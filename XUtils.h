@@ -9,6 +9,7 @@ in the source distribution for its full text.
 
 #include "config.h" // IWYU pragma: keep
 
+#include <limits.h> // IWYU pragma: keep
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h> // IWYU pragma: keep
@@ -72,5 +73,17 @@ char* xStrndup(const char* str, size_t len) ATTR_NONNULL ATTR_MALLOC;
 
 ssize_t xReadfile(const char* pathname, void* buffer, size_t count);
 ssize_t xReadfileat(openat_arg_t dirfd, const char* pathname, void* buffer, size_t count);
+
+/* Returns the nearest power of two that is not greater than x.
+   If x is 0, returns 0. */
+#ifdef HAVE_BUILTIN_CLZ
+static inline unsigned int powerOf2Floor(unsigned int x) {
+   if (x <= 0)
+      return 0;
+   return 1U << (sizeof(x) * CHAR_BIT - 1 - __builtin_clz(x));
+}
+#else
+unsigned int powerOf2Floor(unsigned int x);
+#endif
 
 #endif
