@@ -188,14 +188,39 @@ AC_COMPILE_IFELSE([
    AC_MSG_RESULT(no))
 CFLAGS="$old_CFLAGS"
 
-AC_MSG_CHECKING(for NaN support)
+AC_MSG_CHECKING(for isnan)
+AC_COMPILE_IFELSE([
+   AC_LANG_PROGRAM([[
+      #include <math.h>
+      ]], [[
+      int res = isnan(0.0);
+      ]]
+   )],
+   [AC_DEFINE([HAVE_ISNAN], 1, [Define to 1 if isnan() is supported.])
+   AC_MSG_RESULT(yes)],
+   AC_MSG_RESULT(no))
+
+AC_MSG_CHECKING(for "quiet" floating point comparison)
+AC_COMPILE_IFELSE([
+   AC_LANG_PROGRAM([[
+      #include <math.h>
+      ]], [[
+      int res = isunordered(0.0, 0.0);
+      res = isgreater(0.0, 0.0);
+      ]]
+   )],
+   [AC_DEFINE([HAVE_FP_QUIET_COMPARE], 1, [Define to 1 if "quiet" floating point comparison is supported.])
+   AC_MSG_RESULT(yes)],
+   AC_MSG_RESULT(no))
+
+AC_MSG_CHECKING(if NaN functions properly)
 AC_RUN_IFELSE([
    AC_LANG_PROGRAM(
       [[
        #include <math.h>
       ]],
       [[
-       double x = NAN; return !isnan(x);
+       double x = NAN; return (x == x); /* Expression should be false (0) -> exit success. */
       ]]
    )],
    [AC_MSG_RESULT(yes)],

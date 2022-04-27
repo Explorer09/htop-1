@@ -2,6 +2,42 @@
 #define HEADER_Macros
 
 #include <assert.h> // IWYU pragma: keep
+#include <math.h> // IWYU pragma: keep
+
+#if !defined(HAVE_ISNAN) && !defined(__SUPPORT_SNAN__)
+/* isnan(x) is technically not equivalent to (x != x) as the latter raises
+   FE_INVALID on a "signaling" NaN but isnan(x) raise no exceptions on a sNaN.
+   (TS 18661-1 / C2X standard)
+   htop doesn't use any signaling NaN. */
+#define isnan(x)                       ((x) != (x))
+#endif
+
+#ifndef HAVE_FP_QUIET_COMPARE
+
+/* These fallback expressions are slower than built-ins from the compiler. */
+#ifndef isunordered
+#ifdef __SUPPORT_SNAN__
+/* isunordered should raise FE_INVALID when either argument is a "signaling"
+   NaN. The (a != b) addresses the "isunordered(NAN, SNAN)" case. */
+#define isunordered(a, b)              ((a) != (b) && ((a) != (a) || (b) != (b)))
+#else
+#define isunordered(a, b)              ((a) != (a) || (b) != (b))
+#endif
+#endif
+#ifndef isgreater
+#define isgreater(a, b)                (!isunordered(a, b) && (a) > (b))
+#endif
+#ifndef isgreaterequal
+#define isgreaterequal(a, b)           (!isunordered(a, b) && (a) >= (b))
+#endif
+#ifndef isless
+#define isless(a, b)                   isgreater(b, a)
+#endif
+#ifndef islessequal
+#define islessequal(a, b)              isgreaterequal(b, a)
+#endif
+
+#endif
 
 #ifndef MINIMUM
 #define MINIMUM(a, b)                  ((a) < (b) ? (a) : (b))
