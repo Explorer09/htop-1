@@ -78,6 +78,13 @@ int Meter_humanUnit(char* buffer, unsigned long int value, size_t size) {
    return snprintf(buffer, size, "%.*f%c", precision, (double) value / powi, *prefix);
 }
 
+static void Meter_destroyGraphData(Meter* this) {
+   if (this->drawData)
+      free(this->drawData->values);
+   free(this->drawData);
+   this->drawData = NULL;
+}
+
 void Meter_delete(Object* cast) {
    if (!cast)
       return;
@@ -86,7 +93,7 @@ void Meter_delete(Object* cast) {
    if (Meter_doneFn(this)) {
       Meter_done(this);
    }
-   free(this->drawData);
+   Meter_destroyGraphData(this);
    free(this->caption);
    free(this->values);
    free(this);
@@ -121,8 +128,7 @@ void Meter_setMode(Meter* this, int modeIndex) {
       }
    } else {
       assert(modeIndex >= 1);
-      free(this->drawData);
-      this->drawData = NULL;
+      Meter_destroyGraphData(this);
 
       const MeterMode* mode = Meter_modes[modeIndex];
       this->draw = mode->draw;
@@ -286,6 +292,27 @@ static const char* const GraphMeterMode_dotsAscii[] = {
    /*20*/":", /*21*/":", /*22*/":"
 };
 
+static void GraphMeterMode_expandGraphData(GraphData* data, unsigned int w) {
+   if (data->numRecords >= w * 2) {
+      assert(data->values != NULL);
+      return;
+   }
+   unsigned int newLen = MAXIMUM(w * 2, data->numRecords + data->numRecords / 2);
+   newLen = CLAMP(newLen, MIN_METER_GRAPHDATA_RECORDS, MAX_METER_GRAPHDATA_RECORDS);
+
+   double* buf = calloc(newLen, sizeof(*data->values));
+   if (!buf)
+      return;
+
+   if (data->numRecords > 0) {
+      assert(data->values != NULL);
+      memcpy(buf + (newLen - data->numRecords), data->values, data->numRecords * sizeof(*data->values));
+   }
+   free(data->values);
+   data->values = buf;
+   data->numRecords = newLen;
+}
+
 static void GraphMeterMode_draw(Meter* this, int x, int y, int w) {
    const int captionLen = 3;
    const char* caption = Meter_getCaption(this);
@@ -299,7 +326,10 @@ static void GraphMeterMode_draw(Meter* this, int x, int y, int w) {
       this->drawData = xCalloc(1, sizeof(GraphData));
    }
    GraphData* data = this->drawData;
-   const int nValues = METER_GRAPHDATA_SIZE;
+   GraphMeterMode_expandGraphData(data, (unsigned int)w);
+   if (!data->values)
+      return;
+   assert(data->numRecords > 0);
 
    const char* const* GraphMeterMode_dots;
    int GraphMeterMode_pixPerRow;
@@ -319,24 +349,25 @@ static void GraphMeterMode_draw(Meter* this, int x, int y, int w) {
       struct timeval delay = { .tv_sec = globalDelay / 10, .tv_usec = (globalDelay % 10) * 100000L };
       timeradd(&this->pl->realtime, &delay, &(data->time));
 
-      for (int i = 0; i < nValues - 1; i++)
+      for (size_t i = 0; i < data->numRecords - 1; i++)
          data->values[i] = data->values[i + 1];
 
       double value = 0.0;
       for (uint8_t i = 0; i < this->curItems; i++)
          value += this->values[i];
-      data->values[nValues - 1] = value;
+      data->values[data->numRecords - 1] = value;
    }
 
    x += captionLen;
 
-   int i = 0;
-   if (nValues >= w * 2) {
-      i = nValues - w * 2;
+   size_t i = 0;
+   if (data->numRecords >= (size_t)w * 2) {
+      i = data->numRecords - (size_t)w * 2;
    } else {
+      // Reallocation fails and data->numRecords is not expanded.
       x += -i / 2;
    }
-   for (int k = 0; i < nValues - 1; i += 2, k++) {
+   for (int k = 0; i < data->numRecords - 1; i += 2, k++) {
       int pix = GraphMeterMode_pixPerRow * GRAPH_HEIGHT;
       if (this->total < 1)
          this->total = 1;

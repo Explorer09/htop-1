@@ -20,7 +20,13 @@ in the source distribution for its full text.
 
 
 #define METER_TXTBUFFER_LEN 256
-#define METER_GRAPHDATA_SIZE 256
+
+// The initial number of records for the graph data buffer. With a terminal of
+// 80-char width and 2 meter columnn, about 80 records can be drawn. 128 could
+// be a reasonable default for the buffer.
+#define MIN_METER_GRAPHDATA_RECORDS 128
+
+#define MAX_METER_GRAPHDATA_RECORDS 32768
 
 #define METER_BUFFER_CHECK(buffer, size, written)          \
    do {                                                    \
@@ -97,7 +103,8 @@ typedef struct MeterClass_ {
 
 typedef struct GraphData_ {
    struct timeval time;
-   double values[METER_GRAPHDATA_SIZE];
+   unsigned int numRecords;
+   double* values;
 } GraphData;
 
 struct Meter_ {
