@@ -287,7 +287,13 @@ static const char* const GraphMeterMode_dotsAscii[] = {
 };
 
 static void GraphMeterMode_draw(Meter* this, int x, int y, int w) {
-   const ProcessList* pl = this->pl;
+   const int captionLen = 3;
+   const char* caption = Meter_getCaption(this);
+   attrset(CRT_colors[METER_TEXT]);
+   mvaddnstr(y, x, caption, captionLen);
+   w -= captionLen;
+   if (w <= 0)
+      return;
 
    if (!this->drawData) {
       this->drawData = xCalloc(1, sizeof(GraphData));
@@ -308,17 +314,10 @@ static void GraphMeterMode_draw(Meter* this, int x, int y, int w) {
       GraphMeterMode_pixPerRow = PIXPERROW_ASCII;
    }
 
-   const char* caption = Meter_getCaption(this);
-   attrset(CRT_colors[METER_TEXT]);
-   int captionLen = 3;
-   mvaddnstr(y, x, caption, captionLen);
-   x += captionLen;
-   w -= captionLen;
-
-   if (!timercmp(&pl->realtime, &(data->time), <)) {
+   if (!timercmp(&this->pl->realtime, &(data->time), <)) {
       int globalDelay = this->pl->settings->delay;
       struct timeval delay = { .tv_sec = globalDelay / 10, .tv_usec = (globalDelay % 10) * 100000L };
-      timeradd(&pl->realtime, &delay, &(data->time));
+      timeradd(&this->pl->realtime, &delay, &(data->time));
 
       for (int i = 0; i < nValues - 1; i++)
          data->values[i] = data->values[i + 1];
@@ -329,12 +328,15 @@ static void GraphMeterMode_draw(Meter* this, int x, int y, int w) {
       data->values[nValues - 1] = value;
    }
 
-   int i = nValues - (w * 2), k = 0;
-   if (i < 0) {
-      k = -i / 2;
-      i = 0;
+   x += captionLen;
+
+   int i = 0;
+   if (nValues >= w * 2) {
+      i = nValues - w * 2;
+   } else {
+      x += -i / 2;
    }
-   for (; i < nValues - 1; i += 2, k++) {
+   for (int k = 0; i < nValues - 1; i += 2, k++) {
       int pix = GraphMeterMode_pixPerRow * GRAPH_HEIGHT;
       if (this->total < 1)
          this->total = 1;
