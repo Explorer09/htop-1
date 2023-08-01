@@ -487,7 +487,7 @@ long long Platform_getBootTime(void) {
 
 static double Platform_setOneCPUValues(Meter* this, const Settings* settings, pmAtomValue* values) {
    unsigned long long value = values[CPU_TOTAL_PERIOD].ull;
-   double total = (double) (value == 0 ? 1 : value);
+   double total = (double) (value == 0 ? 1 : value); // <--
    double percent;
 
    double* v = this->values;

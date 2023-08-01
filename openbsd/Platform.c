@@ -192,7 +192,7 @@ double Platform_setCPUValues(Meter* this, unsigned int cpu) {
       return NAN;
    }
 
-   total = cpuData->totalPeriod == 0 ? 1 : cpuData->totalPeriod;
+   total = cpuData->totalPeriod == 0 ? 1 : cpuData->totalPeriod; // <--
 
    v[CPU_METER_NICE] = cpuData->nicePeriod / total * 100.0;
    v[CPU_METER_NORMAL] = cpuData->userPeriod / total * 100.0;

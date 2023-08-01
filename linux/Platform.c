@@ -307,7 +307,7 @@ double Platform_setCPUValues(Meter* this, unsigned int cpu) {
    const LinuxMachine* lhost = (const LinuxMachine *) this->host;
    const Settings* settings = this->host->settings;
    const CPUData* cpuData = &(lhost->cpuData[cpu]);
-   double total = (double) ( cpuData->totalPeriod == 0 ? 1 : cpuData->totalPeriod);
+   double total = (double) ( cpuData->totalPeriod == 0 ? 1 : cpuData->totalPeriod); // <--
    double percent;
    double* v = this->values;
 

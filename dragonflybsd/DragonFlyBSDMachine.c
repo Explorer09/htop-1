@@ -105,7 +105,7 @@ Machine* Machine_new(UsersTable* usersTable, uid_t userId) {
    }
 
    len = sizeof(kernelFScale);
-   if (sysctlbyname("kern.fscale", &kernelFScale, &len, NULL, 0) == -1) {
+   if (sysctlbyname("kern.fscale", &kernelFScale, &len, NULL, 0) == -1) { // <--
       //sane default for kernel provided CPU percentage scaling, at least on x86 machines, in case this sysctl call failed
       kernelFScale = 2048;
    }
@@ -201,7 +201,7 @@ static void DragonFlyBSDMachine_scanCPUTime(Machine* super) {
 
       // totals
       total_d = total_n - total_o;
-      if (total_d < 1 ) {
+      if (total_d < 1 ) { // <--
          total_d = 1;
       }
 

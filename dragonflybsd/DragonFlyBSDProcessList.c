@@ -214,7 +214,7 @@ void ProcessList_goThroughEntries(ProcessList* super) {
       proc->nlwp = kproc->kp_nthreads;		// number of lwp thread
       proc->time = (kproc->kp_lwp.kl_uticks + kproc->kp_lwp.kl_sticks + kproc->kp_lwp.kl_iticks) / 10000;
 
-      proc->percent_cpu = 100.0 * ((double)kproc->kp_lwp.kl_pctcpu / (double)dhost->kernelFScale);
+      proc->percent_cpu = 100.0 * ((double)kproc->kp_lwp.kl_pctcpu / (double)dhost->kernelFScale); // <--
       proc->percent_mem = 100.0 * proc->m_resident / (double)(super->totalMem);
       Process_updateCPUFieldWidths(proc->percent_cpu);
 

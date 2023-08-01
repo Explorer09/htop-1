@@ -136,7 +136,7 @@ Machine* Machine_new(UsersTable* usersTable, uid_t userId) {
    }
 
    len = sizeof(this->kernelFScale);
-   if (sysctlbyname("kern.fscale", &this->kernelFScale, &len, NULL, 0) == -1) {
+   if (sysctlbyname("kern.fscale", &this->kernelFScale, &len, NULL, 0) == -1) { // <--
       //sane default for kernel provided CPU percentage scaling, at least on x86 machines, in case this sysctl call failed
       this->kernelFScale = 2048;
    }
@@ -228,7 +228,7 @@ static inline void FreeBSDMachine_scanCPU(Machine* super) {
 
       // totals
       total_d = total_n - total_o;
-      if (total_d < 1 ) {
+      if (total_d < 1 ) { // <--
          total_d = 1;
       }
 

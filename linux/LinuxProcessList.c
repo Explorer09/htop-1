@@ -1480,7 +1480,7 @@ static bool LinuxProcessList_recurseProcTree(LinuxProcessList* this, openat_arg_
       }
 
       /* period might be 0 after system sleep */
-      float percent_cpu = (lhost->period < 1E-6) ? 0.0F : ((lp->utime + lp->stime - lasttimes) / lhost->period * 100.0);
+      float percent_cpu = (lhost->period < 1E-6) ? 0.0F : ((lp->utime + lp->stime - lasttimes) / lhost->period * 100.0); // <--
       proc->percent_cpu = CLAMP(percent_cpu, 0.0F, host->activeCPUs * 100.0F);
       proc->percent_mem = proc->m_resident / (double)(host->totalMem) * 100.0;
       Process_updateCPUFieldWidths(proc->percent_cpu);

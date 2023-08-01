@@ -144,7 +144,7 @@ static double getpcpu(const NetBSDMachine* nhost, const struct kinfo_proc2* kp) 
    if (nhost->fscale == 0)
       return 0.0;
 
-   return 100.0 * (double)kp->p_pctcpu / nhost->fscale;
+   return 100.0 * (double)kp->p_pctcpu / nhost->fscale; // <--
 }
 
 static void NetBSDProcessList_scanProcs(NetBSDProcessList* this) {

@@ -376,7 +376,7 @@ static bool PCPProcessList_updateProcesses(PCPProcessList* this) {
       if (tty_nr != proc->tty_nr)
          PCPProcessList_updateTTY(proc, pid, offset);
 
-      float percent_cpu = (pp->utime + pp->stime - lasttimes) / phost->period * 100.0;
+      float percent_cpu = (pp->utime + pp->stime - lasttimes) / phost->period * 100.0; // <--
       proc->percent_cpu = isnan(percent_cpu) ?
                           0.0 : CLAMP(percent_cpu, 0.0, host->activeCPUs * 100.0);
       proc->percent_mem = proc->m_resident / (double) host->totalMem * 100.0;

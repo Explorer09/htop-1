@@ -124,7 +124,7 @@ static double getpcpu(const OpenBSDMachine* ohost, const struct kinfo_proc* kp) 
    if (ohost->fscale == 0)
       return 0.0;
 
-   return 100.0 * (double)kp->p_pctcpu / ohost->fscale;
+   return 100.0 * (double)kp->p_pctcpu / ohost->fscale; // <--
 }
 
 static void OpenBSDProcessList_scanProcs(OpenBSDProcessList* this) {

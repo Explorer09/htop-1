@@ -239,7 +239,7 @@ double Platform_setCPUValues(Meter* this, int cpu) {
    const Machine* host = this->host;
    const NetBSDMachine* nhost = (const NetBSDMachine*) host;
    const CPUData* cpuData = &nhost->cpuData[cpu];
-   double total = cpuData->totalPeriod == 0 ? 1 : cpuData->totalPeriod;
+   double total = cpuData->totalPeriod == 0 ? 1 : cpuData->totalPeriod; // <--
    double totalPercent;
    double* v = this->values;
 

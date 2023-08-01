@@ -266,7 +266,7 @@ double Platform_setCPUValues(Meter* mtr, unsigned int cpu) {
    for (size_t i = 0; i < CPU_STATE_MAX; ++i) {
       total += (double)curr->cpu_ticks[i] - (double)prev->cpu_ticks[i];
    }
-
+// No handling code when total == 0.0
    mtr->values[CPU_METER_NICE]
       = ((double)curr->cpu_ticks[CPU_STATE_NICE] - (double)prev->cpu_ticks[CPU_STATE_NICE]) * 100.0 / total;
    mtr->values[CPU_METER_NORMAL]

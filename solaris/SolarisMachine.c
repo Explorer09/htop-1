@@ -127,7 +127,7 @@ static void SolarisMachine_scanCPUTime(SolarisMachine* this) {
                          + (intrtime->value.ui64 - cpuData->lintr)
                          + (krnltime->value.ui64 - cpuData->lkrnl)
                          + (usertime->value.ui64 - cpuData->luser);
-
+// No handling code when totaltime = 0
       // Calculate percentages of deltas since last reading
       cpuData->userPercent      = ((usertime->value.ui64 - cpuData->luser) / (double)totaltime) * 100.0;
       cpuData->nicePercent      = (double)0.0; // Not implemented on Solaris
