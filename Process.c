@@ -73,7 +73,7 @@ void Process_printBytes(RichString* str, unsigned long long number, bool colorin
    char buffer[16];
    int len;
 
-   const char unitPrefixes[] = {'K','M','G','T','P','E','Z','Y','R','Q'};
+   const char unitPrefixes[] = {'K','M','G','T','P','E','Z','Y','R','Q','\0'};
    int colors[4];
    colors[0] = CRT_colors[PROCESS];
    colors[1] = coloring ? CRT_colors[PROCESS_MEGABYTES] : CRT_colors[PROCESS];
@@ -107,7 +107,7 @@ void Process_printBytes(RichString* str, unsigned long long number, bool colorin
       number /= ONE_K;
       if (number < 100 * ONE_K)
          break;
-      if (++unitIndex >= ARRAYSIZE(unitPrefixes)) {
+      if (!unitPrefixes[++unitIndex]) {
          // Would not happen if the long long int type is 64 bits, but we check
          // it to be safe.
          goto invalidNumber;
@@ -133,7 +133,7 @@ void Process_printBytes(RichString* str, unsigned long long number, bool colorin
       // 2 digits + decimal point + 1 digit
       // "9.7G", "99.9G", "9.7T", "99.9T", etc.
       assert(number < 100 * ONE_K);
-      if (++unitIndex >= ARRAYSIZE(unitPrefixes))
+      if (!unitPrefixes[++unitIndex])
          goto invalidNumber;
 
       len = xSnprintf(buffer, sizeof(buffer), "%2llu", number / ONE_K);
