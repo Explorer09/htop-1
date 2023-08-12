@@ -51,22 +51,23 @@ Meter* Meter_new(const Machine* host, unsigned int param, const MeterClass* type
 }
 
 int Meter_humanUnit(char* buffer, unsigned long int value, size_t size) {
-   const char* prefix = "KMGTPEZY";
+   const char prefix[] = {'K','M','G','T','P','E','Z','Y'};
    unsigned long int powi = 1;
    unsigned int powj = 1, precision = 2;
+   size_t unitIndex = 0;
 
    for (;;) {
       if (value / 1024 < powi)
          break;
 
-      if (prefix[1] == '\0')
+      if (unitIndex + 1U >= ARRAYSIZE(prefix))
          break;
 
       powi *= 1024;
-      ++prefix;
+      ++unitIndex;
    }
 
-   if (*prefix == 'K')
+   if (unitIndex == 0)
       precision = 0;
 
    for (; precision > 0; precision--) {
@@ -75,7 +76,7 @@ int Meter_humanUnit(char* buffer, unsigned long int value, size_t size) {
          break;
    }
 
-   return snprintf(buffer, size, "%.*f%c", precision, (double) value / powi, *prefix);
+   return snprintf(buffer, size, "%.*f%c", precision, (double) value / powi, prefix[unitIndex]);
 }
 
 void Meter_delete(Object* cast) {
