@@ -11,7 +11,6 @@ in the source distribution for its full text.
 
 #include <assert.h>
 #include <math.h>
-#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -52,23 +51,22 @@ Meter* Meter_new(const Machine* host, unsigned int param, const MeterClass* type
 }
 
 int Meter_humanUnit(char* buffer, unsigned long int value, size_t size) {
-   const char prefix[] = {'K','M','G','T','P','E','Z','Y'};
+   const char* prefix = "KMGTPEZY";
    unsigned long int powi = 1;
    unsigned int powj = 1, precision = 2;
-   uint8_t unitIndex = 0;
 
    for (;;) {
       if (value / 1024 < powi)
          break;
 
-      if (unitIndex + 1U >= ARRAYSIZE(prefix))
+      if (prefix[1] == '\0')
          break;
 
       powi *= 1024;
-      ++unitIndex;
+      ++prefix;
    }
 
-   if (unitIndex == 0)
+   if (*prefix == 'K')
       precision = 0;
 
    for (; precision > 0; precision--) {
@@ -77,7 +75,7 @@ int Meter_humanUnit(char* buffer, unsigned long int value, size_t size) {
          break;
    }
 
-   return snprintf(buffer, size, "%.*f%c", precision, (double) value / powi, prefix[unitIndex]);
+   return snprintf(buffer, size, "%.*f%c", precision, (double) value / powi, *prefix);
 }
 
 void Meter_delete(Object* cast) {
