@@ -73,7 +73,7 @@ void Process_printBytes(RichString* str, unsigned long long number, bool colorin
    char buffer[16];
    int len;
 
-   const char unitPrefixes[] = {'K','M','G','T','P','E','Z','Y','R','Q','\0'};
+   const char unitPrefixes[] = "KMGTPEZYRQ";
    int colors[4];
    colors[0] = CRT_colors[PROCESS];
    colors[1] = coloring ? CRT_colors[PROCESS_MEGABYTES] : CRT_colors[PROCESS];
