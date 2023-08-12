@@ -114,8 +114,8 @@ void Process_printBytes(RichString* str, unsigned long long number, bool colorin
       }
    }
 
-   int color = unitIndex < ARRAYSIZE(colors) ? colors[unitIndex] : colors[ARRAYSIZE(colors) - 1];
-   int nextUnitColor = unitIndex + 1 < ARRAYSIZE(colors) ? colors[unitIndex + 1] : colors[ARRAYSIZE(colors) - 1];
+   int color = unitIndex < ARRAYSIZE(colors) ? colors[unitIndex] : colors[ARRAYSIZE(colors) - 1U];
+   int nextUnitColor = unitIndex + 1U < ARRAYSIZE(colors) ? colors[unitIndex + 1U] : colors[ARRAYSIZE(colors) - 1U];
 
    if (number < 1000) {
       // 3 digits
