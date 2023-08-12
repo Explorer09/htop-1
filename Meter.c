@@ -11,6 +11,7 @@ in the source distribution for its full text.
 
 #include <assert.h>
 #include <math.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -54,7 +55,7 @@ int Meter_humanUnit(char* buffer, unsigned long int value, size_t size) {
    const char prefix[] = {'K','M','G','T','P','E','Z','Y'};
    unsigned long int powi = 1;
    unsigned int powj = 1, precision = 2;
-   unsigned int unitIndex = 0;
+   uint8_t unitIndex = 0;
 
    for (;;) {
       if (value / 1024 < powi)
