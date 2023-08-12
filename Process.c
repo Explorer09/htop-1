@@ -102,7 +102,7 @@ void Process_printBytes(RichString* str, unsigned long long number, bool colorin
    }
 
    // 100000 KiB (97 MiB) or greater. A unit prefix would be added.
-   unsigned int unitIndex = 1;
+   size_t unitIndex = 1;
    while (true) {
       number /= ONE_K;
       if (number < 100 * ONE_K)
@@ -114,8 +114,8 @@ void Process_printBytes(RichString* str, unsigned long long number, bool colorin
       }
    }
 
-   int color = unitIndex < ARRAYSIZE(colors) ? colors[unitIndex] : colors[ARRAYSIZE(colors) - 1U];
-   int nextUnitColor = unitIndex + 1U < ARRAYSIZE(colors) ? colors[unitIndex + 1U] : colors[ARRAYSIZE(colors) - 1U];
+   int color = unitIndex < ARRAYSIZE(colors) ? colors[unitIndex] : colors[ARRAYSIZE(colors) - 1];
+   int nextUnitColor = unitIndex + 1 < ARRAYSIZE(colors) ? colors[unitIndex + 1] : colors[ARRAYSIZE(colors) - 1];
 
    if (number < 1000) {
       // 3 digits
