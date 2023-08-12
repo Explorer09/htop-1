@@ -102,7 +102,7 @@ void Process_printBytes(RichString* str, unsigned long long number, bool colorin
    }
 
    // 100000 KiB (97 MiB) or greater. A unit prefix would be added.
-   size_t unitIndex = 1;
+   uint8_t unitIndex = 1;
    while (true) {
       number /= ONE_K;
       if (number < 100 * ONE_K)
