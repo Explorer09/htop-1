@@ -8,8 +8,11 @@ env:
   CPPFLAGS: -DGCC_PRINTF -DGCC_SCANF -D_FORTIFY_SOURCE=2
 
 jobs:
-  build-ubuntu-minimal-gcc:
+  build-ubuntu-minimal-gcc-lto-O2:
     runs-on: ubuntu-latest
+    env:
+      CFLAGS: -O2 -g -flto
+      LDFLAGS: -O2 -g -flto -Wl,--as-needed
     steps:
     - uses: actions/checkout@v4
     - name: Install Dependencies
@@ -30,10 +33,37 @@ jobs:
     - name: Get program size
       run: size ./htop
 
-  build-ubuntu-minimal-clang:
+  build-ubuntu-minimal-gcc-lto-Os:
+    runs-on: ubuntu-latest
+    env:
+      CFLAGS: -Os -g -flto
+      LDFLAGS: -Os -g -flto -Wl,--as-needed
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install Dependencies
+      run: sudo apt-get install --no-install-recommends libncursesw5-dev
+    - name: Bootstrap
+      run: ./autogen.sh
+    - name: Configure
+      run: ./configure --enable-werror --enable-affinity --disable-unicode --disable-sensors || (cat config.log; exit 1)
+    - name: Enable compatibility modes
+      run: |
+        sed -i 's/#define HAVE_FSTATAT 1/#undef HAVE_FSTATAT/g' config.h
+        sed -i 's/#define HAVE_OPENAT 1/#undef HAVE_OPENAT/g' config.h
+        sed -i 's/#define HAVE_READLINKAT 1/#undef HAVE_READLINKAT/g' config.h
+    - name: Build
+      run: make -k
+    - name: Distcheck
+      run: make distcheck DISTCHECK_CONFIGURE_FLAGS="--enable-werror --enable-affinity --disable-unicode --disable-sensors"
+    - name: Get program size
+      run: size ./htop
+
+  build-ubuntu-minimal-clang-lto-O2:
     runs-on: ubuntu-latest
     env:
       CC: clang-16
+      CFLAGS: -O2 -g -flto
+      LDFLAGS: -O2 -g -flto -Wl,--as-needed
     steps:
     - uses: actions/checkout@v4
     - name: install clang repo
@@ -54,24 +84,29 @@ jobs:
     - name: Get program size
       run: size ./htop
 
-  build-ubuntu-full-featured-gcc-O3:
+  build-ubuntu-minimal-clang-lto-Os:
     runs-on: ubuntu-latest
-    # Enable LTO, might trigger additional warnings on advanced inlining
     env:
-      CFLAGS: -O3 -g -flto
-      LDFLAGS: -O3 -g -flto -Wl,--as-needed
+      CC: clang-16
+      CFLAGS: -Os -g -flto
+      LDFLAGS: -Os -g -flto -Wl,--as-needed
     steps:
     - uses: actions/checkout@v4
+    - name: install clang repo
+      run: |
+        wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key 2>/dev/null | sudo apt-key add -
+        sudo add-apt-repository 'deb http://apt.llvm.org/focal/ llvm-toolchain-focal-16 main' -y
+        sudo apt-get update -q
     - name: Install Dependencies
-      run: sudo apt-get install --no-install-recommends libncursesw5-dev libhwloc-dev libnl-3-dev libnl-genl-3-dev libsensors4-dev libcap-dev
+      run: sudo apt-get install --no-install-recommends clang-16 libncursesw5-dev
     - name: Bootstrap
       run: ./autogen.sh
     - name: Configure
-      run: ./configure --enable-werror --enable-openvz --enable-vserver --enable-ancient-vserver --enable-unicode --enable-hwloc --enable-delayacct --enable-sensors --enable-capabilities || ( cat config.log; exit 1; )
+      run: ./configure --enable-werror --enable-affinity --disable-unicode --disable-sensors || ( cat config.log; exit 1; )
     - name: Build
       run: make -k
     - name: Distcheck
-      run: make distcheck DISTCHECK_CONFIGURE_FLAGS='--enable-werror --enable-openvz --enable-vserver --enable-ancient-vserver --enable-unicode --enable-hwloc --enable-delayacct --enable-sensors --enable-capabilities'
+      run: make distcheck DISTCHECK_CONFIGURE_FLAGS="--enable-werror --enable-affinity --disable-unicode --disable-sensors"
     - name: Get program size
       run: size ./htop
 
@@ -96,10 +131,33 @@ jobs:
     - name: Get program size
       run: size ./htop
 
-  build-ubuntu-full-featured-clang:
+  build-ubuntu-full-featured-gcc-Os:
+    runs-on: ubuntu-latest
+    # Enable LTO, might trigger additional warnings on advanced inlining
+    env:
+      CFLAGS: -Os -g -flto
+      LDFLAGS: -Os -g -flto -Wl,--as-needed
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install Dependencies
+      run: sudo apt-get install --no-install-recommends libncursesw5-dev libhwloc-dev libnl-3-dev libnl-genl-3-dev libsensors4-dev libcap-dev
+    - name: Bootstrap
+      run: ./autogen.sh
+    - name: Configure
+      run: ./configure --enable-werror --enable-openvz --enable-vserver --enable-ancient-vserver --enable-unicode --enable-hwloc --enable-delayacct --enable-sensors --enable-capabilities || ( cat config.log; exit 1; )
+    - name: Build
+      run: make -k
+    - name: Distcheck
+      run: make distcheck DISTCHECK_CONFIGURE_FLAGS='--enable-werror --enable-openvz --enable-vserver --enable-ancient-vserver --enable-unicode --enable-hwloc --enable-delayacct --enable-sensors --enable-capabilities'
+    - name: Get program size
+      run: size ./htop
+
+  build-ubuntu-full-featured-clang-lto-O2:
     runs-on: ubuntu-latest
     env:
       CC: clang-16
+      CFLAGS: -O2 -g -flto
+      LDFLAGS: -O2 -g -flto -Wl,--as-needed
     steps:
     - uses: actions/checkout@v4
     - name: install clang repo
@@ -120,24 +178,29 @@ jobs:
     - name: Get program size
       run: size ./htop
 
-  build-ubuntu-gcc-static-O3:
+  build-ubuntu-full-featured-clang-lto-Os:
     runs-on: ubuntu-latest
-    # Enable LTO, might trigger additional warnings on advanced inlining
     env:
-      CFLAGS: -O3 -g -flto
-      LDFLAGS: -O3 -g -flto
+      CC: clang-16
+      CFLAGS: -Os -g -flto
+      LDFLAGS: -Os -g -flto -Wl,--as-needed
     steps:
     - uses: actions/checkout@v4
+    - name: install clang repo
+      run: |
+        wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key 2>/dev/null | sudo apt-key add -
+        sudo add-apt-repository 'deb http://apt.llvm.org/focal/ llvm-toolchain-focal-16 main' -y
+        sudo apt-get update -q
     - name: Install Dependencies
-      run: sudo apt-get install --no-install-recommends libncursesw5-dev libtinfo-dev libgpm-dev libsensors4-dev libcap-dev
+      run: sudo apt-get install --no-install-recommends clang-16 libncursesw5-dev libhwloc-dev libnl-3-dev libnl-genl-3-dev libsensors4-dev libcap-dev
     - name: Bootstrap
       run: ./autogen.sh
     - name: Configure
-      run: ./configure --enable-static --enable-werror --enable-openvz --enable-vserver --enable-ancient-vserver --enable-unicode --disable-hwloc --disable-delayacct --enable-sensors --enable-capabilities || ( cat config.log; exit 1; )
+      run: ./configure --enable-werror --enable-openvz --enable-vserver --enable-ancient-vserver --enable-unicode --enable-hwloc --enable-delayacct --enable-sensors --enable-capabilities || ( cat config.log; exit 1; )
     - name: Build
       run: make -k
     - name: Distcheck
-      run: make distcheck DISTCHECK_CONFIGURE_FLAGS='--enable-static --enable-werror --enable-openvz --enable-vserver --enable-ancient-vserver --enable-unicode --disable-hwloc --disable-delayacct --enable-sensors --enable-capabilities'
+      run: make distcheck DISTCHECK_CONFIGURE_FLAGS='--enable-werror --enable-openvz --enable-vserver --enable-ancient-vserver --enable-unicode --enable-hwloc --enable-delayacct --enable-sensors --enable-capabilities'
     - name: Get program size
       run: size ./htop
 
@@ -162,96 +225,24 @@ jobs:
     - name: Get program size
       run: size ./htop
 
-  build-ubuntu-latest-pcp:
-    # we want PCP v5.2.3+
-    runs-on: ubuntu-22.04
-    steps:
-    - uses: actions/checkout@v4
-    - name: Install Dependencies
-      run: sudo apt-get install --no-install-recommends libpcp3-dev libncursesw5-dev libtinfo-dev libgpm-dev
-    - name: Bootstrap
-      run: ./autogen.sh
-    - name: Configure
-      run: ./configure --enable-werror --enable-pcp --enable-unicode || ( cat config.log; exit 1; )
-    - name: Build
-      run: make -k
-
-  build-ubuntu-latest-clang-analyzer:
+  build-ubuntu-gcc-static-Os:
     runs-on: ubuntu-latest
+    # Enable LTO, might trigger additional warnings on advanced inlining
     env:
-      CC: clang-16
-    steps:
-    - uses: actions/checkout@v4
-    - name: install clang repo
-      run: |
-        wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key 2>/dev/null | sudo apt-key add -
-        sudo add-apt-repository 'deb http://apt.llvm.org/focal/ llvm-toolchain-focal-16 main' -y
-        sudo apt-get update -q
-    - name: Install Dependencies
-      run: sudo apt-get install --no-install-recommends clang-16 clang-tools-16 libncursesw5-dev libnl-3-dev libnl-genl-3-dev libsensors4-dev libcap-dev
-    - name: Bootstrap
-      run: ./autogen.sh
-    - name: Configure
-      run: scan-build-16 -analyze-headers --status-bugs ./configure --enable-debug --enable-werror --enable-openvz --enable-vserver --enable-ancient-vserver --enable-unicode --enable-delayacct --enable-sensors --enable-capabilities || ( cat config.log; exit 1; )
-    - name: Build
-      run: scan-build-16 -analyze-headers --status-bugs make -j"$(nproc)"
-
-  build-ubuntu-latest-clang-sanitizer:
-    runs-on: ubuntu-latest
-    env:
-      CC: clang-16
-      CFLAGS: '-O1 -g -ftrivial-auto-var-init=pattern -fsanitize=address -fsanitize-address-use-after-scope -fsanitize-address-use-after-return=always -fno-omit-frame-pointer -fsanitize=undefined -fsanitize=nullability -fsanitize=implicit-conversion -fsanitize=integer -fsanitize=float-divide-by-zero -fsanitize=local-bounds'
-      LDFLAGS: '-ftrivial-auto-var-init=pattern -fsanitize=address -fsanitize-address-use-after-scope -fsanitize-address-use-after-return=always -fno-omit-frame-pointer -fsanitize=undefined -fsanitize=nullability -fsanitize=implicit-conversion -fsanitize=integer -fsanitize=float-divide-by-zero -fsanitize=local-bounds'
-      ASAN_OPTIONS: strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1
-      UBSAN_OPTIONS: print_stacktrace=1:print_summary=1:halt_on_error=1
-      TERM: xterm-color
-      HTOPRC: .github/workflows/htoprc
-    steps:
-    - uses: actions/checkout@v4
-    - name: install clang repo
-      run: |
-        wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key 2>/dev/null | sudo apt-key add -
-        sudo add-apt-repository 'deb http://apt.llvm.org/focal/ llvm-toolchain-focal-16 main' -y
-        sudo apt-get update -q
-    - name: Install LLVM Toolchain
-      run: sudo apt-get install --no-install-recommends clang-16 libclang-rt-16-dev llvm-16
-    - name: Install Dependencies
-      run: sudo apt-get install --no-install-recommends libncursesw5-dev libhwloc-dev libnl-3-dev libnl-genl-3-dev libsensors4-dev libcap-dev
-    - name: Bootstrap
-      run: ./autogen.sh
-    - name: Configure
-      run: ./configure --enable-werror --enable-openvz --enable-vserver --enable-ancient-vserver --enable-unicode --enable-hwloc --enable-delayacct --enable-sensors --enable-capabilities || ( cat config.log; exit 1; )
-    - name: Build
-      run: make -k
-    - name: Run sanitized htop (1)
-      run: ./htop -h
-    - name: Run sanitized htop (2)
-      run: ./htop -n 5
-    - name: Run sanitized htop (3)
-      run: ./htop -n 5 -t
-    - name: Run sanitized htop (4)
-      run: ./htop -d 1 -n 50
-
-  build-macos-latest-clang:
-    runs-on: macOS-latest
-    env:
-      CC: clang
+      CFLAGS: -Os -g -flto
+      LDFLAGS: -Os -g -flto
     steps:
     - uses: actions/checkout@v4
     - name: Install Dependencies
-      run: brew install automake pkg-config
+      run: sudo apt-get install --no-install-recommends libncursesw5-dev libtinfo-dev libgpm-dev libsensors4-dev libcap-dev
     - name: Bootstrap
       run: ./autogen.sh
     - name: Configure
-      run: ./configure --enable-werror || ( cat config.log; exit 1; )
+      run: ./configure --enable-static --enable-werror --enable-openvz --enable-vserver --enable-ancient-vserver --enable-unicode --disable-hwloc --disable-delayacct --enable-sensors --enable-capabilities || ( cat config.log; exit 1; )
     - name: Build
       run: make -k
     - name: Distcheck
-      run: make distcheck DISTCHECK_CONFIGURE_FLAGS="--enable-werror"
+      run: make distcheck DISTCHECK_CONFIGURE_FLAGS='--enable-static --enable-werror --enable-openvz --enable-vserver --enable-ancient-vserver --enable-unicode --disable-hwloc --disable-delayacct --enable-sensors --enable-capabilities'
+    - name: Get program size
+      run: size ./htop
 
-  whitespace_check:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: check-whitespaces
-        run: git diff-tree --check $(git hash-object -t tree /dev/null) HEAD
