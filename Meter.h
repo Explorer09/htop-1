@@ -94,13 +94,23 @@ typedef struct MeterClass_ {
 #define Meter_attributes(this_)        As_Meter(this_)->attributes
 #define Meter_name(this_)              As_Meter(this_)->name
 #define Meter_uiName(this_)            As_Meter(this_)->uiName
+#define Meter_maxItems(this_)          As_Meter(this_)->maxItems
 #define Meter_isMultiColumn(this_)     As_Meter(this_)->isMultiColumn
 #define Meter_isPercentChart(this_)    As_Meter(this_)->isPercentChart
+
+typedef union GraphColorCell_ {
+   int16_t scaleExp;
+   uint16_t numDots;
+   struct GraphColorCellCell_ {
+      uint8_t itemIndex;
+      uint8_t details;
+   } c;
+} GraphColorCell;
 
 typedef struct GraphData_ {
    struct timeval time;
    size_t nValues;
-   double* values;
+   GraphColorCell* buffer;
 } GraphData;
 
 struct Meter_ {
@@ -121,6 +131,13 @@ struct Meter_ {
    double total;
    void* meterData;
 };
+
+/* Used in GraphMeterMode_draw() subroutines only */
+typedef struct GraphDrawContext_ {
+   uint8_t maxItems;
+   bool isPercentChart;
+   size_t nCellsPerValue;
+} GraphDrawContext;
 
 typedef struct MeterMode_ {
    Meter_Draw draw;
