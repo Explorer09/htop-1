@@ -232,7 +232,7 @@ void Row_printKBytes(RichString* str, unsigned long long number, bool coloring) 
    const size_t maxUnitIndex = (sizeof(number) * CHAR_BIT - 1) / 10 + 1;
    const bool canOverflow = maxUnitIndex >= ARRAYSIZE(unitPrefixes);
 
-   size_t i = 1;
+   uint8_t i = 1;
    int prevUnitColor;
    // Convert KiB to (1/100) of MiB
    unsigned long long hundredths = (number / 256) * 25 + (number % 256) * 25 / 256;
@@ -243,8 +243,8 @@ void Row_printKBytes(RichString* str, unsigned long long number, bool coloring) 
       prevUnitColor = color;
       color = nextUnitColor;
 
-      if (coloring && i + 1 < ARRAYSIZE(colors))
-         nextUnitColor = colors[i + 1];
+      if (coloring && i + 1U < ARRAYSIZE(colors))
+         nextUnitColor = colors[i + 1U];
 
       if (hundredths < 1000000)
          break;
