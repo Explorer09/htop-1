@@ -832,6 +832,54 @@ static void GraphMeterMode_computeColors(Meter* this, const GraphDrawContext* co
          break;
       }
    }
+
+   uint8_t lastItemNum = 0;
+   for (size_t cellIndex = 0; cellIndex < nCellsToPaint; cellIndex++) {
+      GraphColorCell* cell = &valueStart[firstCellIndex + (size_t)increment * cellIndex];
+      if (lastItemNum > cell->c.itemNum) {
+         goto dumpData;
+      }
+      lastItemNum = cell->c.itemNum;
+   }
+   return;
+
+dumpData:
+   CRT_done();
+   fprintf(stderr, "--- begin graph data dump ---\n");
+   fprintf(stderr, "context->maxItems = %u\n", context->maxItems);
+   fprintf(stderr, "context->isPercentChart = %u\n", context->isPercentChart);
+   fprintf(stderr, "context->nCellsPerValue = %llu\n", (unsigned long long)context->nCellsPerValue);
+   fprintf(stderr, "\n");
+   fprintf(stderr, "drawData.graphHeight = %u\n", graphHeight);
+   fprintf(stderr, "caption = %s\n", this->caption);
+   fprintf(stderr, "total = %a (%g)\n", this->total, this->total);
+   fprintf(stderr, "curItems = %u\n", this->curItems);
+   fprintf(stderr, "\n");
+   fprintf(stderr, "deltaExp = %d\n", deltaExp);
+   fprintf(stderr, "scaledTotal = %a (%g)\n", scaledTotal, scaledTotal);
+   fprintf(stderr, "numDots = %d\n", numDots);
+   fprintf(stderr, "\n");
+   for (unsigned int i = 0; i < this->curItems; i++) {
+      fprintf(stderr, "values[%u] = %a (%g)\n",
+         i, this->values[i], this->values[i]);
+   }
+   for (size_t cellIndex = 0; cellIndex < nCellsToPaint; cellIndex++) {
+      GraphColorCell* cell = &valueStart[firstCellIndex + (size_t)increment * cellIndex];
+      fprintf(stderr, "cell %u: 0x%04x (item %u)\n",
+         (unsigned int)cellIndex, cell->numDots, cell->c.itemNum);
+   }
+   fprintf(stderr, "full value dump:\n");
+   for (size_t cellIndex = 0; cellIndex < context->nCellsPerValue; cellIndex++) {
+      GraphColorCell* cell = &valueStart[cellIndex];
+      fprintf(stderr, " %04x", cell->numDots);
+      if (cellIndex % 8 == 7) {
+         fprintf(stderr, "\n");
+      }
+   }
+   fprintf(stderr, "\n");
+   fprintf(stderr, "--- end graph data dump ---\n");
+   _exit(1);
+
 }
 
 static void GraphMeterMode_recordNewValue(Meter* this, const GraphDrawContext* context) {
