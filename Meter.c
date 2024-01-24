@@ -12,6 +12,7 @@ in the source distribution for its full text.
 #include <assert.h>
 #include <float.h>
 #include <math.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -25,7 +26,12 @@ in the source distribution for its full text.
 #include "XUtils.h"
 
 
-#define GRAPH_HEIGHT 4 /* Unit: rows (lines) */
+#ifndef UINT16_WIDTH /* Defined in the C23 standard */
+#define UINT16_WIDTH 16
+#endif
+
+#define DEFAULT_GRAPH_HEIGHT 4 /* Unit: rows (lines) */
+#define MAX_GRAPH_HEIGHT 8191 /* == (int)UINT16_MAX / 8 */
 
 const MeterClass Meter_class = {
    .super = {
@@ -95,7 +101,7 @@ void Meter_delete(Object* cast) {
    if (Meter_doneFn(this)) {
       Meter_done(this);
    }
-   free(this->drawData.values);
+   free(this->drawData.buffer);
    free(this->caption);
    free(this->values);
    free(this);
@@ -130,9 +136,10 @@ void Meter_setMode(Meter* this, int modeIndex) {
       }
    } else {
       assert(modeIndex >= 1);
-      free(this->drawData.values);
-      this->drawData.values = NULL;
+      free(this->drawData.buffer);
+      this->drawData.buffer = NULL;
       this->drawData.nValues = 0;
+      this->drawData.graphHeight = 0;
 
       const MeterMode* mode = Meter_modes[modeIndex];
       this->draw = mode->draw;
@@ -291,6 +298,7 @@ static void BarMeterMode_draw(Meter* this, int x, int y, int w) {
 
 /* ---------- GraphMeterMode ---------- */
 
+#if 0 /* Used in old graph meter drawing code; to be removed */
 #ifdef HAVE_LIBNCURSESW
 
 #define PIXPERROW_UTF8 4
@@ -310,24 +318,871 @@ static const char* const GraphMeterMode_dotsAscii[] = {
    /*10*/".", /*11*/".", /*12*/":",
    /*20*/":", /*21*/":", /*22*/":"
 };
+#endif
+
+static void GraphMeterMode_reallocateGraphBuffer(Meter* this, const GraphDrawContext* context, size_t nValues) {
+   GraphData* data = &this->drawData;
+
+   size_t nCellsPerValue = context->nCellsPerValue;
+   size_t valueSize = nCellsPerValue * sizeof(*data->buffer);
+
+   if (!valueSize)
+      goto bufferInitialized;
+
+   data->buffer = xReallocArray(data->buffer, nValues, valueSize);
+
+   // Move existing records ("values") to correct position
+   assert(nValues >= data->nValues);
+   size_t moveOffset = (nValues - data->nValues) * nCellsPerValue;
+   memmove(data->buffer + moveOffset, data->buffer, data->nValues * valueSize);
+
+   // Fill new spaces with blank records
+   memset(data->buffer, 0, moveOffset * sizeof(*data->buffer));
+
+bufferInitialized:
+   data->nValues = nValues;
+}
+
+static unsigned int GraphMeterMode_valueCellIndex(unsigned int graphHeight, bool isPercentChart, int deltaExp, unsigned int y, unsigned int* scaleFactor, unsigned int* increment) {
+   if (scaleFactor)
+      *scaleFactor = 1;
+
+   assert(deltaExp >= 0);
+   assert(deltaExp < UINT16_WIDTH);
+   unsigned int yTop = (graphHeight - 1) >> deltaExp;
+   if (isPercentChart) {
+      assert(deltaExp == 0);
+      if (increment)
+         *increment = 1;
+
+      if (y > yTop)
+         return (unsigned int)-1;
+
+      return y;
+   }
+   // A record may be rendered in different scales depending on the largest
+   // "scaleExp" value of a record set. The colors are precomputed for
+   // different scales of the same record. It takes (2 * graphHeight - 1) cells
+   // of space to store all the color information.
+   //
+   // An example for graphHeight = 6:
+   //
+   //    scale  1*n  2*n  4*n  8*n 16*n | n = value sum of all items
+   // --------------------------------- |     rounded up to a power of
+   // deltaExp    0    1    2    3    4 |     two. The exponent of n is
+   // --------------------------------- |     stored in index [0].
+   //    array [11]    X    X    X    X | X = empty cell
+   //  indices  [9]    X    X    X    X | Cells whose array indices
+   //           [7]    X    X    X    X | are >= (2 * graphHeight) are
+   //           [5] [10]    X    X    X | computed from cells of a
+   //           [3]  [6] (12)    X    X | lower scale and not stored in
+   //           [1]  [2]  [4]  [8] (16) | the array.
+   if (increment)
+      *increment = 2U << deltaExp;
+
+   if (y > yTop)
+      return (unsigned int)-1;
+
+   // "b" is the "base" offset or the upper bits of offset
+   unsigned int b = (y * 2) << deltaExp;
+   unsigned int offset = 1U << deltaExp;
+   if (y == yTop) {
+      assert(((2 * graphHeight - 1) & b) == b);
+      unsigned int offsetTop = powerOf2Floor(2 * graphHeight - 1 - b);
+      if (scaleFactor && offsetTop) {
+         *scaleFactor = offset / offsetTop;
+      }
+      return b + offsetTop;
+   }
+   return b + offset;
+}
+
+static uint8_t GraphMeterMode_findTopCellItem(const Meter* this, double scaledTotal, unsigned int topCell) {
+   unsigned int graphHeight = this->drawData.graphHeight;
+   assert(topCell < graphHeight);
+
+   double valueSum = 0.0;
+   double maxArea = 0.0;
+   uint8_t topCellItem = this->curItems - 1;
+   for (uint8_t i = 0; i < this->curItems && valueSum < DBL_MAX; i++) {
+      double value = this->values[i];
+      if (!isPositive(value))
+         continue;
+
+      double newValueSum = valueSum + value;
+      if (newValueSum > DBL_MAX)
+         newValueSum = DBL_MAX;
+
+      if (value > DBL_MAX - valueSum) {
+         value = DBL_MAX - valueSum;
+         assert(newValueSum < DBL_MAX || valueSum + value >= DBL_MAX);
+      }
+
+      valueSum = newValueSum;
+
+      double topPoint = (valueSum / scaledTotal) * (double)(int)graphHeight;
+      double area = (value / scaledTotal) * (double)(int)graphHeight;
+
+      if (topPoint > (double)(int)topCell) {
+         if (area > topPoint - (double)(int)topCell)
+            area = topPoint - (double)(int)topCell;
+
+         // Find the item that occupies the largest area of the top cell.
+         // Favor item with higher index in case of a tie.
+         if (area >= maxArea) {
+            topCellItem = i;
+            maxArea = area;
+         }
+      }
+   }
+   return topCellItem;
+}
+
+static int GraphMeterMode_needsExtraCell(unsigned int graphHeight, double scaledTotal, unsigned int y, const GraphColorAdjStack* stack, const GraphColorAdjOffset* adjOffset) {
+   double areaSum = (stack->fractionSum + stack->valueSum / scaledTotal) * (double)(int)graphHeight;
+   double adjOffsetVal = adjOffset ? (double)(int32_t)adjOffset->offsetVal : 0.0;
+   double halfPoint = (double)(int)y + 0.5;
+
+   // Calculate the best position for rendering this stack of items.
+   // The formula is arranged for minimizing rounding errors, so as to avoid
+   // tiebreaking whenever we can.
+
+   // Given real numbers a, b, c and d (a <= b <= c <= d), then:
+   // 1. The smallest value for (x - a)^2 + (x - b)^2 + (x - c)^2 + (x - d)^2
+   // happens when x == (a + b + c + d) / 4; x is the "arithmetic mean".
+   // 2. The smallest value for |y - a| + |y - b| + |y - c| + |y - d|
+   // happens when b <= y <= c; y is the "median".
+   // The arithmetic mean is used here.
+
+   // The following variables are not needed for conditionals but mentioned
+   // for reference:
+   // double averagePoint = stack->startPoint + (areaSum / (stack->nItems * 2));
+   // double adjStartPoint = stack->startPoint + ((areaSum - adjOffsetVal) / (stack->nItems * 2));
+
+   if (areaSum - adjOffsetVal > (halfPoint - stack->startPoint) * 2.0 * stack->nItems) {
+      // Mathematically equivalent to isgreater(adjStartPoint, halfPoint)
+      // except for rounding differences.
+      return 1;
+   }
+
+   if (areaSum - adjOffsetVal < (halfPoint - stack->startPoint) * 2.0 * stack->nItems)
+      return 0;
+
+   assert(stack->valueSum <= DBL_MAX);
+   double stackArea = (stack->valueSum / scaledTotal) * (double)(int)graphHeight;
+   double adjNCells = adjOffset ? (double)(int)adjOffset->nCells : 0.0;
+
+   if (stackArea - adjNCells > (halfPoint - stack->startPoint) * 2.0) {
+      // Mathematically equivalent to:
+      // (stack->startPoint + stackArea / 2 > halfPoint + adjNCells / 2)
+      return 1;
+   }
+
+   if (stackArea - adjNCells < (halfPoint - stack->startPoint) * 2.0)
+      return 0;
+
+   return -1;
+}
+
+static void GraphMeterMode_addItemAdjOffset(GraphColorAdjOffset* adjOffset, unsigned int nCells) {
+   adjOffset->offsetVal += (uint32_t)adjOffset->nCells * 2 + nCells;
+   adjOffset->nCells += nCells;
+}
+
+static void GraphMeterMode_addItemAdjStack(GraphColorAdjStack* stack, double scaledTotal, double value) {
+   assert(scaledTotal <= DBL_MAX);
+   assert(stack->valueSum < DBL_MAX);
+
+   stack->fractionSum += (stack->valueSum / scaledTotal) * 2.0;
+   stack->valueSum += value;
+
+   assert(stack->nItems < UINT8_MAX);
+   stack->nItems++;
+}
+
+static uint16_t GraphMeterMode_makeDetailsMask(const GraphColorComputeState* prev, const GraphColorComputeState* new, double prevTopPoint, double rem, int blanksAtTopCell) {
+   assert(new->nCellsPainted > prev->nCellsPainted);
+   assert(rem >= 0.0);
+   assert(rem < 1.0);
+
+   bool isItemOnEdge = (blanksAtTopCell >= 0 || prev->nCellsPainted == 0);
+   const uint8_t dotAlignment = 2;
+   if (isItemOnEdge && rem > 0.0 && rem < (0.125 * dotAlignment))
+      rem = (0.125 * dotAlignment);
+
+   double maxBlanks = (1.0 - rem) * 8.0;
+
+   uint8_t blanksAtEnd;
+   bool roundsUpInAscii = false;
+   bool roundsDownInAscii = false;
+   if (blanksAtTopCell >= 0) {
+      assert(blanksAtTopCell < 8);
+      blanksAtEnd = (uint8_t)blanksAtTopCell;
+      roundsUpInAscii = true;
+   } else if (prev->nCellsPainted == 0 || (double)(int)prev->nCellsPainted >= prevTopPoint) {
+      blanksAtEnd = (uint8_t)maxBlanks % 8;
+   } else {
+      // Unlike other conditions, this one rounds to nearest for visual reason.
+      // In case of a tie, display the dot at lower position of the graph,
+      // i.e. MSB of the "details" data.
+      double fraction = maxBlanks - (int)maxBlanks;
+      double distance = maxBlanks + ((double)(int)prev->nCellsPainted - prevTopPoint) * 8.0 + (1.0 - fraction) * 0.5;
+      if (distance <= 0.0)
+         distance = 0.0;
+
+      blanksAtEnd = (uint8_t)distance;
+
+      // Tiebreaking direction that may be needed in the ASCII display mode.
+      distance = distance - (int)distance;
+      assert(distance < 1.0);
+      roundsUpInAscii = distance < 0.5;
+      roundsDownInAscii = distance > 0.5;
+   }
+   assert(blanksAtEnd < 8);
+
+   uint8_t blanksAtStart;
+   if (prev->nCellsPainted > 0) {
+      blanksAtStart = (uint8_t)maxBlanks % 8 - blanksAtEnd;
+   } else {
+      // Always zero blanks for the first cell.
+      // When an item would be painted with all cells (from the first cell to
+      // the "top cell"), it is expected that the bar would be "stretched" to
+      // represent the sum of the record.
+      blanksAtStart = 0;
+   }
+   assert(blanksAtStart < 8);
+
+   uint16_t mask = 0xFFFF >> blanksAtStart;
+   // See the code and comments of the "printCellDetails" function for how
+   // special bits are used.
+   bool needsTiebreak = (blanksAtStart == blanksAtEnd && (mask & 0xDFFF) == 0x1FFF);
+   if (needsTiebreak && roundsUpInAscii)
+      mask &= 0xF7FF;
+
+   if (new->nCellsPainted - prev->nCellsPainted == 1)
+      mask >>= 8;
+
+   mask &= 0xFFFF << blanksAtEnd;
+
+   if (needsTiebreak) {
+      if (roundsUpInAscii) {
+         if (new->nCellsPainted - prev->nCellsPainted == 1) {
+            mask |= 0x0004;
+         }
+      } else if (roundsDownInAscii) {
+         mask = (mask & 0xFFEF) | 0x0020;
+      }
+   } else if ((mask & 0xBFFD) == 0x1FFC) {
+      // 5 dots at start, 6 or 7 dots at end
+      assert(mask == 0x1FFC || mask == 0x1FFE);
+      mask &= 0xF7FF;
+   } else if ((mask & 0xBFFD) == 0x3FF8) {
+      // 6 or 7 dots at start, 5 dots at end
+      assert(mask == 0x3FF8 || mask == 0x7FF8);
+      mask &= 0xFFEF;
+   }
+
+   return mask;
+}
+
+static void GraphMeterMode_paintCellsForItem(GraphColorCell* cellsStart, unsigned int increment, uint8_t itemIndex, unsigned int nCells, uint16_t mask) {
+   GraphColorCell* cell = cellsStart;
+   while (nCells > 0) {
+      cell->c.itemNum = itemIndex + 1;
+      if (nCells == 1) {
+         cell->c.details = (uint8_t)mask;
+      } else if (cell == cellsStart) {
+         cell->c.details = mask >> 8;
+      } else {
+         cell->c.details = 0xFF;
+      }
+      nCells--;
+      cell += increment;
+   }
+}
+
+static void GraphMeterMode_computeColors(Meter* this, const GraphDrawContext* context, GraphColorCell* valueStart, int deltaExp, double scaledTotal, int numDots) {
+   unsigned int graphHeight = this->drawData.graphHeight;
+   bool isPercentChart = context->isPercentChart;
+
+   assert(deltaExp >= 0);
+   assert(numDots > 0 && numDots <= (int)graphHeight * 8);
+
+   unsigned int increment;
+   unsigned int firstCellIndex = GraphMeterMode_valueCellIndex(graphHeight, isPercentChart, deltaExp, 0, NULL, &increment);
+
+   unsigned int topCell = ((unsigned int)numDots - 1) / 8;
+   const uint8_t dotAlignment = 2;
+   unsigned int blanksAtTopCell = ((topCell + 1) * 8 - (unsigned int)numDots) / dotAlignment * dotAlignment;
+
+   bool hasPartialTopCell = false;
+   if (blanksAtTopCell > 0) {
+      hasPartialTopCell = true;
+   } else if (!isPercentChart && topCell % 2 == 0 && topCell == ((graphHeight - 1) >> deltaExp)) {
+      // This "top cell" is rendered as full in one scale, but partial in the
+      // next scale. (Only happens when graphHeight is not a power of two.)
+      hasPartialTopCell = true;
+   }
+
+   double topCellArea = 0.0;
+   assert(this->curItems > 0);
+   uint8_t topCellItem = this->curItems - 1;
+   if (hasPartialTopCell) {
+      // Allocate the "top cell" first. The item that acquires the "top cell"
+      // will have a smaller "area" for the remainder calculation below.
+      topCellArea = (8 - (int)blanksAtTopCell) / 8.0;
+      topCellItem = GraphMeterMode_findTopCellItem(this, scaledTotal, topCell);
+   }
+
+   GraphColorComputeState restart = {
+      .valueSum = 0.0,
+      .nCellsPainted = 0,
+      .nItemsPainted = 0
+   };
+   double thresholdHigh = 1.0;
+   double thresholdLow = 0.0;
+   double threshold = 0.5;
+   bool rItemIsDetermined = false;
+   bool rItemHasExtraCell = true;
+   unsigned int rItemMinCells = 0;
+   bool isLastTiebreak = false;
+   unsigned int nCellsToPaint = topCell + 1;
+   unsigned int nCellsPaintedHigh = nCellsToPaint + topCellItem + 1;
+   unsigned int nCellsPaintedLow = 0;
+
+   while (true) {
+      GraphColorComputeState prev = restart;
+      double nextThresholdHigh = thresholdLow;
+      double nextThresholdLow = thresholdHigh;
+      bool hasThresholdRange = thresholdLow < thresholdHigh;
+      GraphColorAdjOffset adjLarge = {
+         .offsetVal = 0,
+         .nCells = 0
+      };
+      GraphColorAdjOffset adjSmall = adjLarge;
+      GraphColorAdjStack stack = {
+         .startPoint = 0.0,
+         .fractionSum = 0.0,
+         .valueSum = 0.0,
+         .nItems = 0
+      };
+
+      while (prev.nItemsPainted <= topCellItem && prev.valueSum < DBL_MAX) {
+         double value = this->values[prev.nItemsPainted];
+         if (!isPositive(value)) {
+            if (restart.nItemsPainted == prev.nItemsPainted) {
+               restart.nItemsPainted++;
+            }
+            prev.nItemsPainted++;
+            continue;
+         }
+
+         GraphColorComputeState new;
+
+         new.valueSum = prev.valueSum + value;
+         if (new.valueSum > DBL_MAX)
+            new.valueSum = DBL_MAX;
+
+         if (value > DBL_MAX - prev.valueSum) {
+            value = DBL_MAX - prev.valueSum;
+            // This assumption holds for the new "value" as long as the
+            // rounding mode is consistent.
+            assert(new.valueSum < DBL_MAX || prev.valueSum + value >= DBL_MAX);
+         }
+
+         double area = (value / scaledTotal) * (double)(int)graphHeight;
+         double rem = area;
+
+         if (prev.nItemsPainted == topCellItem)
+            rem = MAXIMUM(area, topCellArea) - topCellArea;
+
+         unsigned int nCells = (unsigned int)(int)rem;
+         rem -= (int)rem;
+
+         // Whether the item will receive an extra cell or be truncated.
+         // The main method is known as the "largest remainder method".
+
+         // An item whose remainder reaches the Droop quota may either receive
+         // an extra cell or need a tiebreak (a tie caused by rounding).
+         // This is the highest threshold we might need to compare with.
+         bool reachesDroopQuota = rem * (double)(int)(graphHeight + 1) > (double)(int)graphHeight;
+         if (reachesDroopQuota && rem < thresholdHigh)
+            thresholdHigh = rem;
+
+         bool equalsThreshold = false;
+         bool isInThresholdRange = rem <= thresholdHigh && rem >= thresholdLow;
+
+         if (rem > threshold) {
+            if (rem < nextThresholdLow) {
+               nextThresholdLow = rem;
+            }
+            nCells++;
+         } else if (rem < threshold) {
+            if (rem > nextThresholdHigh) {
+               nextThresholdHigh = rem;
+            }
+            rem = 0.0;
+         } else if (hasThresholdRange) {
+            assert(!rItemIsDetermined);
+            nCells++;
+         } else if (restart.nItemsPainted >= prev.nItemsPainted) {
+            assert(restart.nItemsPainted == prev.nItemsPainted);
+
+            if (!rItemIsDetermined) {
+               double newTopPoint = (new.valueSum / scaledTotal) * (double)(int)graphHeight;
+               stack.startPoint = newTopPoint;
+               rItemMinCells = nCells;
+               rem = 0.0;
+            } else if (rItemHasExtraCell) {
+               nCells++;
+            } else {
+               rem = 0.0;
+            }
+         } else {
+            equalsThreshold = true;
+
+            unsigned int y = restart.nCellsPainted + rItemMinCells;
+
+            if (adjLarge.nCells > adjSmall.nCells) {
+               int res = GraphMeterMode_needsExtraCell(graphHeight, scaledTotal, y, &stack, &adjLarge);
+
+               if (res == 1) {
+                  rItemHasExtraCell = true;
+                  break;
+               }
+               if (res == -1) {
+                  if (rItemMinCells <= nCells) {
+                     rItemHasExtraCell = true;
+                     break;
+                  }
+               }
+            }
+
+            if (rItemHasExtraCell) {
+               int res = GraphMeterMode_needsExtraCell(graphHeight, scaledTotal, y, &stack, &adjSmall);
+
+               if (res == 0) {
+                  rItemHasExtraCell = false;
+               } else if (res == -1) {
+                  if (rItemMinCells > nCells) {
+                     rItemHasExtraCell = false;
+                  }
+               }
+            }
+         }
+
+         if (!hasThresholdRange && restart.nItemsPainted < prev.nItemsPainted) {
+            GraphMeterMode_addItemAdjOffset(&adjLarge, nCells + equalsThreshold);
+            GraphMeterMode_addItemAdjOffset(&adjSmall, nCells);
+            GraphMeterMode_addItemAdjStack(&stack, scaledTotal, value);
+         }
+
+         if (hasPartialTopCell && prev.nItemsPainted == topCellItem)
+            nCells++;
+
+         new.nCellsPainted = prev.nCellsPainted + nCells;
+         new.nItemsPainted = prev.nItemsPainted + 1;
+
+         // Update the "restart" state if needed
+         if (restart.nItemsPainted >= prev.nItemsPainted) {
+            if (!isInThresholdRange) {
+               restart = new;
+            } else if (rItemIsDetermined) {
+               restart = new;
+               rItemIsDetermined = isLastTiebreak;
+               rItemHasExtraCell = true;
+            }
+         }
+
+         // Paint cells to the buffer
+         if (hasPartialTopCell && prev.nItemsPainted == topCellItem)
+            rem = area - (int)area;
+
+         if (nCells > 0 && new.nCellsPainted <= nCellsToPaint) {
+            double prevTopPoint = (prev.valueSum / scaledTotal) * (double)(int)graphHeight;
+            int blanksAtTopCellArg = (new.nCellsPainted == nCellsToPaint) ? (int)blanksAtTopCell : -1;
+            uint16_t mask = GraphMeterMode_makeDetailsMask(&prev, &new, prevTopPoint, rem, blanksAtTopCellArg);
+
+            GraphColorCell* cellsStart = &valueStart[firstCellIndex + (size_t)increment * prev.nCellsPainted];
+            GraphMeterMode_paintCellsForItem(cellsStart, increment, prev.nItemsPainted, nCells, mask);
+         }
+
+         prev = new;
+      }
+
+      if (hasThresholdRange) {
+         if (prev.nCellsPainted == nCellsToPaint)
+            break;
+
+         // Set new threshold range
+         if (prev.nCellsPainted > nCellsToPaint) {
+            nCellsPaintedHigh = prev.nCellsPainted;
+            assert(thresholdLow < threshold);
+            thresholdLow = threshold;
+         } else {
+            nCellsPaintedLow = prev.nCellsPainted + 1;
+            assert(thresholdHigh > nextThresholdHigh);
+            thresholdHigh = nextThresholdHigh;
+            nextThresholdLow = thresholdLow;
+         }
+
+         // Make new threshold value
+         threshold = thresholdHigh;
+         hasThresholdRange = thresholdLow < thresholdHigh;
+         if (hasThresholdRange && nCellsPaintedLow < nCellsPaintedHigh) {
+            // Linear interpolation
+            assert(nCellsPaintedLow <= nCellsToPaint);
+            threshold -= ((thresholdHigh - thresholdLow) * (nCellsToPaint - nCellsPaintedLow) / (nCellsPaintedHigh - nCellsPaintedLow));
+            if (threshold < nextThresholdLow) {
+               threshold = nextThresholdLow;
+            }
+         }
+         assert(threshold <= thresholdHigh);
+      } else if (restart.nItemsPainted <= topCellItem && restart.valueSum < DBL_MAX) {
+         if (restart.nCellsPainted + rItemMinCells + adjLarge.nCells < nCellsToPaint) {
+            rItemHasExtraCell = true;
+            isLastTiebreak = true;
+         }
+         rItemIsDetermined = true;
+      } else {
+         assert(restart.nCellsPainted == nCellsToPaint);
+         break;
+      }
+   }
+}
+
+static void GraphMeterMode_recordNewValue(Meter* this, const GraphDrawContext* context) {
+   uint8_t maxItems = context->maxItems;
+   bool isPercentChart = context->isPercentChart;
+   size_t nCellsPerValue = context->nCellsPerValue;
+   if (!nCellsPerValue)
+      return;
+
+   GraphData* data = &this->drawData;
+   size_t nValues = data->nValues;
+   unsigned int graphHeight = data->graphHeight;
+
+   // Move previous records
+   size_t valueSize = nCellsPerValue * sizeof(*data->buffer);
+   memmove(&data->buffer[0], &data->buffer[1 * nCellsPerValue], (nValues - 1) * valueSize);
+
+   GraphColorCell* valueStart = &data->buffer[(nValues - 1) * nCellsPerValue];
+
+   // Compute "sum" and "total"
+   double sum = Meter_computeSum(this);
+   assert(sum >= 0.0 && sum <= DBL_MAX);
+   double total;
+   int scaleExp = 0;
+   if (isPercentChart) {
+      total = MAXIMUM(this->total, sum);
+   } else {
+      (void) frexp(sum, &scaleExp);
+      if (scaleExp < 0) {
+         scaleExp = 0;
+      }
+      // In IEEE 754 binary64 (DBL_MAX_EXP == 1024, DBL_MAX_10_EXP == 308),
+      // "scaleExp" never overflows.
+      assert(DBL_MAX_10_EXP < 9864);
+      assert(scaleExp <= INT16_MAX);
+      valueStart[0].scaleExp = (int16_t)scaleExp;
+      total = ldexp(1.0, scaleExp);
+   }
+   if (total > DBL_MAX)
+      total = DBL_MAX;
+
+   assert(graphHeight <= UINT16_MAX / 8);
+   double maxDots = (double)(int)(graphHeight * 8);
+   int numDots = (int) ceil((sum / total) * maxDots);
+   assert(numDots >= 0);
+   if (sum > 0.0 && numDots <= 0) {
+      numDots = 1; // Division of (sum / total) underflows
+   }
+
+   if (maxItems == 1) {
+      assert(numDots <= UINT16_MAX);
+      valueStart[isPercentChart ? 0 : 1].numDots = (uint16_t)numDots;
+      return;
+   }
+
+   // Clear cells
+   unsigned int i = ((unsigned int)numDots + 8 - 1) / 8; // Round up
+   i = GraphMeterMode_valueCellIndex(graphHeight, isPercentChart, 0, i, NULL, NULL);
+   if (i != (unsigned int)-1) {
+      assert(i < nCellsPerValue);
+      memset(&valueStart[i], 0, (nCellsPerValue - i) * sizeof(*valueStart));
+   }
+
+   if (sum <= 0.0)
+      return;
+
+   int deltaExp = 0;
+   double scaledTotal = total;
+   while (true) {
+      numDots = (int) ceil((sum / scaledTotal) * maxDots);
+      if (numDots <= 0) {
+         numDots = 1; // Division of (sum / scaledTotal) underflows
+      }
+
+      GraphMeterMode_computeColors(this, context, valueStart, deltaExp, scaledTotal, numDots);
+
+      if (isPercentChart || !(scaledTotal < DBL_MAX) || (1U << deltaExp) >= graphHeight) {
+         break;
+      }
+
+      deltaExp++;
+      scaledTotal *= 2.0;
+      if (scaledTotal > DBL_MAX) {
+         scaledTotal = DBL_MAX;
+      }
+   }
+}
+
+static void GraphMeterMode_printScale(int exponent) {
+   if (exponent < 10) {
+      // "1" to "512"; the (exponent < 0) case is not implemented.
+      assert(exponent >= 0);
+      printw("%3u", 1U << exponent);
+   } else if (exponent > (int)ARRAYSIZE(unitPrefixes) * 10 + 6) {
+      addstr("inf");
+   } else if (exponent % 10 < 7) {
+      // "1K" to "64K", "1M" to "64M", "1G" to "64G", etc.
+      printw("%2u%c", 1U << (exponent % 10), unitPrefixes[exponent / 10 - 1]);
+   } else {
+      // "M/8" (=128K), "M/4" (=256K), "M/2" (=512K), "G/8" (=128M), etc.
+      printw("%c/%u", unitPrefixes[exponent / 10], 1U << (10 - exponent % 10));
+   }
+}
+
+static uint8_t GraphMeterMode_scaleCellDetails(uint8_t details, unsigned int scaleFactor) {
+   // Only the "top cell" of a record may need scaling like this; the cell does
+   // not use the special meaning of bit 4.
+   // This algorithm assumes the "details" be printed in braille characters.
+   assert(scaleFactor > 0);
+   if (scaleFactor < 2) {
+      return details;
+   }
+   if (scaleFactor < 4 && (details & 0x0F) != 0x00) {
+      // Display the cell in half height (bits 0 to 3 are zero).
+      // Bits 4 and 5 are set simultaneously to avoid a jaggy visual.
+      uint8_t newDetails = 0x30;
+      // Bit 6
+      if (popCount8(details) > 4)
+         newDetails |= 0x40;
+      // Bit 7 (equivalent to (details >= 0x80 || popCount8(details) > 6))
+      if (details >= 0x7F)
+         newDetails |= 0x80;
+      return newDetails;
+   }
+   if (details != 0x00) {
+      // Display the cell in a quarter height (bits 0 to 5 are zero).
+      // Bits 6 and 7 are set simultaneously.
+      return 0xC0;
+   }
+   return 0x00;
+}
+
+static int GraphMeterMode_lookupCell(const Meter* this, const GraphDrawContext* context, int scaleExp, size_t valueIndex, unsigned int y, uint8_t* details) {
+   const GraphData* data = &this->drawData;
+   unsigned int graphHeight = data->graphHeight;
+
+   uint8_t maxItems = context->maxItems;
+   bool isPercentChart = context->isPercentChart;
+   size_t nCellsPerValue = context->nCellsPerValue;
+
+   // Reverse the coordinate
+   assert(y < graphHeight);
+   y = graphHeight - 1 - y;
+
+   uint8_t itemIndex = (uint8_t)-1;
+   *details = 0x00; // Empty the cell
+
+   if (maxItems < 1)
+      goto cellIsEmpty;
+
+   assert(valueIndex < data->nValues);
+   const GraphColorCell* valueStart = &data->buffer[valueIndex * nCellsPerValue];
+   int deltaExp;
+
+   if (maxItems == 1) {
+      int valueScaleExp = isPercentChart ? 0 : valueStart[0].scaleExp;
+      unsigned int numDots = valueStart[isPercentChart ? 0 : 1].numDots;
+
+      deltaExp = scaleExp - valueScaleExp;
+      assert(deltaExp >= 0);
+
+      if (numDots < 1)
+         goto cellIsEmpty;
+
+      // Scale according to exponent difference. Round up.
+      numDots = deltaExp < UINT16_WIDTH ? ((numDots - 1) >> deltaExp) + 1 : 1;
+
+      if (y * 8 >= numDots)
+         goto cellIsEmpty;
+
+      itemIndex = 0;
+      *details = 0xFF;
+      if ((y + 1) * 8 > numDots) {
+         const uint8_t dotAlignment = 2;
+         unsigned int blanksAtTopCell = ((y + 1) * 8 - numDots) / dotAlignment * dotAlignment;
+         *details <<= blanksAtTopCell;
+      }
+   } else {
+      deltaExp = 0;
+      if (!isPercentChart) {
+         int valueScaleExp = valueStart[0].scaleExp;
+         deltaExp = scaleExp - valueScaleExp;
+         assert(deltaExp >= 0);
+         if (deltaExp >= UINT16_WIDTH) {
+            deltaExp = UINT16_WIDTH - 1;
+         }
+      }
+
+      int deltaExpArg = deltaExp >= UINT16_WIDTH ? UINT16_WIDTH - 1 : deltaExp;
+
+      unsigned int scaleFactor;
+      unsigned int i = GraphMeterMode_valueCellIndex(graphHeight, isPercentChart, deltaExpArg, y, &scaleFactor, NULL);
+      if (i == (unsigned int)-1)
+         goto cellIsEmpty;
+
+      if (deltaExp >= UINT16_WIDTH) {
+         // Any "scaleFactor" value greater than 8 behaves the same as 8 for the
+         // "scaleCellDetails" function.
+         scaleFactor = 8;
+      }
+
+      const GraphColorCell* cell = &valueStart[i];
+      itemIndex = cell->c.itemNum - 1;
+      *details = GraphMeterMode_scaleCellDetails(cell->c.details, scaleFactor);
+   }
+   /* fallthrough */
+
+cellIsEmpty:
+   if (y == 0)
+      *details |= 0xC0;
+
+   if (itemIndex == (uint8_t)-1)
+      return BAR_SHADOW;
+
+   assert(itemIndex < maxItems);
+   return Meter_attributes(this)[itemIndex];
+}
+
+static void GraphMeterMode_printCellDetails(uint8_t details) {
+   if (details == 0x00) {
+      // Use ASCII space instead. A braille blank character may display as a
+      // substitute block and is less distinguishable from a cell with data.
+      addch(' ');
+      return;
+   }
+#ifdef HAVE_LIBNCURSESW
+   if (CRT_utf8) {
+      // Bits 3 and 4 of "details" might carry special meaning. When the whole
+      // byte contains specific bit patterns, it indicates that only half cell
+      // should be displayed in the ASCII display mode. The bits are supposed
+      // to be filled in the Unicode display mode.
+      if ((details & 0x9C) == 0x14 || (details & 0x39) == 0x28) {
+         if (details == 0x14 || details == 0x28) { // Special case
+            details = 0x18;
+         } else {
+            details |= 0x18;
+         }
+      }
+      // Convert GraphColorCell.c.details bit representation to Unicode braille
+      // dot ordering.
+      //   (Bit0) a b (Bit3)  From:        h g f e d c b a (binary)
+      //   (Bit1) c d (Bit4)               | | |  X   X  |
+      //   (Bit2) e f (Bit5)               | | | | \ / | |
+      //   (Bit6) g h (Bit7)               | | | |  X  | |
+      //                      To: 0x2800 + h g f d b e c a
+      // Braille Patterns [U+2800, U+28FF] in UTF-8: [E2 A0 80, E2 A3 BF]
+      char sequence[4] = "\xE2\xA0\x80";
+      // Bits 6 and 7 are in the second byte of the UTF-8 sequence.
+      sequence[1] |= details >> 6;
+      // Bits 0 to 5 are in the third byte.
+      // The algorithm is optimized for x86 and ARM.
+      uint32_t n = details * 0x01010101U;
+      n = (uint32_t)((n & 0x08211204U) * 0x02110408U) >> 26;
+      sequence[2] |= n;
+      addstr(sequence);
+      return;
+   }
+#endif
+   // ASCII display mode
+   const char upperHalf = '`';
+   const char lowerHalf = '.';
+   const char fullCell = ':';
+   char c;
+
+   // Detect special cases where we should print only half of the cell.
+   if ((details & 0x9C) == 0x14) {
+      c = upperHalf;
+   } else if ((details & 0x39) == 0x28) {
+      c = lowerHalf;
+      // End of special cases
+   } else if (popCount8(details) > 4) {
+      c = fullCell;
+   } else {
+      // Determine which half has more dots than the other.
+      uint8_t inverted = details ^ 0x0F;
+      int difference = popCount8(inverted) - 4;
+      if (difference < 0) {
+         c = upperHalf;
+      } else if (difference > 0) {
+         c = lowerHalf;
+      } else {
+         // Give weight to dots closer to the top or bottom of the cell (LSB or
+         // MSB, respectively) as a tiebreaker.
+         // Reverse bits 0 to 3 and subtract it from bits 4 to 7.
+         // The algorithm is optimized for x86 and ARM.
+         uint32_t n = inverted * 0x01010101U;
+         n = (uint32_t)((n & 0xF20508U) * 0x01441080U) >> 27;
+         difference = (int)n - 0x0F;
+         c = difference < 0 ? upperHalf : lowerHalf;
+      }
+   }
+   addch(c);
+}
 
 static void GraphMeterMode_draw(Meter* this, int x, int y, int w) {
    const char* caption = Meter_getCaption(this);
    attrset(CRT_colors[METER_TEXT]);
    const int captionLen = 3;
    mvaddnstr(y, x, caption, captionLen);
+
+   unsigned int graphHeight = DEFAULT_GRAPH_HEIGHT;
+
+   uint8_t maxItems = Meter_maxItems(this);
+   bool isPercentChart = Meter_isPercentChart(this);
+   size_t nCellsPerValue = maxItems <= 1 ? maxItems : graphHeight;
+   if (!isPercentChart)
+      nCellsPerValue *= 2;
+
+   GraphDrawContext context = {
+      .maxItems = maxItems,
+      .isPercentChart = isPercentChart,
+      .nCellsPerValue = nCellsPerValue
+   };
+
+   bool needsScaleDisplay = maxItems > 0 && graphHeight >= 2;
+   if (needsScaleDisplay) {
+      move(y + 1, x); // Cursor position for printing the scale
+   }
    x += captionLen;
    w -= captionLen;
 
    GraphData* data = &this->drawData;
-   assert(data->nValues / 2 <= INT_MAX);
-   if (w > (int)(data->nValues / 2) && MAX_METER_GRAPHDATA_VALUES > data->nValues) {
-      size_t oldNValues = data->nValues;
-      data->nValues = MAXIMUM(oldNValues + oldNValues / 2, (size_t)w * 2);
-      data->nValues = MINIMUM(data->nValues, MAX_METER_GRAPHDATA_VALUES);
-      data->values = xReallocArray(data->values, data->nValues, sizeof(*data->values));
-      memmove(data->values + (data->nValues - oldNValues), data->values, oldNValues * sizeof(*data->values));
-      memset(data->values, 0, (data->nValues - oldNValues) * sizeof(*data->values));
+
+   if (data->graphHeight != graphHeight) {
+      data->nValues = 0; // Discard the color data in the buffer
+      data->graphHeight = graphHeight;
+   }
+
+   assert(data->nValues <= INT_MAX);
+   if (w > (int)data->nValues && MAX_METER_GRAPHDATA_VALUES > data->nValues) {
+      size_t nValues = data->nValues;
+      nValues = MAXIMUM(nValues + nValues / 2, (size_t)w);
+      nValues = MINIMUM(nValues, MAX_METER_GRAPHDATA_VALUES);
+      GraphMeterMode_reallocateGraphBuffer(this, &context, nValues);
    }
 
    const size_t nValues = data->nValues;
@@ -340,47 +1195,43 @@ static void GraphMeterMode_draw(Meter* this, int x, int y, int w) {
       struct timeval delay = { .tv_sec = globalDelay / 10, .tv_usec = (globalDelay % 10) * 100000L };
       timeradd(&host->realtime, &delay, &(data->time));
 
-      memmove(&data->values[0], &data->values[1], (nValues - 1) * sizeof(*data->values));
-
-      data->values[nValues - 1] = sumPositiveValues(this->values, this->curItems);
+      GraphMeterMode_recordNewValue(this, &context);
    }
 
    if (w <= 0)
       return;
 
-   if ((size_t)w > nValues / 2) {
-      x += w - nValues / 2;
-      w = nValues / 2;
+   if ((size_t)w > nValues) {
+      x += w - nValues;
+      w = nValues;
    }
 
-   const char* const* GraphMeterMode_dots;
-   int GraphMeterMode_pixPerRow;
-#ifdef HAVE_LIBNCURSESW
-   if (CRT_utf8) {
-      GraphMeterMode_dots = GraphMeterMode_dotsUtf8;
-      GraphMeterMode_pixPerRow = PIXPERROW_UTF8;
-   } else
-#endif
-   {
-      GraphMeterMode_dots = GraphMeterMode_dotsAscii;
-      GraphMeterMode_pixPerRow = PIXPERROW_ASCII;
+   size_t i = nValues - (size_t)w;
+
+   int scaleExp = 0;
+   if (maxItems > 0 && !isPercentChart) {
+      for (unsigned int col = 0; i + col < nValues; col++) {
+         const GraphColorCell* valueStart = &data->buffer[(i + col) * nCellsPerValue];
+         if (scaleExp < valueStart[0].scaleExp) {
+            scaleExp = valueStart[0].scaleExp;
+         }
+      }
+   }
+   if (needsScaleDisplay) {
+      if (isPercentChart) {
+         addstr("  %");
+      } else {
+         GraphMeterMode_printScale(scaleExp);
+      }
    }
 
-   size_t i = nValues - (size_t)w * 2;
-   for (int col = 0; i < nValues - 1; i += 2, col++) {
-      int pix = GraphMeterMode_pixPerRow * GRAPH_HEIGHT;
-      double total = MAXIMUM(this->total, 1);
-      int v1 = CLAMP((int) lround(data->values[i] / total * pix), 1, pix);
-      int v2 = CLAMP((int) lround(data->values[i + 1] / total * pix), 1, pix);
-
-      int colorIdx = GRAPH_1;
-      for (int line = 0; line < GRAPH_HEIGHT; line++) {
-         int line1 = CLAMP(v1 - (GraphMeterMode_pixPerRow * (GRAPH_HEIGHT - 1 - line)), 0, GraphMeterMode_pixPerRow);
-         int line2 = CLAMP(v2 - (GraphMeterMode_pixPerRow * (GRAPH_HEIGHT - 1 - line)), 0, GraphMeterMode_pixPerRow);
-
+   for (unsigned int line = 0; line < graphHeight; line++) {
+      for (unsigned int col = 0; i + col < nValues; col++) {
+         uint8_t details;
+         int colorIdx = GraphMeterMode_lookupCell(this, &context, scaleExp, i + col, line, &details);
+         move(y + (int)line, x + (int)col);
          attrset(CRT_colors[colorIdx]);
-         mvaddstr(y + line, x + col, GraphMeterMode_dots[line1 * (GraphMeterMode_pixPerRow + 1) + line2]);
-         colorIdx = GRAPH_2;
+         GraphMeterMode_printCellDetails(details);
       }
    }
    attrset(CRT_colors[RESET_COLOR]);
@@ -470,7 +1321,7 @@ static MeterMode TextMeterMode = {
 
 static MeterMode GraphMeterMode = {
    .uiName = "Graph",
-   .h = GRAPH_HEIGHT,
+   .h = DEFAULT_GRAPH_HEIGHT,
    .draw = GraphMeterMode_draw,
 };
 
