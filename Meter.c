@@ -520,7 +520,7 @@ static uint16_t GraphMeterMode_makeDetailsMask(const GraphColorComputeState* pre
 
    uint8_t blanksAtStart;
    if (prev->nCellsPainted > 0) {
-      blanksAtStart = (uint8_t)maxBlanks % 8 - blanksAtEnd;
+      blanksAtStart = ((unsigned int)(uint8_t)maxBlanks - blanksAtEnd) % 8;
    } else {
       // Always zero blanks for the first cell.
       // When an item would be painted with all cells (from the first cell to
@@ -773,8 +773,13 @@ static void GraphMeterMode_computeColors(Meter* this, const GraphDrawContext* co
          }
 
          // Paint cells to the buffer
-         if (hasPartialTopCell && prev.nItemsPainted == topCellItem)
-            rem = area - (int)area;
+         if (hasPartialTopCell && prev.nItemsPainted == topCellItem) {
+            rem = area;
+            if (nCells == 1 && rem > topCellArea) {
+               rem = topCellArea;
+            }
+            rem -= (int)rem;
+         }
 
          if (nCells > 0 && new.nCellsPainted <= nCellsToPaint) {
             double prevTopPoint = (prev.valueSum / scaledTotal) * (double)(int)graphHeight;
