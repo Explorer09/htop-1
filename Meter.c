@@ -387,29 +387,236 @@ static uint8_t GraphMeterMode_findTopCellItem(const Meter* this, double scaledTo
    assert(topCell < graphHeight);
 
    double valueSum = 0.0;
-   double prevTopPoint = (double)(int)topCell;
-   double maxArea = 0.0;
+   double maxValue = 0.0;
    uint8_t topCellItem = this->curItems - 1;
    for (uint8_t i = 0; i < this->curItems && valueSum < DBL_MAX; i++) {
-      if (!isPositive(this->values[i]))
+      double value = this->values[i];
+      if (!isPositive(value))
          continue;
 
-      valueSum += this->values[i];
-      if (valueSum > DBL_MAX)
-         valueSum = DBL_MAX;
+      double newValueSum = valueSum + value;
+      if (newValueSum > DBL_MAX)
+         newValueSum = DBL_MAX;
 
-      double topPoint = (valueSum / scaledTotal) * (double)(int)graphHeight;
-      if (topPoint > prevTopPoint) {
-         // Find the item that occupies the largest area of the top cell.
-         // Favor item with higher index in case of a tie.
-         if (topPoint - prevTopPoint >= maxArea) {
+      if (value > DBL_MAX - valueSum) {
+         value = DBL_MAX - valueSum;
+         // This assumption holds for the new "value" as long as the
+         // rounding mode is consistent.
+         assert(newValueSum < DBL_MAX || valueSum + value >= DBL_MAX);
+      }
+
+      valueSum = newValueSum;
+
+      // Find the item that occupies the largest area of the top cell.
+      // Favor the item with higher index in case of a tie.
+
+      if (topCell > 0) {
+         double topPoint = (valueSum / scaledTotal) * (double)(int)graphHeight;
+         assert(topPoint >= 0.0);
+
+         if (!(topPoint > (double)(int)topCell))
+            continue;
+
+         // This code assumes the default FP rounding mode (i.e. to nearest),
+         // which requires "area" to be at least (DBL_EPSILON / 2) to win.
+
+         double area = (value / scaledTotal) * (double)(int)graphHeight;
+         assert(area >= 0.0);
+
+         if (area > topPoint - (double)(int)topCell)
+            area = topPoint - (double)(int)topCell;
+
+         if (area >= maxValue) {
+            maxValue = area;
             topCellItem = i;
-            maxArea = topPoint - prevTopPoint;
          }
-         prevTopPoint = topPoint;
+      } else {
+         // Compare "value" directly. It is possible for an "area" to
+         // underflow here and still wins as the largest area.
+         if (value >= maxValue) {
+            maxValue = value;
+            topCellItem = i;
+         }
       }
    }
    return topCellItem;
+}
+
+static int GraphMeterMode_needsExtraCell(unsigned int graphHeight, double scaledTotal, unsigned int y, const GraphColorAdjStack* stack, const GraphColorAdjOffset* adjOffset) {
+   double areaSum = (stack->fractionSum + stack->valueSum / scaledTotal) * (double)(int)graphHeight;
+   double adjOffsetVal = adjOffset ? (double)(int32_t)adjOffset->offsetVal : 0.0;
+   double halfPoint = (double)(int)y + 0.5;
+
+   // Calculate the best position for rendering this stack of items.
+   // Given real numbers a, b, c and d (a <= b <= c <= d), then:
+   // 1. The smallest value for (x - a)^2 + (x - b)^2 + (x - c)^2 + (x - d)^2
+   // happens when x == (a + b + c + d) / 4; x is the "arithmetic mean".
+   // 2. The smallest value for |y - a| + |y - b| + |y - c| + |y - d|
+   // happens when b <= y <= c; y is the "median".
+   // Both kinds of averages are acceptable. The arithmetic mean is chosen
+   // here because it is cheaper to produce.
+
+   // averagePoint := stack->startPoint + (areaSum / (stack->nItems * 2))
+   // adjStartPoint := averagePoint - (adjOffsetVal / (stack->nItems * 2))
+
+   // Intended to compare this but with greater precision:
+   // isgreater(adjStartPoint, halfPoint)
+   if (areaSum - adjOffsetVal > (halfPoint - stack->startPoint) * 2.0 * stack->nItems)
+      return 1;
+
+   if (areaSum - adjOffsetVal < (halfPoint - stack->startPoint) * 2.0 * stack->nItems)
+      return 0;
+
+   assert(stack->valueSum <= DBL_MAX);
+   double stackArea = (stack->valueSum / scaledTotal) * (double)(int)graphHeight;
+   double adjNCells = adjOffset ? (double)(int)adjOffset->nCells : 0.0;
+
+   // Intended to compare this but with greater precision:
+   // (stack->startPoint + (stackArea / 2) > halfPoint + (adjNCells / 2))
+   if (stackArea - adjNCells > (halfPoint - stack->startPoint) * 2.0)
+      return 1;
+
+   if (stackArea - adjNCells < (halfPoint - stack->startPoint) * 2.0)
+      return 0;
+
+   return -1;
+}
+
+static void GraphMeterMode_addItemAdjOffset(GraphColorAdjOffset* adjOffset, unsigned int nCells) {
+   adjOffset->offsetVal += (uint32_t)adjOffset->nCells * 2 + nCells;
+   adjOffset->nCells += nCells;
+}
+
+static void GraphMeterMode_addItemAdjStack(GraphColorAdjStack* stack, double scaledTotal, double value) {
+   assert(scaledTotal <= DBL_MAX);
+   assert(stack->valueSum < DBL_MAX);
+
+   stack->fractionSum += (stack->valueSum / scaledTotal) * 2.0;
+   stack->valueSum += value;
+
+   assert(stack->nItems < UINT8_MAX);
+   stack->nItems++;
+}
+
+static uint16_t GraphMeterMode_makeDetailsMask(const GraphColorComputeState* prev, const GraphColorComputeState* new, double rem, int blanksAtTopCell) {
+   assert(new->nCellsPainted > prev->nCellsPainted);
+   assert(rem >= 0.0);
+   assert(rem < 1.0);
+
+   double numDots = ceil(rem * 8.0);
+   double maxBlanks = 8.0 - numDots;
+
+   uint8_t blanksAtEnd;
+   bool roundsUpInAscii = false;
+   bool roundsDownInAscii = false;
+   if (blanksAtTopCell >= 0) {
+      assert(blanksAtTopCell < 8);
+      blanksAtEnd = (uint8_t)blanksAtTopCell;
+      roundsUpInAscii = true;
+   } else if (prev->nCellsPainted == 0 || prev->topPoint <= (double)(int)prev->nCellsPainted) {
+      blanksAtEnd = (uint8_t)maxBlanks % 8;
+   } else if ((double)(int)new->nCellsPainted > new->topPoint) {
+      assert(new->nCellsPainted - new->topPoint < 1.0);
+      assert(rem > 0.0);
+      // Unlike other conditions, this one rounds to nearest for visual reason.
+      // In case of a tie, display the dot at lower position of the graph,
+      // i.e. MSB of the "details" data.
+
+      double distance = new->topPoint - (double)(int)(new->nCellsPainted - 1);
+      assert(distance > rem);
+      distance = distance - rem * 0.5;
+
+      // Tiebreaking direction that may be needed in the ASCII display mode.
+      roundsUpInAscii = distance > 0.5;
+      roundsDownInAscii = distance < 0.5;
+
+      distance *= 8.0;
+      if ((uint8_t)numDots % 2 == 0) {
+         distance -= 0.5;
+      }
+      distance = ceil(distance);
+      assert(distance >= 0.0);
+      assert(distance < INT_MAX);
+
+      unsigned int maxBlanks2 = 8 - (unsigned int)(int)numDots / 2;
+      assert(maxBlanks2 >= distance);
+      maxBlanks2 -= (unsigned int)(int)distance;
+      blanksAtEnd = (uint8_t)maxBlanks2;
+   } else {
+      blanksAtEnd = 0;
+   }
+   assert(blanksAtEnd < 8);
+
+   uint8_t blanksAtStart;
+   if (prev->nCellsPainted > 0) {
+      blanksAtStart = (uint8_t)((int)maxBlanks - blanksAtEnd) % 8;
+   } else {
+      // Always zero blanks for the first cell.
+      // When an item would be painted with all cells (from the first cell to
+      // the "top cell"), it is expected that the bar would be "stretched" to
+      // represent the sum of the record.
+      blanksAtStart = 0;
+   }
+   assert(blanksAtStart < 8);
+
+   uint16_t mask = 0xFFFFU >> blanksAtStart;
+   // See the code and comments of the "printCellDetails" function for how
+   // special bits are used.
+   bool needsTiebreak = blanksAtStart >= 2 && blanksAtStart < 4 && blanksAtStart == blanksAtEnd;
+
+   if (new->nCellsPainted - prev->nCellsPainted == 1) {
+      assert(blanksAtStart + blanksAtEnd < 8);
+      if (roundsUpInAscii && needsTiebreak) {
+         mask &= 0xF7FF;
+      }
+      mask >>= 8;
+   } else if (roundsUpInAscii) {
+      if (blanksAtStart < 4 && (uint8_t)(blanksAtStart + blanksAtEnd % 4) >= 4) {
+         mask &= 0xF7FF;
+      }
+   }
+
+   mask &= 0xFFFFU << blanksAtEnd;
+
+   if (roundsUpInAscii) {
+      if (needsTiebreak) {
+         mask |= 0x0004;
+      }
+   } else if (roundsDownInAscii) {
+      assert(blanksAtStart <= blanksAtEnd);
+      if (needsTiebreak) {
+         mask = (mask & 0xFFEF) | 0x0020;
+      } else if (new->nCellsPainted - prev->nCellsPainted != 1) {
+         if (blanksAtEnd < 4 && (uint8_t)(blanksAtStart + blanksAtEnd) >= 4) {
+            mask = (mask & 0xFFEF) | 0x0020;
+         }
+      }
+   }
+
+   // The following result values are impossible as they lack special bits
+   // needed for the ASCII display mode.
+   assert(mask != 0x3FF8); // Should be 0x37F8 or 0x3FE8
+   assert(mask != 0x7FF8); // Should be 0x77F8 or 0x7FE8
+   assert(mask != 0x1FFC); // Should be 0x17FC
+   assert(mask != 0x1FFE); // Should be 0x17FE
+
+   return mask;
+}
+
+static void GraphMeterMode_paintCellsForItem(GraphColorCell* cellsStart, unsigned int increment, uint8_t itemIndex, unsigned int nCells, uint16_t mask) {
+   GraphColorCell* cell = cellsStart;
+   while (nCells > 0) {
+      cell->c.itemIndex = itemIndex;
+      if (nCells == 1) {
+         cell->c.details = (uint8_t)mask;
+      } else if (cell == cellsStart) {
+         cell->c.details = mask >> 8;
+      } else {
+         cell->c.details = 0xFF;
+      }
+      nCells--;
+      cell += increment;
+   }
 }
 
 static void GraphMeterMode_computeColors(Meter* this, const GraphDrawContext* context, GraphColorCell* valueStart, int deltaExp, double scaledTotal, int numDots) {
@@ -420,8 +627,10 @@ static void GraphMeterMode_computeColors(Meter* this, const GraphDrawContext* co
    assert(numDots > 0);
    assert((unsigned int)numDots <= graphHeight * 8);
 
-   // If there is a "top cell" which will not be completely filled, determine
-   // its color first.
+   unsigned int increment;
+   unsigned int firstCellIndex = GraphMeterMode_valueCellIndex(graphHeight, isPercentChart, deltaExp, 0, NULL, &increment);
+   assert(firstCellIndex < context->nCellsPerValue);
+
    unsigned int topCell = ((unsigned int)numDots - 1) / 8;
    const uint8_t dotAlignment = 2;
    unsigned int blanksAtTopCell = ((topCell + 1) * 8 - (unsigned int)numDots) / dotAlignment * dotAlignment;
@@ -429,203 +638,253 @@ static void GraphMeterMode_computeColors(Meter* this, const GraphDrawContext* co
    bool hasPartialTopCell = false;
    if (blanksAtTopCell > 0) {
       hasPartialTopCell = true;
-   } else if (!isPercentChart && topCell == ((graphHeight - 1) >> deltaExp) && topCell % 2 == 0) {
+   } else if (!isPercentChart && topCell % 2 == 0 && topCell == ((graphHeight - 1) >> deltaExp)) {
       // This "top cell" is rendered as full in one scale, but partial in the
       // next scale. (Only happens when graphHeight is not a power of two.)
       hasPartialTopCell = true;
    }
 
    double topCellArea = 0.0;
+   assert(this->curItems > 0);
    uint8_t topCellItem = this->curItems - 1;
    if (hasPartialTopCell) {
+      // Allocate the "top cell" first. The item that acquires the "top cell"
+      // will have a smaller "area" for the remainder calculation below.
       topCellArea = (8 - (int)blanksAtTopCell) / 8.0;
       topCellItem = GraphMeterMode_findTopCellItem(this, scaledTotal, topCell);
    }
-   topCell += 1; // This index points to a cell that would be blank.
 
-   // NOTE: The algorithm below needs a rewrite. It's messy for now and don't expect the result would be accurate.
-   // BEGINNING OF THE PART THAT NEEDS REWRITING
-
-   // Compute colors of the rest of the cells, using the largest remainder
-   // method (a.k.a. Hamilton's method).
-   // The Hare quota is (scaledTotal / graphHeight).
-   int paintedHigh = (int)topCell + (int)topCellItem + 1;
-   int paintedLow = 0;
-   double threshold = 0.5;
+   GraphColorComputeState restart = {
+      .valueSum = 0.0,
+      .topPoint = 0.0,
+      .nCellsPainted = 0,
+      .nItemsPainted = 0
+   };
    double thresholdHigh = 1.0;
    double thresholdLow = 0.0;
-   // Tiebreak 1: Favor items with less number of cells. (Top cell is not
-   // included in the count.)
-   int cellLimit = (int)topCell;
-   int cellLimitHigh = (int)topCell;
-   int cellLimitLow = 0.0;
-   // Tiebreak 2: Favor items whose indices are lower.
-   uint8_t tiedItemLimit = topCellItem;
+   double threshold = 0.5;
+   bool rItemIsDetermined = false;
+   bool rItemHasExtraCell = true;
+   unsigned int rItemMinCells = 0;
+   bool isLastTiebreak = false;
+   unsigned int nCellsToPaint = topCell + 1;
+   unsigned int nCellsPaintedHigh = nCellsToPaint + topCellItem + 1;
+   unsigned int nCellsPaintedLow = 0;
+
    while (true) {
-      double sum = 0.0;
-      double bottom = 0.0;
-      int cellsPainted = 0;
-      double nextThresholdHigh = 0.0;
-      double nextThresholdLow = 1.0;
-      int nextCellLimitHigh = 0;
-      int nextCellLimitLow = (int)topCell;
-      uint8_t numTiedItems = 0;
-      for (uint8_t i = 0; i <= topCellItem && sum < DBL_MAX; i++) {
-         if (!isPositive(this->values[i]))
+      GraphColorComputeState prev = restart;
+      double nextThresholdHigh = thresholdLow;
+      double nextThresholdLow = thresholdHigh;
+      bool hasThresholdRange = thresholdLow < thresholdHigh;
+      GraphColorAdjOffset adjLarge = {
+         .offsetVal = 0,
+         .nCells = 0
+      };
+      GraphColorAdjOffset adjSmall = adjLarge;
+      GraphColorAdjStack stack = {
+         .startPoint = 0.0,
+         .fractionSum = 0.0,
+         .valueSum = 0.0,
+         .nItems = 0
+      };
+
+      while (prev.nItemsPainted <= topCellItem && prev.valueSum < DBL_MAX) {
+         double value = this->values[prev.nItemsPainted];
+         if (!isPositive(value)) {
+            if (restart.nItemsPainted == prev.nItemsPainted) {
+               restart.nItemsPainted++;
+            }
+            prev.nItemsPainted++;
             continue;
-
-         sum += this->values[i];
-         if (sum > DBL_MAX)
-            sum = DBL_MAX;
-
-         double top = (sum / scaledTotal) * graphHeight;
-         double area = top - bottom;
-         double rem = area;
-         if (i == topCellItem) {
-            rem -= topCellArea;
-            if (!(rem >= 0.0))
-               rem = 0.0;
          }
-         int numCells = (int)rem;
-         rem -= numCells;
 
-         // Whether the item will receive an extra cell or be truncated
-         if (rem >= threshold) {
-            if (rem > threshold) {
-               if (rem < nextThresholdLow)
-                  nextThresholdLow = rem;
-               numCells++;
-            } else if (numCells <= cellLimit) {
-               if (numCells < cellLimit) {
-                  if (numCells > nextCellLimitHigh)
-                     nextCellLimitHigh = numCells;
-                  numCells++;
-               } else {
-                  numTiedItems++;
-                  if (numTiedItems <= tiedItemLimit) {
-                     numCells++;
-                  } else {
-                     rem = 0.0;
-                  }
-               }
+         GraphColorComputeState new;
+
+         new.valueSum = prev.valueSum + value;
+         if (new.valueSum > DBL_MAX)
+            new.valueSum = DBL_MAX;
+
+         if (value > DBL_MAX - prev.valueSum) {
+            value = DBL_MAX - prev.valueSum;
+            // This assumption holds for the new "value" as long as the
+            // rounding mode is consistent.
+            assert(new.valueSum < DBL_MAX || prev.valueSum + value >= DBL_MAX);
+         }
+
+         new.topPoint = (new.valueSum / scaledTotal) * (double)(int)graphHeight;
+         double area = (value / scaledTotal) * (double)(int)graphHeight;
+         assert(area >= 0.0); // "area" can be 0.0 when the division underflows
+         double rem = area;
+
+         if (prev.nItemsPainted == topCellItem)
+            rem = MAXIMUM(area, topCellArea) - topCellArea;
+
+         unsigned int nCells = (unsigned int)(int)rem;
+         rem -= (int)rem;
+
+         // Whether the item will receive an extra cell or be truncated.
+         // The main method is known as the "largest remainder method".
+
+         // An item whose remainder reaches the Droop quota may either receive
+         // an extra cell or need a tiebreak (a tie caused by rounding).
+         // This is the highest threshold we might need to compare with.
+         bool reachesDroopQuota = rem * (double)(int)(graphHeight + 1) > (double)(int)graphHeight;
+         if (reachesDroopQuota && rem < thresholdHigh)
+            thresholdHigh = rem;
+
+         bool equalsThreshold = false;
+         bool isInThresholdRange = rem <= thresholdHigh && rem >= thresholdLow;
+
+         assert(threshold > 0.0);
+         assert(threshold <= 1.0);
+         if (rem > threshold) {
+            if (rem < nextThresholdLow) {
+               nextThresholdLow = rem;
+            }
+            nCells++;
+         } else if (rem < threshold) {
+            if (rem > nextThresholdHigh) {
+               nextThresholdHigh = rem;
+            }
+            rem = 0.0;
+         } else if (hasThresholdRange) {
+            assert(!rItemIsDetermined);
+            nCells++;
+         } else if (restart.nItemsPainted >= prev.nItemsPainted) {
+            assert(restart.nItemsPainted == prev.nItemsPainted);
+
+            if (!rItemIsDetermined) {
+               stack.startPoint = new.topPoint;
+               rItemMinCells = nCells;
+               rem = 0.0;
+            } else if (rItemHasExtraCell) {
+               nCells++;
             } else {
-               if (numCells < nextCellLimitLow)
-                  nextCellLimitLow = numCells;
                rem = 0.0;
             }
          } else {
-            if (rem > nextThresholdHigh)
-               nextThresholdHigh = rem;
-            rem = 0.0;
+            equalsThreshold = true;
+
+            unsigned int y = restart.nCellsPainted + rItemMinCells;
+
+            if (adjLarge.nCells > adjSmall.nCells) {
+               int res = GraphMeterMode_needsExtraCell(graphHeight, scaledTotal, y, &stack, &adjLarge);
+
+               if (res == 1) {
+                  rItemHasExtraCell = true;
+                  break;
+               }
+               if (res == -1) {
+                  if (rItemMinCells <= nCells) {
+                     rItemHasExtraCell = true;
+                     break;
+                  }
+               }
+            }
+
+            if (rItemHasExtraCell) {
+               int res = GraphMeterMode_needsExtraCell(graphHeight, scaledTotal, y, &stack, &adjSmall);
+
+               if (res == 0) {
+                  rItemHasExtraCell = false;
+               } else if (res == -1) {
+                  if (rItemMinCells > nCells) {
+                     rItemHasExtraCell = false;
+                  }
+               }
+            }
+         }
+
+         if (!hasThresholdRange && restart.nItemsPainted < prev.nItemsPainted) {
+            GraphMeterMode_addItemAdjOffset(&adjLarge, nCells + equalsThreshold);
+            GraphMeterMode_addItemAdjOffset(&adjSmall, nCells);
+            GraphMeterMode_addItemAdjStack(&stack, scaledTotal, value);
+         }
+
+         if (hasPartialTopCell && prev.nItemsPainted == topCellItem)
+            nCells++;
+
+         new.nCellsPainted = prev.nCellsPainted + nCells;
+         new.nItemsPainted = prev.nItemsPainted + 1;
+
+         // Update the "restart" state if needed
+         if (restart.nItemsPainted >= prev.nItemsPainted) {
+            if (!isInThresholdRange) {
+               restart = new;
+            } else if (rItemIsDetermined) {
+               restart = new;
+               rItemIsDetermined = isLastTiebreak;
+               rItemHasExtraCell = true;
+            }
          }
 
          // Paint cells to the buffer
-         uint8_t blanksAtEnd = 0;
-         if (i == topCellItem && topCellArea > 0.0) {
-            numCells++;
-            if (area < topCellArea) {
-               rem = MAXIMUM(area, 0.25);
-               blanksAtEnd = (uint8_t)blanksAtTopCell;
+         if (hasPartialTopCell && prev.nItemsPainted == topCellItem) {
+            // Re-calculate the remainder with the top cell area included
+            if (rem > 0.0) {
+               // Has extra cell won from the largest remainder method
+               rem = area;
+            } else {
+               // Did not win extra cell from the remainder
+               rem = MINIMUM(area, topCellArea);
             }
-         } else if (cellsPainted + numCells >= (int)topCell) {
-            blanksAtEnd = 0;
-         } else if (cellsPainted <= 0 || bottom <= cellsPainted) {
-            blanksAtEnd = ((uint8_t)((1.0 - rem) * 8.0) % 8);
-         } else if (cellsPainted + numCells > top) {
-            assert(cellsPainted + numCells - top < 1.0);
-            blanksAtEnd = (uint8_t)((cellsPainted + numCells - top) * 8.0);
+            rem -= (int)rem;
          }
 
-         unsigned int blanksAtStart = 0;
-         if (cellsPainted > 0) {
-            blanksAtStart = ((uint8_t)((1.0 - rem) * 8.0) % 8 - blanksAtEnd);
+         bool isItemOnEdge = (prev.nCellsPainted == 0 || new.nCellsPainted == nCellsToPaint);
+         if (isItemOnEdge && area < (0.125 * dotAlignment))
+            rem = (0.125 * dotAlignment);
+
+         if (nCells > 0 && new.nCellsPainted <= nCellsToPaint) {
+            int blanksAtTopCellArg = (new.nCellsPainted == nCellsToPaint) ? (int)blanksAtTopCell : -1;
+            uint16_t mask = GraphMeterMode_makeDetailsMask(&prev, &new, rem, blanksAtTopCellArg);
+
+            GraphColorCell* cellsStart = &valueStart[firstCellIndex + (size_t)increment * prev.nCellsPainted];
+            GraphMeterMode_paintCellsForItem(cellsStart, increment, prev.nItemsPainted, nCells, mask);
          }
 
-         while (numCells > 0 && cellsPainted < (int)topCell) {
-            unsigned int offset = (unsigned int)cellsPainted;
-            if (!isPercentChart) {
-               offset = (offset * 2 + 1) << deltaExp;
-            }
-
-            valueStart[offset].c.itemIndex = (uint8_t)i;
-            valueStart[offset].c.details = 0xFF;
-
-            if (blanksAtStart > 0) {
-               assert(blanksAtStart < 8);
-               valueStart[offset].c.details >>= blanksAtStart;
-               blanksAtStart = 0;
-            }
-
-            if (cellsPainted == (int)topCell - 1) {
-               assert(blanksAtTopCell < 8);
-               valueStart[offset].c.details &= 0xFF << blanksAtTopCell;
-            } else if (numCells == 1) {
-               assert(blanksAtEnd < 8);
-               valueStart[offset].c.details &= 0xFF << blanksAtEnd;
-            }
-
-            numCells--;
-            cellsPainted++;
-         }
-         cellsPainted += numCells;
-
-         bottom = top;
+         prev = new;
       }
 
-      if (cellsPainted == (int)topCell)
-         break;
+      if (hasThresholdRange) {
+         if (prev.nCellsPainted == nCellsToPaint)
+            break;
 
-      // Set new bounds and threshold
-      if (cellsPainted > (int)topCell) {
-         paintedHigh = cellsPainted;
-         if (thresholdLow >= thresholdHigh) {
-            if (cellLimitLow >= cellLimitHigh) {
-               assert(tiedItemLimit >= topCellItem);
-               tiedItemLimit = numTiedItems - (uint8_t)(cellsPainted - (int)topCell);
-            } else {
-               assert(cellLimitHigh > cellLimit);
-               cellLimitHigh = cellLimit;
-            }
-         } else {
+         // Set new threshold range
+         if (prev.nCellsPainted > nCellsToPaint) {
+            nCellsPaintedHigh = prev.nCellsPainted;
             assert(thresholdLow < threshold);
             thresholdLow = threshold;
-         }
-      } else {
-         paintedLow = cellsPainted + 1;
-         if (thresholdLow >= thresholdHigh) {
-            assert(cellLimitLow < cellLimitHigh);
-            assert(cellLimitLow < nextCellLimitLow);
-            cellLimitLow = nextCellLimitLow;
-            nextCellLimitHigh = cellLimitHigh;
          } else {
-            assert(cellLimit >= (int)topCell);
+            nCellsPaintedLow = prev.nCellsPainted + 1;
             assert(thresholdHigh > nextThresholdHigh);
             thresholdHigh = nextThresholdHigh;
             nextThresholdLow = thresholdLow;
          }
-      }
-      threshold = thresholdHigh;
-      if (thresholdLow >= thresholdHigh) {
-         cellLimit = cellLimitLow;
-         if (cellLimitLow < cellLimitHigh && paintedHigh > paintedLow) {
-            cellLimit += ((cellLimitHigh - cellLimitLow) *
-                         ((int)topCell - paintedLow) /
-                         (paintedHigh - paintedLow));
-            if (cellLimit > nextCellLimitHigh)
-               cellLimit = nextCellLimitHigh;
-         }
-      } else {
-         if (paintedHigh > paintedLow) {
-            threshold -= ((thresholdHigh - thresholdLow) *
-                         ((int)topCell - paintedLow) /
-                         (paintedHigh - paintedLow));
-            if (threshold < nextThresholdLow)
+
+         // Make new threshold value
+         threshold = thresholdHigh;
+         hasThresholdRange = thresholdLow < thresholdHigh;
+         if (hasThresholdRange && nCellsPaintedLow < nCellsPaintedHigh) {
+            // Linear interpolation
+            assert(nCellsPaintedLow <= nCellsToPaint);
+            threshold -= ((thresholdHigh - thresholdLow) * (nCellsToPaint - nCellsPaintedLow) / (nCellsPaintedHigh - nCellsPaintedLow));
+            if (threshold < nextThresholdLow) {
                threshold = nextThresholdLow;
+            }
          }
+         assert(threshold <= thresholdHigh);
+      } else if (restart.nItemsPainted <= topCellItem && restart.valueSum < DBL_MAX) {
+         if (restart.nCellsPainted + rItemMinCells + adjLarge.nCells < nCellsToPaint) {
+            rItemHasExtraCell = true;
+            isLastTiebreak = true;
+         }
+         rItemIsDetermined = true;
+      } else {
+         assert(restart.nCellsPainted == nCellsToPaint);
+         break;
       }
-      assert(threshold <= thresholdHigh);
    }
-   // END OF THE PART THAT NEEDS REWRITING
 }
 
 static void GraphMeterMode_recordNewValue(Meter* this, const GraphDrawContext* context) {

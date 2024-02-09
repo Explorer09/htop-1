@@ -140,6 +140,28 @@ typedef struct GraphDrawContext_ {
    size_t nCellsPerValue;
 } GraphDrawContext;
 
+/* Used in GraphMeterMode_computeColors() subroutines only */
+typedef struct GraphColorComputeState_ {
+   double valueSum;
+   double topPoint;
+   unsigned int nCellsPainted;
+   uint8_t nItemsPainted;
+} GraphColorComputeState;
+
+/* Used in GraphMeterMode_computeColors() subroutines only */
+typedef struct GraphColorAdjOffset_ {
+   uint32_t offsetVal; /* "offsetVal" requires at least 22 bits */
+   unsigned int nCells;
+} GraphColorAdjOffset;
+
+/* Used in GraphMeterMode_computeColors() subroutines only */
+typedef struct GraphColorAdjStack_ {
+   double startPoint;
+   double fractionSum;
+   double valueSum;
+   uint8_t nItems;
+} GraphColorAdjStack;
+
 typedef struct MeterMode_ {
    Meter_Draw draw;
    const char* uiName;
