@@ -504,7 +504,6 @@ static uint16_t GraphMeterMode_makeDetailsMask(const GraphColorComputeState* pre
    assert(rem < 1.0);
 
    double numDots = ceil(rem * 8.0);
-   double maxBlanks = 8.0 - numDots;
 
    uint8_t blanksAtEnd;
    bool roundsUpInAscii = false;
@@ -514,7 +513,7 @@ static uint16_t GraphMeterMode_makeDetailsMask(const GraphColorComputeState* pre
       blanksAtEnd = (uint8_t)blanksAtTopCell;
       roundsUpInAscii = true;
    } else if (prev->nCellsPainted == 0 || prev->topPoint <= (double)(int)prev->nCellsPainted) {
-      blanksAtEnd = (uint8_t)maxBlanks % 8;
+      blanksAtEnd = (uint8_t)(8 - (uint8_t)numDots) % 8;
    } else if ((double)(int)new->nCellsPainted > new->topPoint) {
       assert(new->nCellsPainted - new->topPoint < 1.0);
       assert(rem > 0.0);
@@ -549,7 +548,7 @@ static uint16_t GraphMeterMode_makeDetailsMask(const GraphColorComputeState* pre
 
    uint8_t blanksAtStart;
    if (prev->nCellsPainted > 0) {
-      blanksAtStart = (uint8_t)((int)maxBlanks - blanksAtEnd) % 8;
+      blanksAtStart = (uint8_t)(8 - (uint8_t)numDots - blanksAtEnd) % 8;
    } else {
       // Always zero blanks for the first cell.
       // When an item would be painted with all cells (from the first cell to
