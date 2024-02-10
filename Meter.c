@@ -585,10 +585,12 @@ static uint16_t GraphMeterMode_makeDetailsMask(const GraphColorComputeState* pre
       assert(blanksAtStart <= blanksAtEnd);
       if (needsTiebreak) {
          mask = (mask & 0xFFEF) | 0x0020;
-      } else if (new->nCellsPainted - prev->nCellsPainted != 1) {
-         if (blanksAtEnd < 4 && (uint8_t)(blanksAtStart + blanksAtEnd) >= 4) {
-            mask = (mask & 0xFFEF) | 0x0020;
-         }
+      } else if ((mask & 0xBFFF) == 0x3FF8) {
+         assert(new->nCellsPainted - prev->nCellsPainted > 1);
+         assert(blanksAtEnd < 4);
+         assert(blanksAtStart + blanksAtEnd >= 4);
+
+         mask = (mask & 0xFFEF) | 0x0020;
       }
    }
 
