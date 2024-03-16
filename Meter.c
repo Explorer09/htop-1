@@ -1044,16 +1044,17 @@ static int GraphMeterMode_lookupCell(const Meter* this, const GraphDrawContext* 
          goto cellIsEmpty;
 
       // Scale according to exponent difference. Round up.
-      numDots = deltaExp < UINT16_WIDTH ? ((numDots - 1) >> deltaExp) + 1 : 1;
+      numDots = deltaExp < UINT16_WIDTH ? ((numDots - 1) >> deltaExp) : 0;
+      numDots++;
 
-      if (y * 8 >= numDots)
+      if (y > (numDots - 1) / 8)
          goto cellIsEmpty;
 
       itemIndex = 0;
       *details = 0xFF;
-      if ((y + 1) * 8 > numDots) {
+      if (y == (numDots - 1) / 8) {
          const uint8_t dotAlignment = 2;
-         unsigned int blanksAtTopCell = ((y + 1) * 8 - numDots) / dotAlignment * dotAlignment;
+         unsigned int blanksAtTopCell = (8 - 1 - (numDots - 1) % 8) / dotAlignment * dotAlignment;
          *details <<= blanksAtTopCell;
       }
    } else {
