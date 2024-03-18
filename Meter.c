@@ -576,7 +576,7 @@ static uint16_t GraphMeterMode_makeDetailsMask(const GraphColorComputeState* pre
       }
    }
 
-   mask = (uint16_t)(((unsigned int)mask >> blanksAtEnd) << blanksAtEnd);
+   mask = (uint16_t)((mask >> blanksAtEnd) << blanksAtEnd);
 
    if (needsTiebreak) {
       if (roundDirInAscii > 0) {
