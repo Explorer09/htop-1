@@ -109,7 +109,6 @@ static inline uint64_t fast_strtoull_hex(char** str, int maxlen) {
          break;
       letter = (nibble & 0x40) ? 'A' - '9' - 1 : 0;
       nibble &=~0x20; // to upper
-      nibble ^= 0x10; // switch letters and digits
       nibble -= letter;
       nibble &= 0x0f;
       result <<= 4;
