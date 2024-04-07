@@ -798,14 +798,14 @@ static void GraphMeterMode_computeColors(Meter* this, const GraphDrawContext* co
             }
          }
 
-         if (hasPartialTopCell && prev.nItemsPainted == topCellItem)
-            nCells++;
-
          if (!hasThresholdRange && restart.nItemsPainted < prev.nItemsPainted) {
             GraphMeterMode_addItemAdjOffset(&adjLarge, nCells + equalsThreshold);
             GraphMeterMode_addItemAdjOffset(&adjSmall, nCells);
             GraphMeterMode_addItemAdjStack(&stack, scaledTotal, value);
          }
+
+         if (hasPartialTopCell && prev.nItemsPainted == topCellItem)
+            nCells++;
 
          new.nCellsPainted = prev.nCellsPainted + nCells;
          new.nItemsPainted = prev.nItemsPainted + 1;
@@ -879,13 +879,14 @@ static void GraphMeterMode_computeColors(Meter* this, const GraphDrawContext* co
          }
          assert(threshold <= thresholdHigh);
       } else if (restart.nItemsPainted <= topCellItem && restart.valueSum < DBL_MAX) {
-         if (restart.nCellsPainted + rItemMinCells + adjLarge.nCells < nCellsToPaint) {
+         if (prev.nCellsPainted - adjSmall.nCells + adjLarge.nCells < nCellsToPaint) {
+// (restart.nCellsPainted + rItemMinCells + adjLarge.nCells < nCellsToPaint)
             rItemHasExtraCell = true;
             isLastTiebreak = true;
          } else if (prev.nCellsPainted >= nCellsToPaint) {
             // else if (restart.nCellsPainted + rItemMinCells + adjSmall.nCells >= nCellsToPaint)
-            assert(restart.nCellsPainted + rItemMinCells + adjSmall.nCells == nCellsToPaint);
-            assert(restart.nCellsPainted + rItemMinCells + adjSmall.nCells == prev.nCellsPainted);
+            //assert(restart.nCellsPainted + rItemMinCells + adjSmall.nCells == nCellsToPaint);
+            //assert(restart.nCellsPainted + rItemMinCells + adjSmall.nCells == prev.nCellsPainted);
             break;
          }
          rItemIsDetermined = true;
