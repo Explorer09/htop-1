@@ -790,14 +790,14 @@ static void GraphMeterMode_computeColors(Meter* this, const GraphDrawContext* co
             }
          }
 
+         if (hasPartialTopCell && prev.nItemsPainted == topCellItem)
+            nCells++;
+
          if (!hasThresholdRange && restart.nItemsPainted < prev.nItemsPainted) {
             GraphMeterMode_addItemAdjOffset(&adjLarge, nCells + equalsThreshold);
             GraphMeterMode_addItemAdjOffset(&adjSmall, nCells);
             GraphMeterMode_addItemAdjStack(&stack, scaledTotal, value);
          }
-
-         if (hasPartialTopCell && prev.nItemsPainted == topCellItem)
-            nCells++;
 
          new.nCellsPainted = prev.nCellsPainted + nCells;
          new.nItemsPainted = prev.nItemsPainted + 1;
