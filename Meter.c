@@ -771,21 +771,29 @@ static void GraphMeterMode_computeColors(Meter* this, const GraphDrawContext* co
 
             unsigned int y = restart.nCellsPainted + rItemMinCells;
 
-            if (adjLarge.nCells > adjSmall.nCells) {
+            assert(restart.nCellsPainted + rItemMinCells + adjSmall.nCells == prev.nCellsPainted);
+            // The first cell and last cell are painted with dots aligned to the
+            // bottom and top respectively. If multiple items whose remainders
+            // equal the threshold and would be painted on the same cell, give
+            // priority to the first or last of the items respectively.
+
+            // if (adjSmall.nCells == 0 && rItemMinCells == 0 && restart.nCellsPainted == 0)
+            // else if (adjSmall.nCells == 0 && nCells == 0 && restart.nCellsPainted + rItemMinCells + 1 == nCellsToPaint)
+            if (adjSmall.nCells == 0 && prev.nCellsPainted == 0) {
+               rItemHasExtraCell = true;
+            } else if (adjSmall.nCells == 0 && nCells == 0 && prev.nCellsPainted + 1 == nCellsToPaint) {
+               rItemHasExtraCell = false;
+            } else {
                int8_t res = GraphMeterMode_needsExtraCell(graphHeight, scaledTotal, y, &stack, &adjLarge);
 
                if (res > 0 || (res < 0 && rItemMinCells <= nCells)) {
                   rItemHasExtraCell = true;
-                  break;
-               }
-            }
+               } else if (rItemHasExtraCell) {
+                  res = GraphMeterMode_needsExtraCell(graphHeight, scaledTotal, y, &stack, &adjSmall);
 
-            if (rItemHasExtraCell) {
-               int8_t res = GraphMeterMode_needsExtraCell(graphHeight, scaledTotal, y, &stack, &adjSmall);
-
-               if (res == 0 || (res < 0 && rItemMinCells > nCells)) {
-                  rItemHasExtraCell = false;
-                  // Do not break the loop here
+                  if (res == 0 || (res < 0 && rItemMinCells > nCells)) {
+                     rItemHasExtraCell = false;
+                  }
                }
             }
          }
@@ -874,6 +882,11 @@ static void GraphMeterMode_computeColors(Meter* this, const GraphDrawContext* co
          if (restart.nCellsPainted + rItemMinCells + adjLarge.nCells < nCellsToPaint) {
             rItemHasExtraCell = true;
             isLastTiebreak = true;
+         } else if (prev.nCellsPainted >= nCellsToPaint) {
+            // else if (restart.nCellsPainted + rItemMinCells + adjSmall.nCells >= nCellsToPaint)
+            assert(restart.nCellsPainted + rItemMinCells + adjSmall.nCells == nCellsToPaint);
+            assert(restart.nCellsPainted + rItemMinCells + adjSmall.nCells == prev.nCellsPainted);
+            break;
          }
          rItemIsDetermined = true;
       } else {
