@@ -783,17 +783,15 @@ static void GraphMeterMode_computeColors(Meter* this, const GraphDrawContext* co
                rItemHasExtraCell = true;
             } else if (adjSmall.nCells == 0 && nCells == 0 && prev.nCellsPainted + 1 == nCellsToPaint) {
                rItemHasExtraCell = false;
-            } else {
+            } else if (!rItemHasExtraCell) {
                int8_t res = GraphMeterMode_needsExtraCell(graphHeight, scaledTotal, y, &stack, &adjLarge);
-
                if (res > 0 || (res < 0 && rItemMinCells <= nCells)) {
                   rItemHasExtraCell = true;
-               } else if (rItemHasExtraCell) {
-                  res = GraphMeterMode_needsExtraCell(graphHeight, scaledTotal, y, &stack, &adjSmall);
-
-                  if (res == 0 || (res < 0 && rItemMinCells > nCells)) {
-                     rItemHasExtraCell = false;
-                  }
+               }
+            } else {
+               int8_t res = GraphMeterMode_needsExtraCell(graphHeight, scaledTotal, y, &stack, &adjSmall);
+               if (res == 0 || (res < 0 && rItemMinCells > nCells)) {
+                  rItemHasExtraCell = false;
                }
             }
          }
