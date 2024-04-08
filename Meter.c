@@ -777,8 +777,6 @@ static void GraphMeterMode_computeColors(Meter* this, const GraphDrawContext* co
             // equal the threshold and would be painted on the same cell, give
             // priority to the first or last of the items respectively.
 
-            // if (adjSmall.nCells == 0 && rItemMinCells == 0 && restart.nCellsPainted == 0)
-            // else if (adjSmall.nCells == 0 && nCells == 0 && restart.nCellsPainted + rItemMinCells + 1 == nCellsToPaint)
             if (adjSmall.nCells == 0 && prev.nCellsPainted == 0) {
                rItemHasExtraCell = true;
             } else if (adjSmall.nCells == 0 && nCells == 0 && prev.nCellsPainted + 1 == nCellsToPaint) {
@@ -878,11 +876,9 @@ static void GraphMeterMode_computeColors(Meter* this, const GraphDrawContext* co
          assert(threshold <= thresholdHigh);
       } else if (restart.nItemsPainted <= topCellItem && restart.valueSum < DBL_MAX) {
          if (prev.nCellsPainted - adjSmall.nCells + adjLarge.nCells < nCellsToPaint) {
-// (restart.nCellsPainted + rItemMinCells + adjLarge.nCells < nCellsToPaint)
             rItemHasExtraCell = true;
             isLastTiebreak = true;
          } else if (prev.nCellsPainted >= nCellsToPaint) {
-            // else if (restart.nCellsPainted + rItemMinCells + adjSmall.nCells >= nCellsToPaint)
             //assert(restart.nCellsPainted + rItemMinCells + adjSmall.nCells == nCellsToPaint);
             //assert(restart.nCellsPainted + rItemMinCells + adjSmall.nCells == prev.nCellsPainted);
             break;
