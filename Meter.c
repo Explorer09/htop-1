@@ -766,6 +766,7 @@ static void GraphMeterMode_computeColors(Meter* this, const GraphDrawContext* co
             }
          } else {
             equalsThreshold = true;
+            rem = 0.0;
 
             unsigned int y = prev.nCellsPainted - adjSmall.nCells;
             unsigned int rItemMinCells = y - restart.nCellsPainted;
