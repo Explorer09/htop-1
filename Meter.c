@@ -670,7 +670,6 @@ static void GraphMeterMode_computeColors(Meter* this, const GraphDrawContext* co
    double threshold = 0.5;
    bool rItemIsDetermined = false;
    bool rItemHasExtraCell = true;
-   //unsigned int rItemMinCells = 0;
    bool isLastTiebreak = false;
    unsigned int nCellsToPaint = topCell + 1;
    unsigned int nCellsPaintedHigh = nCellsToPaint + topCellItem + 1;
@@ -759,7 +758,6 @@ static void GraphMeterMode_computeColors(Meter* this, const GraphDrawContext* co
 
             if (!rItemIsDetermined) {
                stack.startPoint = (new.valueSum / scaledTotal) * (double)(int)graphHeight;
-               //rItemMinCells = nCells;
                rem = 0.0;
             } else if (rItemHasExtraCell) {
                nCells++;
@@ -771,7 +769,6 @@ static void GraphMeterMode_computeColors(Meter* this, const GraphDrawContext* co
 
             unsigned int y = prev.nCellsPainted - adjSmall.nCells;
             unsigned int rItemMinCells = y - restart.nCellsPainted;
-            //unsigned int y = restart.nCellsPainted + rItemMinCells;
 
             //assert(restart.nCellsPainted + rItemMinCells + adjSmall.nCells == prev.nCellsPainted);
             // The first cell and last cell are painted with dots aligned to the
