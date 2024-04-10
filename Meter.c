@@ -777,7 +777,8 @@ static void GraphMeterMode_computeColors(Meter* this, const GraphDrawContext* co
             // equal the threshold and would be painted on the same cell, give
             // priority to the first or last of the items respectively.
 
-            if (adjSmall.nCells == 0 && prev.nCellsPainted == 0) {
+            if (prev.nCellsPainted == 0) {
+               //assert(adjSmall.nCells == 0);
                rItemHasExtraCell = true;
             } else if (adjSmall.nCells == 0 && prev.nCellsPainted + 1 >= nCellsToPaint) {
                //assert(nCells == 0);
