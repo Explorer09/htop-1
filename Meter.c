@@ -780,7 +780,8 @@ static void GraphMeterMode_computeColors(Meter* this, const GraphDrawContext* co
             if (prev.nCellsPainted == 0) {
                //assert(adjSmall.nCells == 0);
                rItemHasExtraCell = true;
-            } else if (adjSmall.nCells == 0 && prev.nCellsPainted + 1 >= nCellsToPaint) {
+            } else if (y + 1 >= nCellsToPaint) {
+               //assert(adjSmall.nCells == 0);
                //assert(nCells == 0);
                rItemHasExtraCell = false;
             } else if (!rItemHasExtraCell) {
