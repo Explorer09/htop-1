@@ -794,7 +794,7 @@ static void GraphMeterMode_computeColors(Meter* this, const GraphDrawContext* co
                }
             } else {
                int8_t res = GraphMeterMode_needsExtraCell(graphHeight, scaledTotal, y, &stack, &adjSmall);
-               if (res == 0 || (res < 0 && rItemMinCells > nCells)) {
+               if (res == 0 || (res < 0 && (rItemMinCells > nCells || prev.nCellsPainted + 1 >= nCellsToPaint))) {
                   rItemHasExtraCell = false;
                }
             }
