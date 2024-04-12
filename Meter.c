@@ -801,8 +801,8 @@ static void GraphMeterMode_computeColors(Meter* this, const GraphDrawContext* co
          }
 
          if (!hasThresholdRange && restart.nItemsPainted < prev.nItemsPainted) {
-            GraphMeterMode_addItemAdjOffset(&adjLarge, nCells + equalsThreshold);
             GraphMeterMode_addItemAdjOffset(&adjSmall, nCells);
+            GraphMeterMode_addItemAdjOffset(&adjLarge, nCells + equalsThreshold);
             GraphMeterMode_addItemAdjStack(&stack, scaledTotal, value);
          }
 
