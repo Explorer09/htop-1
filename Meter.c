@@ -680,17 +680,17 @@ static void GraphMeterMode_computeColors(Meter* this, const GraphDrawContext* co
       double nextThresholdHigh = thresholdLow;
       double nextThresholdLow = thresholdHigh;
       bool hasThresholdRange = thresholdLow < thresholdHigh;
-      GraphColorAdjOffset adjLarge = {
-         .offsetVal = 0,
-         .nCells = 0
-      };
-      GraphColorAdjOffset adjSmall = adjLarge;
       GraphColorAdjStack stack = {
          .startPoint = 0.0,
          .fractionSum = 0.0,
          .valueSum = 0.0,
          .nItems = 0
       };
+      GraphColorAdjOffset adjSmall = {
+         .offsetVal = 0,
+         .nCells = 0
+      };
+      GraphColorAdjOffset adjLarge = adjSmall;
 
       while (prev.nItemsPainted <= topCellItem && prev.valueSum < DBL_MAX) {
          double value = this->values[prev.nItemsPainted];
