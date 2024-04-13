@@ -784,17 +784,17 @@ static void GraphMeterMode_computeColors(Meter* this, const GraphDrawContext* co
                assert(adjSmall.nCells == 0);
                assert(nCells == 0);
                rItemHasExtraCell = false;
-            } else if (!rItemHasExtraCell) {
+            } else if (rItemHasExtraCell) {
+               int8_t res = GraphMeterMode_needsExtraCell(graphHeight, scaledTotal, y, &stack, &adjSmall);
+               if (res == 0 || (res < 0 && (rItemMinCells > nCells || prev.nCellsPainted + 1 >= nCellsToPaint))) {
+                  rItemHasExtraCell = false;
+               }
+            } else {
                assert(adjLarge.nCells > adjSmall.nCells);
 
                int8_t res = GraphMeterMode_needsExtraCell(graphHeight, scaledTotal, y, &stack, &adjLarge);
                if (res > 0 || (res < 0 && rItemMinCells <= nCells)) {
                   rItemHasExtraCell = true;
-               }
-            } else {
-               int8_t res = GraphMeterMode_needsExtraCell(graphHeight, scaledTotal, y, &stack, &adjSmall);
-               if (res == 0 || (res < 0 && (rItemMinCells > nCells || prev.nCellsPainted + 1 >= nCellsToPaint))) {
-                  rItemHasExtraCell = false;
                }
             }
          }
