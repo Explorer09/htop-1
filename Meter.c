@@ -670,15 +670,15 @@ static void GraphMeterMode_computeColors(Meter* this, const GraphDrawContext* co
    double threshold = 0.5;
    bool rItemIsDetermined = false;
    bool rItemHasExtraCell = true;
-   bool isLastTiebreak = false;
    unsigned int nCellsToPaint = topCell + 1;
+   bool isLastTiebreak = false;
    unsigned int nCellsPaintedHigh = nCellsToPaint + topCellItem + 1;
    unsigned int nCellsPaintedLow = 0;
 
    while (true) {
       GraphColorComputeState prev = restart;
-      double nextThresholdHigh = thresholdLow;
       double nextThresholdLow = thresholdHigh;
+      double nextThresholdHigh = thresholdLow;
       bool hasThresholdRange = thresholdLow < thresholdHigh;
       GraphColorAdjStack stack = {
          .startPoint = 0.0,
@@ -771,7 +771,6 @@ static void GraphMeterMode_computeColors(Meter* this, const GraphDrawContext* co
             unsigned int y = prev.nCellsPainted - adjSmall.nCells;
             unsigned int rItemMinCells = y - restart.nCellsPainted;
 
-            //assert(restart.nCellsPainted + rItemMinCells + adjSmall.nCells == prev.nCellsPainted);
             // The first cell and last cell are painted with dots aligned to the
             // bottom and top respectively. If multiple items whose remainders
             // equal the threshold and would be painted on the same cell, give
