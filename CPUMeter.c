@@ -358,7 +358,7 @@ const MeterClass AllCPUsMeter_class = {
       .display = CPUMeter_display
    },
    .updateValues = AllCPUsMeter_updateValues,
-   .defaultMode = CUSTOM_METERMODE,
+   .defaultMode = BAR_METERMODE,
    .total = 100.0,
    .attributes = CPUMeter_attributes,
    .name = "AllCPUs",
@@ -378,7 +378,7 @@ const MeterClass AllCPUs2Meter_class = {
       .display = CPUMeter_display
    },
    .updateValues = AllCPUsMeter_updateValues,
-   .defaultMode = CUSTOM_METERMODE,
+   .defaultMode = BAR_METERMODE,
    .isMultiColumn = true,
    .total = 100.0,
    .attributes = CPUMeter_attributes,
@@ -399,7 +399,7 @@ const MeterClass LeftCPUsMeter_class = {
       .display = CPUMeter_display
    },
    .updateValues = AllCPUsMeter_updateValues,
-   .defaultMode = CUSTOM_METERMODE,
+   .defaultMode = BAR_METERMODE,
    .isMultiColumn = true,
    .total = 100.0,
    .attributes = CPUMeter_attributes,
@@ -420,7 +420,7 @@ const MeterClass RightCPUsMeter_class = {
       .display = CPUMeter_display
    },
    .updateValues = AllCPUsMeter_updateValues,
-   .defaultMode = CUSTOM_METERMODE,
+   .defaultMode = BAR_METERMODE,
    .isMultiColumn = true,
    .total = 100.0,
    .attributes = CPUMeter_attributes,
@@ -441,7 +441,7 @@ const MeterClass LeftCPUs2Meter_class = {
       .display = CPUMeter_display
    },
    .updateValues = AllCPUsMeter_updateValues,
-   .defaultMode = CUSTOM_METERMODE,
+   .defaultMode = BAR_METERMODE,
    .isMultiColumn = true,
    .total = 100.0,
    .attributes = CPUMeter_attributes,
@@ -462,7 +462,7 @@ const MeterClass RightCPUs2Meter_class = {
       .display = CPUMeter_display
    },
    .updateValues = AllCPUsMeter_updateValues,
-   .defaultMode = CUSTOM_METERMODE,
+   .defaultMode = BAR_METERMODE,
    .isMultiColumn = true,
    .total = 100.0,
    .attributes = CPUMeter_attributes,
@@ -483,7 +483,7 @@ const MeterClass AllCPUs4Meter_class = {
       .display = CPUMeter_display
    },
    .updateValues = AllCPUsMeter_updateValues,
-   .defaultMode = CUSTOM_METERMODE,
+   .defaultMode = BAR_METERMODE,
    .isMultiColumn = true,
    .total = 100.0,
    .attributes = CPUMeter_attributes,
@@ -504,7 +504,7 @@ const MeterClass LeftCPUs4Meter_class = {
       .display = CPUMeter_display
    },
    .updateValues = AllCPUsMeter_updateValues,
-   .defaultMode = CUSTOM_METERMODE,
+   .defaultMode = BAR_METERMODE,
    .isMultiColumn = true,
    .total = 100.0,
    .attributes = CPUMeter_attributes,
@@ -525,7 +525,7 @@ const MeterClass RightCPUs4Meter_class = {
       .display = CPUMeter_display
    },
    .updateValues = AllCPUsMeter_updateValues,
-   .defaultMode = CUSTOM_METERMODE,
+   .defaultMode = BAR_METERMODE,
    .isMultiColumn = true,
    .total = 100.0,
    .attributes = CPUMeter_attributes,
@@ -546,7 +546,7 @@ const MeterClass AllCPUs8Meter_class = {
       .display = CPUMeter_display
    },
    .updateValues = AllCPUsMeter_updateValues,
-   .defaultMode = CUSTOM_METERMODE,
+   .defaultMode = BAR_METERMODE,
    .isMultiColumn = true,
    .total = 100.0,
    .attributes = CPUMeter_attributes,
@@ -567,7 +567,7 @@ const MeterClass LeftCPUs8Meter_class = {
       .display = CPUMeter_display
    },
    .updateValues = AllCPUsMeter_updateValues,
-   .defaultMode = CUSTOM_METERMODE,
+   .defaultMode = BAR_METERMODE,
    .isMultiColumn = true,
    .total = 100.0,
    .attributes = CPUMeter_attributes,
@@ -588,7 +588,7 @@ const MeterClass RightCPUs8Meter_class = {
       .display = CPUMeter_display
    },
    .updateValues = AllCPUsMeter_updateValues,
-   .defaultMode = CUSTOM_METERMODE,
+   .defaultMode = BAR_METERMODE,
    .isMultiColumn = true,
    .total = 100.0,
    .attributes = CPUMeter_attributes,

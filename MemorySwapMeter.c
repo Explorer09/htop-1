@@ -92,7 +92,7 @@ const MeterClass MemorySwapMeter_class = {
       .delete = Meter_delete,
    },
    .updateValues = MemorySwapMeter_updateValues,
-   .defaultMode = CUSTOM_METERMODE,
+   .defaultMode = BAR_METERMODE,
    .isMultiColumn = true,
    .name = "MemorySwap",
    .uiName = "Memory & Swap",
