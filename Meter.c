@@ -117,8 +117,8 @@ void Meter_setMode(Meter* this, int modeIndex) {
       return;
    }
 
-   if (!modeIndex) {
-      modeIndex = 1;
+   if (modeIndex == 0) {
+      modeIndex = BAR_METERMODE;
    }
 
    assert(modeIndex < LAST_METERMODE);
