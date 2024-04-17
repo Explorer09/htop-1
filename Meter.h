@@ -105,11 +105,11 @@ struct Meter_ {
    const Machine* host;
 
    char* caption;
-   MeterModeId mode;
    unsigned int param;
    GraphData drawData;
    int h;
    int columnWidthCount;      /**< only used internally by the Header */
+   MeterModeId mode;
    uint8_t curItems;
    const int* curAttributes;
    char txtBuffer[METER_TXTBUFFER_LEN];
