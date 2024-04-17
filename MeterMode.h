@@ -7,13 +7,18 @@ Released under the GNU GPLv2+, see the COPYING file
 in the source distribution for its full text.
 */
 
-typedef enum {
+#include <stdint.h>
+
+
+enum MeterModeId_ {
    /* Meter mode 0 is reserved */
    BAR_METERMODE = 1,
    TEXT_METERMODE,
    GRAPH_METERMODE,
    LED_METERMODE,
    LAST_METERMODE
-} MeterModeId;
+};
+
+typedef uint8_t MeterModeId;
 
 #endif
