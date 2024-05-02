@@ -61,7 +61,7 @@ jobs:
   build-ubuntu-minimal-clang-lto-O2:
     runs-on: ubuntu-latest
     env:
-      CC: clang-18
+      CC: clang-17
       CFLAGS: -O2 -g -flto
       LDFLAGS: -O2 -g -flto -Wl,--as-needed
     steps:
@@ -69,10 +69,10 @@ jobs:
     - name: install clang repo
       run: |
         wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key 2>/dev/null | sudo apt-key add -
-        sudo add-apt-repository 'deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-18 main' -y
+        sudo add-apt-repository 'deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-17 main' -y
         sudo apt-get update -q
     - name: Install Dependencies
-      run: sudo apt-get install --no-install-recommends clang-18 libncursesw5-dev
+      run: sudo apt-get install --no-install-recommends clang-17 libncursesw5-dev
     - name: Bootstrap
       run: ./autogen.sh
     - name: Configure
@@ -87,7 +87,7 @@ jobs:
   build-ubuntu-minimal-clang-lto-Os:
     runs-on: ubuntu-latest
     env:
-      CC: clang-18
+      CC: clang-17
       CFLAGS: -Os -g -flto
       LDFLAGS: -Os -g -flto -Wl,--as-needed
     steps:
@@ -95,10 +95,10 @@ jobs:
     - name: install clang repo
       run: |
         wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key 2>/dev/null | sudo apt-key add -
-        sudo add-apt-repository 'deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-18 main' -y
+        sudo add-apt-repository 'deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-17 main' -y
         sudo apt-get update -q
     - name: Install Dependencies
-      run: sudo apt-get install --no-install-recommends clang-18 libncursesw5-dev
+      run: sudo apt-get install --no-install-recommends clang-17 libncursesw5-dev
     - name: Bootstrap
       run: ./autogen.sh
     - name: Configure
@@ -155,7 +155,7 @@ jobs:
   build-ubuntu-full-featured-clang-lto-O2:
     runs-on: ubuntu-latest
     env:
-      CC: clang-18
+      CC: clang-17
       CFLAGS: -O2 -g -flto
       LDFLAGS: -O2 -g -flto -Wl,--as-needed
     steps:
@@ -163,10 +163,10 @@ jobs:
     - name: install clang repo
       run: |
         wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key 2>/dev/null | sudo apt-key add -
-        sudo add-apt-repository 'deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-18 main' -y
+        sudo add-apt-repository 'deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-17 main' -y
         sudo apt-get update -q
     - name: Install Dependencies
-      run: sudo apt-get install --no-install-recommends clang-18 libncursesw5-dev libhwloc-dev libnl-3-dev libnl-genl-3-dev libsensors4-dev libcap-dev
+      run: sudo apt-get install --no-install-recommends clang-17 libncursesw5-dev libhwloc-dev libnl-3-dev libnl-genl-3-dev libsensors4-dev libcap-dev
     - name: Bootstrap
       run: ./autogen.sh
     - name: Configure
@@ -181,7 +181,7 @@ jobs:
   build-ubuntu-full-featured-clang-lto-Os:
     runs-on: ubuntu-latest
     env:
-      CC: clang-18
+      CC: clang-17
       CFLAGS: -Os -g -flto
       LDFLAGS: -Os -g -flto -Wl,--as-needed
     steps:
@@ -189,10 +189,10 @@ jobs:
     - name: install clang repo
       run: |
         wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key 2>/dev/null | sudo apt-key add -
-        sudo add-apt-repository 'deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-18 main' -y
+        sudo add-apt-repository 'deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-17 main' -y
         sudo apt-get update -q
     - name: Install Dependencies
-      run: sudo apt-get install --no-install-recommends clang-18 libncursesw5-dev libhwloc-dev libnl-3-dev libnl-genl-3-dev libsensors4-dev libcap-dev
+      run: sudo apt-get install --no-install-recommends clang-17 libncursesw5-dev libhwloc-dev libnl-3-dev libnl-genl-3-dev libsensors4-dev libcap-dev
     - name: Bootstrap
       run: ./autogen.sh
     - name: Configure
