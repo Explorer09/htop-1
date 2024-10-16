@@ -668,6 +668,19 @@ else
       [AC_CHECK_HEADERS([term.h], [],
          [AC_MSG_ERROR([can not find required term header file])])])
 fi
+
+CFLAGS="-I$srcdir $CFLAGS"
+# "stdscr" might be a macro, and it is for ncurses built as an
+# reentrant library (ncursest).
+AC_MSG_CHECKING([for stdscr])
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+#include "ProvideCurses.h"
+   ]], [[
+keypad(stdscr, 0);
+   ]])],
+   [AC_MSG_RESULT(yes)],
+   [AC_MSG_RESULT(no)
+   AC_MSG_ERROR([cannot find required variable stdscr])])
 CFLAGS=$htop_save_CFLAGS
 
 if test "$enable_static" = yes; then
