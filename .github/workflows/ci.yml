@@ -28,6 +28,29 @@ jobs:
     - name: Distcheck
       run: make distcheck DISTCHECK_CONFIGURE_FLAGS="--enable-werror --enable-affinity --disable-unicode --disable-sensors"
 
+  build-ubuntu-latest-minimal-gcc-vpath:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install Dependencies
+      run: sudo apt-get install --no-install-recommends libncursesw5-dev
+    - name: Bootstrap
+      run: ./autogen.sh
+    - name: Configure
+      run: |
+        mkdir build
+        cd build
+        ../configure --enable-werror --enable-affinity --disable-unicode --disable-sensors || (cat config.log; exit 1)
+    - name: Enable compatibility modes
+      run: |
+        sed -i 's/#define HAVE_FSTATAT 1/#undef HAVE_FSTATAT/g' config.h
+        sed -i 's/#define HAVE_OPENAT 1/#undef HAVE_OPENAT/g' config.h
+        sed -i 's/#define HAVE_READLINKAT 1/#undef HAVE_READLINKAT/g' config.h
+    - name: Build
+      run: make -k
+    - name: Distcheck
+      run: make distcheck DISTCHECK_CONFIGURE_FLAGS="--enable-werror --enable-affinity --disable-unicode --disable-sensors"
+
   build-ubuntu-latest-minimal-clang:
     runs-on: ubuntu-latest
     env:
