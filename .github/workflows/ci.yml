@@ -63,11 +63,11 @@ jobs:
     - name: Bootstrap
       run: ./autogen.sh
     - name: Configure
-      run: ./configure --enable-werror --enable-openvz --enable-vserver --enable-ancient-vserver --enable-unicode --enable-hwloc --enable-delayacct --enable-sensors --enable-capabilities || ( cat config.log; exit 1; )
+      run: ./configure --enable-werror --enable-openvz --enable-vserver --enable-ancient-vserver --disable-unicode --enable-hwloc --enable-delayacct --enable-sensors --enable-capabilities || ( cat config.log; exit 1; )
     - name: Build
       run: make -k
     - name: Distcheck
-      run: make distcheck DISTCHECK_CONFIGURE_FLAGS='--enable-werror --enable-openvz --enable-vserver --enable-ancient-vserver --enable-unicode --enable-hwloc --enable-delayacct --enable-sensors --enable-capabilities'
+      run: make distcheck DISTCHECK_CONFIGURE_FLAGS='--enable-werror --enable-openvz --enable-vserver --enable-ancient-vserver --disable-unicode --enable-hwloc --enable-delayacct --enable-sensors --enable-capabilities'
 
   build-ubuntu-latest-full-featured-clang:
     runs-on: ubuntu-latest
@@ -85,11 +85,11 @@ jobs:
     - name: Bootstrap
       run: ./autogen.sh
     - name: Configure
-      run: ./configure --enable-werror --enable-openvz --enable-vserver --enable-ancient-vserver --enable-unicode --enable-hwloc --enable-delayacct --enable-sensors --enable-capabilities || ( cat config.log; exit 1; )
+      run: ./configure --enable-werror --enable-openvz --enable-vserver --enable-ancient-vserver --disable-unicode --enable-hwloc --enable-delayacct --enable-sensors --enable-capabilities || ( cat config.log; exit 1; )
     - name: Build
       run: make -k
     - name: Distcheck
-      run: make distcheck DISTCHECK_CONFIGURE_FLAGS='--enable-werror --enable-openvz --enable-vserver --enable-ancient-vserver --enable-unicode --enable-hwloc --enable-delayacct --enable-sensors --enable-capabilities'
+      run: make distcheck DISTCHECK_CONFIGURE_FLAGS='--enable-werror --enable-openvz --enable-vserver --enable-ancient-vserver --disable-unicode --enable-hwloc --enable-delayacct --enable-sensors --enable-capabilities'
 
   build-ubuntu-latest-gcc-static:
     runs-on: ubuntu-latest
@@ -104,11 +104,11 @@ jobs:
     - name: Bootstrap
       run: ./autogen.sh
     - name: Configure
-      run: ./configure --enable-static --enable-werror --enable-openvz --enable-vserver --enable-ancient-vserver --enable-unicode --disable-hwloc --disable-delayacct --enable-sensors --enable-capabilities || ( cat config.log; exit 1; )
+      run: ./configure --enable-static --enable-werror --enable-openvz --enable-vserver --enable-ancient-vserver --disable-unicode --disable-hwloc --disable-delayacct --enable-sensors --enable-capabilities || ( cat config.log; exit 1; )
     - name: Build
       run: make -k
     - name: Distcheck
-      run: make distcheck DISTCHECK_CONFIGURE_FLAGS='--enable-static --enable-werror --enable-openvz --enable-vserver --enable-ancient-vserver --enable-unicode --disable-hwloc --disable-delayacct --enable-sensors --enable-capabilities'
+      run: make distcheck DISTCHECK_CONFIGURE_FLAGS='--enable-static --enable-werror --enable-openvz --enable-vserver --enable-ancient-vserver --disable-unicode --disable-hwloc --disable-delayacct --enable-sensors --enable-capabilities'
 
   build-ubuntu-latest-pcp:
     # we want PCP v5.2.3+
@@ -120,7 +120,7 @@ jobs:
     - name: Bootstrap
       run: ./autogen.sh
     - name: Configure
-      run: ./configure --enable-werror --enable-pcp --enable-unicode || ( cat config.log; exit 1; )
+      run: ./configure --enable-werror --enable-pcp --disable-unicode || ( cat config.log; exit 1; )
     - name: Build
       run: make -k
 
@@ -140,7 +140,7 @@ jobs:
     - name: Bootstrap
       run: ./autogen.sh
     - name: Configure
-      run: scan-build-18 -analyze-headers --status-bugs ./configure --enable-debug --enable-werror --enable-openvz --enable-vserver --enable-ancient-vserver --enable-unicode --enable-delayacct --enable-sensors --enable-capabilities || ( cat config.log; exit 1; )
+      run: scan-build-18 -analyze-headers --status-bugs ./configure --enable-debug --enable-werror --enable-openvz --enable-vserver --enable-ancient-vserver --disable-unicode --enable-delayacct --enable-sensors --enable-capabilities || ( cat config.log; exit 1; )
     - name: Build
       run: scan-build-18 -analyze-headers --status-bugs make -j"$(nproc)"
 
@@ -168,7 +168,7 @@ jobs:
     - name: Bootstrap
       run: ./autogen.sh
     - name: Configure
-      run: ./configure --enable-werror --enable-openvz --enable-vserver --enable-ancient-vserver --enable-unicode --enable-hwloc --enable-delayacct --enable-sensors --enable-capabilities || ( cat config.log; exit 1; )
+      run: ./configure --enable-werror --enable-openvz --enable-vserver --enable-ancient-vserver --disable-unicode --enable-hwloc --enable-delayacct --enable-sensors --enable-capabilities || ( cat config.log; exit 1; )
     - name: Build
       run: make -k
     - name: Run sanitized htop (1)
@@ -191,7 +191,7 @@ jobs:
     - name: Bootstrap
       run: ./autogen.sh
     - name: Configure
-      run: ./configure --enable-werror || ( cat config.log; exit 1; )
+      run: ./configure --enable-werror --disable-unicode || ( cat config.log; exit 1; )
     - name: Build
       run: make -k
     - name: Distcheck
@@ -217,7 +217,7 @@ jobs:
               export LDFLAGS="-L/usr/local/lib"
               export CFLAGS="-I/usr/local/include"
               ./autogen.sh
-              ./configure --enable-unicode --enable-werror
+              ./configure --disable-unicode --enable-werror
               gmake -k
 
   build-freebsd-latest-clang:
@@ -238,7 +238,7 @@ jobs:
             run: |
               set -e
               ./autogen.sh
-              ./configure --enable-unicode --enable-werror
+              ./configure --disable-unicode --enable-werror
               gmake -k
 
   build-netbsd-latest-gcc:
@@ -263,7 +263,7 @@ jobs:
             run: |
               set -e
               ./autogen.sh
-              ./configure --enable-unicode --enable-werror
+              ./configure --disable-unicode --enable-werror
               gmake -k
 
   build-openbsd-latest-clang:
@@ -298,7 +298,7 @@ jobs:
               export AUTOMAKE_VERSION=$(echo ${automake_version_full} |
                 LC_ALL=C sed 's/^\([0-9]*\.[0-9]*\).*$/\1/')
               ./autogen.sh
-              ./configure --enable-unicode --enable-werror
+              ./configure --disable-unicode --enable-werror
               gmake -k
 
   build-solaris-latest-gcc:
@@ -319,7 +319,7 @@ jobs:
             run: |
               set -e
               ./autogen.sh
-              ./configure --enable-unicode --enable-werror
+              ./configure --disable-unicode --enable-werror
               gmake -k
 
   lint-whitespace:
