@@ -68,6 +68,15 @@ esac
 # Enable extensions, required by hwloc scripts
 AC_USE_SYSTEM_EXTENSIONS
 
+dnl May be needed for htop Unicode support
+AH_VERBATIM([_XOPEN_SOURCE_EXTENDED],
+[/* Enables XPG4v2 (SUSv1) interfaces if they are not enabled already
+   with _XOPEN_SOURCE */
+#ifndef _XOPEN_SOURCE_EXTENDED
+#undef _XOPEN_SOURCE_EXTENDED
+#endif
+])
+
 # Activate some more of the missing global defines
 AC_SYS_LARGEFILE
 
@@ -504,6 +513,13 @@ wadd_wchnstr((void*)&dummy1, (void*)&dummy2, 0);
       AM_CFLAGS="$AM_CFLAGS $htop_curses_cflags"
       if test "$htop_curses_capability" = wide; then
          AC_DEFINE([HAVE_LIBNCURSESW], 1, [libncursesw is present])
+
+         # The header of ncurses exposes wide-character interfaces only
+         # if _XOPEN_SOURCE_EXTENDED is defined or _XOPEN_SOURCE
+         # defined to be >= 500. Avoid touching with _XOPEN_SOURCE
+         # because defining it (to any value) in DragonFly BSD, FreeBSD
+         # or OpenBSD *hides* interfaces that are useful for htop.
+         AC_DEFINE([_XOPEN_SOURCE_EXTENDED], 1)
       else
          AC_DEFINE([HAVE_LIBNCURSES], 1, [libcurses is present])
       fi
