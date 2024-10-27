@@ -40,7 +40,8 @@ jobs:
           --disable-weak-symbols \
           --with-pkg-config=yes \
           --disable-overwrite \
-          --with-curses-h
+          --with-curses-h \
+          --with-extra-suffix=suffix
         make -k || :
         make -k install DESTDIR=$(pwd)/ncurses-install || :
         ( cd ncurses-install && find . -ls )
