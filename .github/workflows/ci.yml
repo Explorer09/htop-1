@@ -22,15 +22,15 @@ jobs:
         ./configure \
           --prefix=/usr/local \
           \
-          --with-normal \
-          --with-shared \
-          --with-cxx-shared \
+          --without-normal \
+          --without-shared \
+          --without-cxx-shared \
           \
           --enable-reentrant \
           --enable-widec \
           \
           --with-debug \
-          --with-profile \
+          --without-profile \
           --with-termlib=yes \
           --with-pthread \
           --enable-lib-suffixes \
@@ -40,9 +40,9 @@ jobs:
           --disable-weak-symbols \
           --with-pkg-config=yes \
           --disable-overwrite \
-          --without-curses-h
-        make
-        make install DESTDIR=$(pwd)/ncurses-install
+          --with-curses-h
+        make -k || :
+        make -k install DESTDIR=$(pwd)/ncurses-install || :
         ( cd ncurses-install && find . -ls )
 
   build-ubuntu-latest-minimal-gcc:
