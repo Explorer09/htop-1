@@ -22,28 +22,27 @@ jobs:
         ./configure \
           --prefix=/usr/local \
           \
-          --without-normal \
-          --without-shared \
-          --without-cxx-shared \
-          \
-          --enable-reentrant \
-          --enable-widec \
+          --with-progs \
+          --with-termlib \
           \
           --with-debug \
           --without-profile \
-          --with-termlib=yes \
-          --with-pthread \
+          --without-normal \
+          --without-shared \
+          --without-libtool \
+          \
+          --enable-widec \
+          --disable-reentrant \
           --enable-lib-suffixes \
-          --enable-pc-files \
-          --enable-symlinks \
-          --enable-warnings \
-          --disable-weak-symbols \
-          --with-pkg-config=yes \
-          --disable-overwrite \
-          --with-curses-h \
           --with-extra-suffix=suffix
         make -k || :
+    - name: Install to temp directory
+      run: |
+        cd ncurses-6.5
         make -k install DESTDIR=$(pwd)/ncurses-install || :
+    - name: File list
+      run: |
+        cd ncurses-6.5
         ( cd ncurses-install && find . -ls )
 
   build-ubuntu-latest-minimal-gcc:
