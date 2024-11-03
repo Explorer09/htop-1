@@ -16,9 +16,9 @@ jobs:
       run: sudo apt-get install --no-install-recommends libncursesw5-dev libtool-bin
     - name: Build
       run: |
-        wget "https://ftp.gnu.org/gnu/ncurses/ncurses-6.5.tar.gz"
-        tar -x -f ncurses-6.5.tar.gz
-        cd ncurses-6.5
+        wget "https://invisible-island.net/archives/ncurses/current/ncurses-6.5-20241102.tgz"
+        tar -x -f ncurses-6.5-20241102.tgz
+        cd ncurses-6.5-20241102
         ./configure \
           --prefix=/usr/local \
           \
@@ -38,11 +38,11 @@ jobs:
         make -k || :
     - name: Install to temp directory
       run: |
-        cd ncurses-6.5
+        cd ncurses-6.5-20241102
         make -k install DESTDIR=$(pwd)/ncurses-install || :
     - name: File list
       run: |
-        cd ncurses-6.5
+        cd ncurses-6.5-20241102
         ( cd ncurses-install && find . -ls )
 
   build-ubuntu-latest-minimal-gcc:
