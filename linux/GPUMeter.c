@@ -38,11 +38,11 @@ static const int GPUMeter_attributes[] = {
    GPU_RESIDUE,
 };
 
-static int humanTimeUnit(char* buffer, size_t size, unsigned long long int value) {
-   if (value < 10000)
-      return xSnprintf(buffer, size, "%4uns", (unsigned int)value);
+static int humanTimeUnit(char* buffer, size_t size, unsigned long long totalNanoseconds) {
+   if (totalNanoseconds < 10000)
+      return xSnprintf(buffer, size, "%4uns", (unsigned int)totalNanoseconds);
 
-   value /= 100;
+   unsigned long long value = totalNanoseconds / 100;
 
    if (value < 1000)
       return xSnprintf(buffer, size, "%u.%uus", (unsigned int)(value / 10), (unsigned int)(value % 10));
