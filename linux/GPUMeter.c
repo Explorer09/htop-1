@@ -39,47 +39,63 @@ static const int GPUMeter_attributes[] = {
 };
 
 static int humanTimeUnit(char* buffer, size_t size, unsigned long long int value) {
+   if (value < 10000)
+      return xSnprintf(buffer, size, "%4lluns", value);
+
+   value /= 100;
 
    if (value < 1000)
-      return xSnprintf(buffer, size, "%3lluns", value);
+      return xSnprintf(buffer, size, "%2llu.%lluus", value / 10, value % 10);
+
+   value /= 10; // microseconds
 
    if (value < 10000)
-      return xSnprintf(buffer, size, "%1llu.%1lluus", value / 1000, (value % 1000) / 100);
+      return xSnprintf(buffer, size, "%4lluus", value);
 
-   value /= 1000;
-
-   if (value < 1000)
-      return xSnprintf(buffer, size, "%3lluus", value);
+   value /= 100;
 
    if (value < 10000)
-      return xSnprintf(buffer, size, "%1llu.%1llums", value / 1000, (value % 1000) / 100);
+      return xSnprintf(buffer, size, ".%04llus", value);
 
-   value /= 1000;
-
-   if (value < 1000)
-      return xSnprintf(buffer, size, "%3llums", value);
+   value /= 10; // milliseconds
 
    if (value < 10000)
-      return xSnprintf(buffer, size, "%1llu.%1llus", value / 1000, (value % 1000) / 100);
+      return xSnprintf(buffer, size, "%llu.%03llus", value / 1000, value % 1000);
 
-   value /= 1000;
+   value /= 10;
 
-   if (value < 600)
-      return xSnprintf(buffer, size, "%3llus", value);
+   if (value < 6000)
+      return xSnprintf(buffer, size, "%2llu.%02llus", value / 100, value % 100);
 
-   value /= 60;
+   value /= 100; // seconds
 
-   if (value < 600)
-      return xSnprintf(buffer, size, "%3llum", value);
+   if (value < 3600)
+      return xSnprintf(buffer, size, "%2llum%02llus", value / 60, value % 60);
 
-   value /= 60;
+   value /= 60; // minutes
 
-   if (value < 96)
-      return xSnprintf(buffer, size, "%3lluh", value);
+   if (value < 1440)
+      return xSnprintf(buffer, size, "%2lluh%02llum", value / 60, value % 60);
 
-   value /= 24;
+   value /= 60; // hours
 
-   return xSnprintf(buffer, size, "%3llud", value);
+   if (value < 2400)
+      return xSnprintf(buffer, size, "%2llud%02lluh", value / 24, value % 24);
+
+   value /= 24; // days
+
+   if (value < 365)
+      return xSnprintf(buffer, size, "%5llud", value);
+
+   if (value < 3650)
+      return xSnprintf(buffer, size, "%lluy%03llud", value / 365, value % 365);
+
+   value /= 365; // years (ignore leap years)
+
+   if (value < 100000)
+      return xSnprintf(buffer, size, "%5lluy", value);
+
+   return xSnprintf(buffer, size, "  inf.");
 }
 
 static void GPUMeter_updateValues(Meter* this) {
