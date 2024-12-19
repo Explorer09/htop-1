@@ -54,7 +54,8 @@ static int humanTimeUnit(char* buffer, size_t size, unsigned long long totalNano
 
    value /= 100;
 
-   if (value < 600000) {
+   unsigned long long totalSeconds = value / 10000;
+   if (totalSeconds < 60) {
       int width = 4;
       unsigned int seconds = (unsigned int)(value / 10000);
       unsigned int fraction = (unsigned int)(value % 10000);
@@ -65,7 +66,7 @@ static int humanTimeUnit(char* buffer, size_t size, unsigned long long totalNano
       return xSnprintf(buffer, size, "%.u.%0*us", seconds, width, fraction);
    }
 
-   value /= 10000; // seconds
+   value = totalSeconds;
 
    if (value < 3600)
       return xSnprintf(buffer, size, "%2um%02us", (unsigned int)value / 60, (unsigned int)value % 60);
