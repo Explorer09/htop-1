@@ -56,8 +56,8 @@ static int humanTimeUnit(char* buffer, size_t size, unsigned long long int value
 
    if (value < 600000) {
       int width = 4;
-      unsigned int seconds = (unsigned int)((uint32_t)value / 10000);
-      unsigned int fraction = (unsigned int)((uint32_t)value % 10000);
+      unsigned int seconds = (unsigned int)(value / 10000);
+      unsigned int fraction = (unsigned int)(value % 10000);
       for (unsigned int limit = 1; seconds >= limit; limit *= 10) {
          width--;
          fraction /= 10;
