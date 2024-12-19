@@ -80,7 +80,7 @@ static int humanTimeUnit(char* buffer, size_t size, unsigned long long int value
    value /= 60; // hours
 
    if (value < 2400)
-      return xSnprintf(buffer, size, "%2llud%02lluh", value / 24, value % 24);
+      return xSnprintf(buffer, size, "%2ud%02uh", (unsigned int)value / 24, (unsigned int)value % 24);
 
    value /= 24; // days
 
