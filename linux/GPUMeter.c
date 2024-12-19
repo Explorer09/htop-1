@@ -85,7 +85,7 @@ static int humanTimeUnit(char* buffer, size_t size, unsigned long long int value
    value /= 24; // days
 
    if (value < 365)
-      return xSnprintf(buffer, size, "%5llud", value);
+      return xSnprintf(buffer, size, "%5ud", (unsigned int)value);
 
    if (value < 3650)
       return xSnprintf(buffer, size, "%lluy%03llud", value / 365, value % 365);
