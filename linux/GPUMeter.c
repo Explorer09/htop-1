@@ -75,7 +75,7 @@ static int humanTimeUnit(char* buffer, size_t size, unsigned long long int value
    value /= 60; // minutes
 
    if (value < 1440)
-      return xSnprintf(buffer, size, "%2lluh%02llum", value / 60, value % 60);
+      return xSnprintf(buffer, size, "%2uh%02um", (unsigned int)value / 60, (unsigned int)value % 60);
 
    value /= 60; // hours
 
