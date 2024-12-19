@@ -45,7 +45,7 @@ static int humanTimeUnit(char* buffer, size_t size, unsigned long long int value
    value /= 100;
 
    if (value < 1000)
-      return xSnprintf(buffer, size, "%2u.%uus", (unsigned int)value / 10, (unsigned int)value % 10);
+      return xSnprintf(buffer, size, "%2u.%uus", (unsigned int)(value / 10), (unsigned int)(value % 10));
 
    value /= 10; // microseconds
 
