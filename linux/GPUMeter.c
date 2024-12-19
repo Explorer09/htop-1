@@ -57,7 +57,7 @@ static int humanTimeUnit(char* buffer, size_t size, unsigned long long totalNano
    unsigned long long totalSeconds = value / 10000;
    if (totalSeconds < 60) {
       int width = 4;
-      unsigned int seconds = (unsigned int)(value / 10000);
+      unsigned int seconds = (unsigned int)totalSeconds;
       unsigned int fraction = (unsigned int)(value % 10000);
       for (unsigned int limit = 1; seconds >= limit; limit *= 10) {
          width--;
