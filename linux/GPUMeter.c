@@ -40,7 +40,7 @@ static const int GPUMeter_attributes[] = {
 
 static int humanTimeUnit(char* buffer, size_t size, unsigned long long int value) {
    if (value < 10000)
-      return xSnprintf(buffer, size, "%4lluns", value);
+      return xSnprintf(buffer, size, "%4uns", (unsigned int)value);
 
    value /= 100;
 
