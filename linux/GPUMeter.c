@@ -88,7 +88,7 @@ static int humanTimeUnit(char* buffer, size_t size, unsigned long long int value
       return xSnprintf(buffer, size, "%5ud", (unsigned int)value);
 
    if (value < 3650)
-      return xSnprintf(buffer, size, "%uy%03ud", (unsigned int)value / 365, (unsigned int)value % 365);
+      return xSnprintf(buffer, size, "%uy%03ud", (unsigned int)(value / 365), (unsigned int)(value % 365));
 
    value /= 365; // years (ignore leap years)
 
