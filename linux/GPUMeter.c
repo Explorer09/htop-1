@@ -62,12 +62,12 @@ static int humanTimeUnit(char* buffer, size_t size, unsigned long long int value
    if (value < 10000)
       return xSnprintf(buffer, size, "%u.%03us", (unsigned int)value / 1000, (unsigned int)value % 1000);
 
-   value /= 10;
+   //value /= 10;
 
-   if (value < 6000)
-      return xSnprintf(buffer, size, "%u.%02us", (unsigned int)value / 100, (unsigned int)value % 100);
+   if (value < 60000)
+      return xSnprintf(buffer, size, "%u.%02us", (unsigned int)value / 1000, ((unsigned int)value % 1000) / 10);
 
-   value /= 100; // seconds
+   value /= 1000; // seconds
 
    if (value < 3600)
       return xSnprintf(buffer, size, "%2um%02us", (unsigned int)value / 60, (unsigned int)value % 60);
