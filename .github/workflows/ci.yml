@@ -9,7 +9,7 @@ env:
 
 jobs:
   build-ubuntu-minimal-gcc-lto-O2:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       CFLAGS: -O2 -g -flto
       LDFLAGS: -O2 -g -flto -Wl,--as-needed
@@ -34,7 +34,7 @@ jobs:
       run: size ./htop
 
   build-ubuntu-minimal-gcc-lto-Os:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       CFLAGS: -Os -g -flto
       LDFLAGS: -Os -g -flto -Wl,--as-needed
@@ -59,7 +59,7 @@ jobs:
       run: size ./htop
 
   build-ubuntu-minimal-clang-lto-O2:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       CC: clang-18
       CFLAGS: -O2 -g -flto
@@ -85,7 +85,7 @@ jobs:
       run: size ./htop
 
   build-ubuntu-minimal-clang-lto-Os:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       CC: clang-18
       CFLAGS: -Os -g -flto
@@ -111,7 +111,7 @@ jobs:
       run: size ./htop
 
   build-ubuntu-full-featured-gcc-O2:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # Enable LTO, might trigger additional warnings on advanced inlining
     env:
       CFLAGS: -O2 -g -flto
@@ -132,7 +132,7 @@ jobs:
       run: size ./htop
 
   build-ubuntu-full-featured-gcc-Os:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # Enable LTO, might trigger additional warnings on advanced inlining
     env:
       CFLAGS: -Os -g -flto
@@ -153,7 +153,7 @@ jobs:
       run: size ./htop
 
   build-ubuntu-full-featured-clang-lto-O2:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       CC: clang-18
       CFLAGS: -O2 -g -flto
@@ -179,7 +179,7 @@ jobs:
       run: size ./htop
 
   build-ubuntu-full-featured-clang-lto-Os:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       CC: clang-18
       CFLAGS: -Os -g -flto
@@ -205,7 +205,7 @@ jobs:
       run: size ./htop
 
   build-ubuntu-gcc-static-O2:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # Enable LTO, might trigger additional warnings on advanced inlining
     env:
       CFLAGS: -O2 -g -flto
@@ -226,7 +226,7 @@ jobs:
       run: size ./htop
 
   build-ubuntu-gcc-static-Os:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # Enable LTO, might trigger additional warnings on advanced inlining
     env:
       CFLAGS: -Os -g -flto
