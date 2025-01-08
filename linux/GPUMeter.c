@@ -50,7 +50,7 @@ static int humanTimeUnit(char* buffer, size_t size, unsigned long long totalNano
    value /= 10; // microseconds
 
    if (value < 10000)
-      return xSnprintf(buffer, size, "%4uus", (unsigned int)value);
+      return xSnprintf(buffer, size, "%4lluus", value);
 
    value /= 100;
 
