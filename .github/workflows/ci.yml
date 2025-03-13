@@ -47,7 +47,7 @@ jobs:
     - name: Configure
       run: ./configure --enable-werror --enable-affinity --disable-unicode --disable-sensors || ( cat config.log; exit 1; )
     - name: Build
-      run: make -k
+      run: make -k V=0
     - name: Distcheck
       run: make distcheck DISTCHECK_CONFIGURE_FLAGS="--enable-werror --enable-affinity --disable-unicode --disable-sensors"
 
@@ -89,7 +89,7 @@ jobs:
     - name: Configure
       run: ./configure --enable-werror --enable-openvz --enable-vserver --enable-ancient-vserver --enable-unicode --enable-hwloc --enable-delayacct --enable-sensors --enable-capabilities || ( cat config.log; exit 1; )
     - name: Build
-      run: make -k
+      run: make -k V=0
     - name: Distcheck
       run: make distcheck DISTCHECK_CONFIGURE_FLAGS='--enable-werror --enable-openvz --enable-vserver --enable-ancient-vserver --enable-unicode --enable-hwloc --enable-delayacct --enable-sensors --enable-capabilities'
 
@@ -188,7 +188,7 @@ jobs:
     - name: Configure
       run: ./configure --enable-werror --enable-openvz --enable-vserver --enable-ancient-vserver --enable-unicode --enable-hwloc --enable-delayacct --enable-sensors --enable-capabilities || ( cat config.log; exit 1; )
     - name: Build
-      run: make -k
+      run: make -k V=0
     - name: Run sanitized htop (1)
       run: ./htop -h
     - name: Run sanitized htop (2)
