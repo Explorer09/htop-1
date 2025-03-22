@@ -61,8 +61,8 @@ jobs:
   build-ubuntu-minimal-clang-lto-O2:
     runs-on: ubuntu-latest
     env:
-      CC: clang-18
-      CFLAGS: -O2 -g -flto
+      CC: clang-20
+      CFLAGS: -O2 -g -flto -Wno-shorten-64-to-32
       LDFLAGS: -O2 -g -flto -Wl,--as-needed
     steps:
     - uses: actions/checkout@v5
@@ -70,10 +70,10 @@ jobs:
       run: |
         ubuntu_codename=`LC_ALL=C sed 's/^ *UBUNTU_CODENAME *= *\([a-z]*\).*$/\1/p; d' /etc/os-release`
         wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key 2>/dev/null | sudo apt-key add -
-        sudo add-apt-repository "deb http://apt.llvm.org/${ubuntu_codename}/ llvm-toolchain-${ubuntu_codename}-18 main" -y
+        sudo add-apt-repository "deb http://apt.llvm.org/${ubuntu_codename}/ llvm-toolchain-${ubuntu_codename}-20 main" -y
         sudo apt-get update -q
     - name: Install Dependencies
-      run: sudo apt-get install --no-install-recommends clang-18 libncursesw5-dev
+      run: sudo apt-get install --no-install-recommends clang-20 libncursesw5-dev
     - name: Bootstrap
       run: ./autogen.sh
     - name: Configure
@@ -88,8 +88,8 @@ jobs:
   build-ubuntu-minimal-clang-lto-Os:
     runs-on: ubuntu-latest
     env:
-      CC: clang-18
-      CFLAGS: -Os -g -flto
+      CC: clang-20
+      CFLAGS: -Os -g -flto -Wno-shorten-64-to-32
       LDFLAGS: -Os -g -flto -Wl,--as-needed
     steps:
     - uses: actions/checkout@v5
@@ -97,10 +97,10 @@ jobs:
       run: |
         ubuntu_codename=`LC_ALL=C sed 's/^ *UBUNTU_CODENAME *= *\([a-z]*\).*$/\1/p; d' /etc/os-release`
         wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key 2>/dev/null | sudo apt-key add -
-        sudo add-apt-repository "deb http://apt.llvm.org/${ubuntu_codename}/ llvm-toolchain-${ubuntu_codename}-18 main" -y
+        sudo add-apt-repository "deb http://apt.llvm.org/${ubuntu_codename}/ llvm-toolchain-${ubuntu_codename}-20 main" -y
         sudo apt-get update -q
     - name: Install Dependencies
-      run: sudo apt-get install --no-install-recommends clang-18 libncursesw5-dev
+      run: sudo apt-get install --no-install-recommends clang-20 libncursesw5-dev
     - name: Bootstrap
       run: ./autogen.sh
     - name: Configure
@@ -157,8 +157,8 @@ jobs:
   build-ubuntu-full-featured-clang-lto-O2:
     runs-on: ubuntu-latest
     env:
-      CC: clang-18
-      CFLAGS: -O2 -g -flto
+      CC: clang-20
+      CFLAGS: -O2 -g -flto -Wno-shorten-64-to-32
       LDFLAGS: -O2 -g -flto -Wl,--as-needed
     steps:
     - uses: actions/checkout@v5
@@ -166,10 +166,10 @@ jobs:
       run: |
         ubuntu_codename=`LC_ALL=C sed 's/^ *UBUNTU_CODENAME *= *\([a-z]*\).*$/\1/p; d' /etc/os-release`
         wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key 2>/dev/null | sudo apt-key add -
-        sudo add-apt-repository "deb http://apt.llvm.org/${ubuntu_codename}/ llvm-toolchain-${ubuntu_codename}-18 main" -y
+        sudo add-apt-repository "deb http://apt.llvm.org/${ubuntu_codename}/ llvm-toolchain-${ubuntu_codename}-20 main" -y
         sudo apt-get update -q
     - name: Install Dependencies
-      run: sudo apt-get install --no-install-recommends clang-18 libncursesw5-dev libhwloc-dev libnl-3-dev libnl-genl-3-dev libsensors-dev libcap-dev
+      run: sudo apt-get install --no-install-recommends clang-20 libncursesw5-dev libhwloc-dev libnl-3-dev libnl-genl-3-dev libsensors-dev libcap-dev
     - name: Bootstrap
       run: ./autogen.sh
     - name: Configure
@@ -184,8 +184,8 @@ jobs:
   build-ubuntu-full-featured-clang-lto-Os:
     runs-on: ubuntu-latest
     env:
-      CC: clang-18
-      CFLAGS: -Os -g -flto
+      CC: clang-20
+      CFLAGS: -Os -g -flto -Wno-shorten-64-to-32
       LDFLAGS: -Os -g -flto -Wl,--as-needed
     steps:
     - uses: actions/checkout@v5
@@ -193,10 +193,10 @@ jobs:
       run: |
         ubuntu_codename=`LC_ALL=C sed 's/^ *UBUNTU_CODENAME *= *\([a-z]*\).*$/\1/p; d' /etc/os-release`
         wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key 2>/dev/null | sudo apt-key add -
-        sudo add-apt-repository "deb http://apt.llvm.org/${ubuntu_codename}/ llvm-toolchain-${ubuntu_codename}-18 main" -y
+        sudo add-apt-repository "deb http://apt.llvm.org/${ubuntu_codename}/ llvm-toolchain-${ubuntu_codename}-20 main" -y
         sudo apt-get update -q
     - name: Install Dependencies
-      run: sudo apt-get install --no-install-recommends clang-18 libncursesw5-dev libhwloc-dev libnl-3-dev libnl-genl-3-dev libsensors-dev libcap-dev
+      run: sudo apt-get install --no-install-recommends clang-20 libncursesw5-dev libhwloc-dev libnl-3-dev libnl-genl-3-dev libsensors-dev libcap-dev
     - name: Bootstrap
       run: ./autogen.sh
     - name: Configure
