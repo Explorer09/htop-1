@@ -212,7 +212,6 @@ static void GraphMeterMode_draw(Meter* this, int x, int y, int w) {
       attrset(CRT_colors[METER_TEXT]);
       mvaddnstr(y, x, caption, captionLen);
    }
-   x += captionLen;
    w -= captionLen;
 
    GraphData* data = &this->drawData;
@@ -251,6 +250,7 @@ static void GraphMeterMode_draw(Meter* this, int x, int y, int w) {
    if (w < 1) {
       goto end;
    }
+   x += captionLen;
 
    // Graph drawing style (character set, etc.)
    const char* const* GraphMeterMode_dots;
