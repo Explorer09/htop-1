@@ -126,19 +126,27 @@ jobs:
     - name: Build
       run: make -k
 
-  build-unsupported-latest-gcc:
+  build-unsupported-latest-clang:
     # build as if we were on an unsupported platform
     runs-on: ubuntu-latest
+    env:
+      CC: clang-20
     steps:
     - uses: actions/checkout@v4
+    - name: install clang repo
+      run: |
+        ubuntu_codename=`LC_ALL=C sed 's/^ *UBUNTU_CODENAME *= *\([a-z]*\).*$/\1/p; d' /etc/os-release`
+        wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key 2>/dev/null | sudo apt-key add -
+        sudo add-apt-repository "deb http://apt.llvm.org/${ubuntu_codename}/ llvm-toolchain-${ubuntu_codename}-20 main" -y
+        sudo apt-get update -q
     - name: Install Dependencies
-      run: sudo apt-get install --no-install-recommends libncursesw5-dev libtinfo-dev libgpm-dev
+      run: sudo apt-get install --no-install-recommends clang-20 libncursesw5-dev libtinfo-dev libgpm-dev
     - name: Bootstrap
       run: ./autogen.sh
     - name: Configure
       run: ./configure --host=`uname -m`-none --enable-werror --enable-unicode || ( cat config.log; exit 1; )
     - name: Build
-      run: make -k
+      run: make -k V=0
 
   build-ubuntu-latest-clang-analyzer:
     runs-on: ubuntu-latest
@@ -202,6 +210,7 @@ jobs:
     runs-on: macOS-latest
     env:
       CC: clang
+      CFLAGS: -O3 -g -flto -Werror=shorten-64-to-32
     steps:
     - uses: actions/checkout@v4
     - name: Install Dependencies
@@ -211,7 +220,7 @@ jobs:
     - name: Configure
       run: ./configure --enable-werror || ( cat config.log; exit 1; )
     - name: Build
-      run: make -k
+      run: make -k V=0
     - name: Distcheck
       run: make distcheck DISTCHECK_CONFIGURE_FLAGS="--enable-werror"
 
@@ -233,10 +242,10 @@ jobs:
             run: |
               set -e
               export LDFLAGS="-L/usr/local/lib"
-              export CFLAGS="-I/usr/local/include"
+              export CFLAGS="-I/usr/local/include -O3 -g -flto -Werror=shorten-64-to-32"
               ./autogen.sh
               ./configure --enable-unicode --enable-werror
-              gmake -k
+              gmake -k V=0
 
   build-freebsd-latest-clang:
       runs-on: ubuntu-22.04
@@ -255,9 +264,10 @@ jobs:
               git config --global --add safe.directory /home/runner/work/htop/htop
             run: |
               set -e
+              export CFLAGS="-O3 -g -flto -Werror=shorten-64-to-32"
               ./autogen.sh
               ./configure --enable-unicode --enable-werror
-              gmake -k
+              gmake -k V=0
 
   build-netbsd-latest-gcc:
       runs-on: ubuntu-22.04
@@ -280,9 +290,10 @@ jobs:
               git config --global --add safe.directory /home/runner/work/htop/htop
             run: |
               set -e
+              export CFLAGS="-O3 -g -flto -Werror=shorten-64-to-32"
               ./autogen.sh
               ./configure --enable-unicode --enable-werror
-              gmake -k
+              gmake -k V=0
 
   build-openbsd-latest-clang:
       runs-on: ubuntu-22.04
@@ -315,9 +326,10 @@ jobs:
               # Must not include the third version field in $AUTOMAKE_VERSION
               export AUTOMAKE_VERSION=$(echo ${automake_version_full} |
                 LC_ALL=C sed 's/^\([0-9]*\.[0-9]*\).*$/\1/')
+              export CFLAGS="-O3 -g -flto -Werror=shorten-64-to-32"
               ./autogen.sh
               ./configure --enable-unicode --enable-werror
-              gmake -k
+              gmake -k V=0
 
   build-solaris-latest-gcc:
       runs-on: ubuntu-22.04
@@ -336,9 +348,10 @@ jobs:
               git config --global --add safe.directory /home/runner/work/htop/htop
             run: |
               set -e
+              export CFLAGS="-O3 -g -flto -Werror=shorten-64-to-32"
               ./autogen.sh
               ./configure --enable-unicode --enable-werror
-              gmake -k
+              gmake -k V=0
 
   lint-whitespace:
     runs-on: ubuntu-latest
