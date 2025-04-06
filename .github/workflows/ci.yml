@@ -302,6 +302,7 @@ jobs:
               git config --global --add safe.directory /home/runner/work/htop/htop
             run: |
               set -e
+              export CFLAGS="-g -O2 -flto"
               ./autogen.sh
               ./configure --enable-unicode --enable-werror
               gmake -k
