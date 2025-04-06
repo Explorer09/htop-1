@@ -45,7 +45,7 @@ jobs:
     - name: Bootstrap
       run: ./autogen.sh
     - name: Configure
-      run: ./configure --enable-werror --enable-affinity --disable-unicode --disable-sensors || ( cat config.log; exit 1; )
+      run: ./configure --enable-werror --enable-affinity --disable-unicode --disable-sensors --enable-debug || ( cat config.log; exit 1; )
     - name: Build
       run: make -k V=0
     - name: Distcheck
@@ -87,7 +87,7 @@ jobs:
     - name: Bootstrap
       run: ./autogen.sh
     - name: Configure
-      run: ./configure --enable-werror --enable-openvz --enable-vserver --enable-ancient-vserver --enable-unicode --enable-hwloc --enable-delayacct --enable-sensors --enable-capabilities || ( cat config.log; exit 1; )
+      run: ./configure --enable-werror --enable-openvz --enable-vserver --enable-ancient-vserver --enable-unicode --enable-hwloc --enable-delayacct --enable-sensors --enable-capabilities --enable-debug || ( cat config.log; exit 1; )
     - name: Build
       run: make -k V=0
     - name: Distcheck
@@ -144,7 +144,7 @@ jobs:
     - name: Bootstrap
       run: ./autogen.sh
     - name: Configure
-      run: ./configure --host=`uname -m`-none --enable-werror --enable-unicode || ( cat config.log; exit 1; )
+      run: ./configure --host=`uname -m`-none --enable-werror --enable-unicode --enable-debug || ( cat config.log; exit 1; )
     - name: Build
       run: make -k V=0
 
@@ -194,7 +194,7 @@ jobs:
     - name: Bootstrap
       run: ./autogen.sh
     - name: Configure
-      run: ./configure --enable-werror --enable-openvz --enable-vserver --enable-ancient-vserver --enable-unicode --enable-hwloc --enable-delayacct --enable-sensors --enable-capabilities || ( cat config.log; exit 1; )
+      run: ./configure --enable-werror --enable-openvz --enable-vserver --enable-ancient-vserver --enable-unicode --enable-hwloc --enable-delayacct --enable-sensors --enable-capabilities --enable-debug || ( cat config.log; exit 1; )
     - name: Build
       run: make -k V=0
     - name: Run sanitized htop (1)
@@ -218,7 +218,7 @@ jobs:
     - name: Bootstrap
       run: ./autogen.sh
     - name: Configure
-      run: ./configure --enable-werror || ( cat config.log; exit 1; )
+      run: ./configure --enable-werror --enable-debug || ( cat config.log; exit 1; )
     - name: Build
       run: make -k V=0
     - name: Distcheck
@@ -266,7 +266,7 @@ jobs:
               set -e
               export CFLAGS="-O3 -g -flto -Werror=shorten-64-to-32"
               ./autogen.sh
-              ./configure --enable-unicode --enable-werror
+              ./configure --enable-unicode --enable-werror --enable-debug
               gmake -k V=0
 
   build-netbsd-latest-gcc:
@@ -328,7 +328,7 @@ jobs:
                 LC_ALL=C sed 's/^\([0-9]*\.[0-9]*\).*$/\1/')
               export CFLAGS="-O3 -g -flto -Werror=shorten-64-to-32"
               ./autogen.sh
-              ./configure --enable-unicode --enable-werror
+              ./configure --enable-unicode --enable-werror --enable-debug
               gmake -k V=0
 
   build-solaris-latest-gcc:
