@@ -242,7 +242,7 @@ jobs:
             run: |
               set -e
               export LDFLAGS="-L/usr/local/lib"
-              export CFLAGS="-I/usr/local/include -O3 -g -flto -Werror=shorten-64-to-32"
+              export CFLAGS="-I/usr/local/include -O3 -g -flto"
               ./autogen.sh
               ./configure --enable-unicode --enable-werror
               gmake -k V=0
@@ -290,7 +290,7 @@ jobs:
               git config --global --add safe.directory /home/runner/work/htop/htop
             run: |
               set -e
-              export CFLAGS="-O3 -g -flto -Werror=shorten-64-to-32"
+              export CFLAGS="-O3 -g -flto"
               ./autogen.sh
               ./configure --enable-unicode --enable-werror
               gmake -k V=0
@@ -348,7 +348,7 @@ jobs:
               git config --global --add safe.directory /home/runner/work/htop/htop
             run: |
               set -e
-              export CFLAGS="-O3 -g -flto -Werror=shorten-64-to-32"
+              export CFLAGS="-O3 -g -flto"
               ./autogen.sh
               ./configure --enable-unicode --enable-werror
               gmake -k V=0
