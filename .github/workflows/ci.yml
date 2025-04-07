@@ -115,16 +115,24 @@ jobs:
   build-ubuntu-latest-pcp:
     # we want PCP v5.2.3+
     runs-on: ubuntu-22.04
+    env:
+      CC: clang-20
     steps:
     - uses: actions/checkout@v4
+    - name: install clang repo
+      run: |
+        ubuntu_codename=`LC_ALL=C sed 's/^ *UBUNTU_CODENAME *= *\([a-z]*\).*$/\1/p; d' /etc/os-release`
+        wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key 2>/dev/null | sudo apt-key add -
+        sudo add-apt-repository "deb http://apt.llvm.org/${ubuntu_codename}/ llvm-toolchain-${ubuntu_codename}-20 main" -y
+        sudo apt-get update -q
     - name: Install Dependencies
-      run: sudo apt-get install --no-install-recommends libpcp3-dev libncursesw5-dev libtinfo-dev libgpm-dev
+      run: sudo apt-get install --no-install-recommends clang-20 libpcp3-dev libncursesw5-dev libtinfo-dev libgpm-dev
     - name: Bootstrap
       run: ./autogen.sh
     - name: Configure
-      run: ./configure --enable-werror --enable-pcp --enable-unicode || ( cat config.log; exit 1; )
+      run: ./configure --enable-werror --enable-pcp --enable-unicode --enable-debug || ( cat config.log; exit 1; )
     - name: Build
-      run: make -k
+      run: make -k V=0
 
   build-unsupported-latest-clang:
     # build as if we were on an unsupported platform
