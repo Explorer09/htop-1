@@ -314,11 +314,11 @@ void LibSensors_getCPUTemperatures(CPUData* cpus, unsigned int existingCPUs, uns
             bool skip = true;
             /* Intel coretemp names, labels mention package and physical id */
             if (String_startsWith(label, "Package id ")) {
-               physicalID = strtoul(label + strlen("Package id "), NULL, 10);
+               physicalID = strtoul(label + strlen("Package id "), NULL, 10); /* __MARKER */
             } else if (String_startsWith(label, "Physical id ")) {
-               physicalID = strtoul(label + strlen("Physical id "), NULL, 10);
+               physicalID = strtoul(label + strlen("Physical id "), NULL, 10); /* __MARKER */
             } else if (String_startsWith(label, "Core ")) {
-               int coreID = strtoul(label + strlen("Core "), NULL, 10);
+               int coreID = strtoul(label + strlen("Core "), NULL, 10); /* __MARKER */
                for (size_t i = 1; i < existingCPUs + 1; i++) {
                   if (cpus[i].physicalID == physicalID && cpus[i].coreID == coreID) {
                      data[i] = temp;

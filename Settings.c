@@ -927,8 +927,8 @@ bool Settings_isReadonly(void) {
 }
 
 void Settings_setHeaderLayout(Settings* this, HeaderLayout hLayout) {
-   unsigned int oldColumns = HeaderLayout_getColumns(this->hLayout);
-   unsigned int newColumns = HeaderLayout_getColumns(hLayout);
+   unsigned int oldColumns = HeaderLayout_getColumns(this->hLayout); /* __MARKER */
+   unsigned int newColumns = HeaderLayout_getColumns(hLayout); /* __MARKER */
 
    if (newColumns > oldColumns) {
       this->hColumns = xReallocArray(this->hColumns, newColumns, sizeof(MeterColumnSetting));

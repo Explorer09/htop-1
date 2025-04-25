@@ -144,7 +144,7 @@ io_priority = (cpu_nice + 20) / 5. -- From ionice(1) man page
 */
 static int LinuxProcess_effectiveIOPriority(const LinuxProcess* this) {
    if (IOPriority_class(this->ioPriority) == IOPRIO_CLASS_NONE) {
-      return IOPriority_tuple(IOPRIO_CLASS_BE, (this->super.nice + 20) / 5);
+      return IOPriority_tuple(IOPRIO_CLASS_BE, (this->super.nice + 20) / 5); /* __MARKER */
    }
 
    return this->ioPriority;

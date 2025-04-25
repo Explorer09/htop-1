@@ -89,7 +89,7 @@ static void LinuxMachine_updateCPUcount(LinuxMachine* this) {
       existing++;
 
       /* readdir() iterates with no specific order */
-      unsigned int max = MAXIMUM(existing, id + 1);
+      unsigned int max = MAXIMUM(existing, id + 1); /* __MARKER */
       if (max > currExisting) {
          this->cpuData = xReallocArrayZero(this->cpuData, currExisting ? (currExisting + 1) : 0, max + /* aggregate */ 1, sizeof(CPUData));
          this->cpuData[0].online = true; /* average is always "online" */
@@ -754,7 +754,7 @@ Machine* Machine_new(UsersTable* usersTable, uid_t userId) {
    Machine_init(super, usersTable, userId);
 
    // Initialize page size
-   if ((this->pageSize = sysconf(_SC_PAGESIZE)) == -1)
+   if ((this->pageSize = sysconf(_SC_PAGESIZE)) == -1) /* __MARKER */
       CRT_fatalError("Cannot get pagesize by sysconf(_SC_PAGESIZE)");
    this->pageSizeKB = this->pageSize / ONE_K;
 

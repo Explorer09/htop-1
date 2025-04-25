@@ -43,7 +43,7 @@ static bool PCPDynamicColumn_addMetric(PCPDynamicColumns* columns, PCPDynamicCol
    column->id = columns->offset + columns->cursor;
    columns->cursor++;
 
-   Platform_addMetric(column->id, metricName);
+   Platform_addMetric(column->id, metricName); /* __MARKER */
    return true;
 }
 
@@ -117,7 +117,7 @@ static PCPDynamicColumn* PCPDynamicColumn_new(PCPDynamicColumns* columns, const 
    column->defaultEnabled = true;
 
    size_t id = columns->count + LAST_PROCESSFIELD;
-   Hashtable_put(columns->table, id, column);
+   Hashtable_put(columns->table, id, column); /* __MARKER */
    columns->count++;
 
    return column;
@@ -166,7 +166,7 @@ static void PCPDynamicColumn_parseFile(PCPDynamicColumns* columns, const char* p
       } else if (value && column && String_eq(key, "description")) {
          free_and_xStrdup(&column->super.description, value);
       } else if (value && column && String_eq(key, "width")) {
-         column->super.width = strtoul(value, NULL, 10);
+         column->super.width = strtoul(value, NULL, 10); /* __MARKER */
       } else if (value && column && String_eq(key, "format")) {
          free_and_xStrdup(&column->format, value);
       } else if (value && column && String_eq(key, "instances")) {
@@ -267,7 +267,7 @@ static void PCPDynamicColumn_setupWidth(ATTR_UNUSED ht_key_t key, void* value, A
    PCPDynamicColumn* column = (PCPDynamicColumn*) value;
 
    /* calculate column size based on config file and metric units */
-   const pmDesc* desc = Metric_desc(column->id);
+   const pmDesc* desc = Metric_desc(column->id); /* __MARKER */
 
    if (column->instances || desc->type == PM_TYPE_STRING) {
       column->super.width = column->width;
@@ -456,15 +456,15 @@ void PCPDynamicColumn_writeAtomValue(PCPDynamicColumn* column, RichString* str, 
 void PCPDynamicColumn_writeField(PCPDynamicColumn* this, const Process* proc, RichString* str) {
    const Settings* settings = proc->super.host->settings;
    const PCPProcess* pp = (const PCPProcess*) proc;
-   const pmDesc* desc = Metric_desc(this->id);
+   const pmDesc* desc = Metric_desc(this->id); /* __MARKER */
    pid_t pid = Process_getPid(proc);
 
    pmAtomValue atom;
    pmAtomValue* ap = &atom;
-   if (!Metric_instance(this->id, pid, pp->offset, ap, desc->type))
+   if (!Metric_instance(this->id, pid, pp->offset, ap, desc->type)) /* __MARKER */
       ap = NULL;
 
-   PCPDynamicColumn_writeAtomValue(this, str, settings, this->id, pid, desc, ap);
+   PCPDynamicColumn_writeAtomValue(this, str, settings, this->id, pid, desc, ap); /* __MARKER */
 }
 
 int PCPDynamicColumn_compareByKey(const PCPProcess* p1, const PCPProcess* p2, ProcessField key) {
@@ -476,11 +476,11 @@ int PCPDynamicColumn_compareByKey(const PCPProcess* p1, const PCPProcess* p2, Pr
       return -1;
 
    size_t metric = column->id;
-   unsigned int type = Metric_type(metric);
+   unsigned int type = Metric_type(metric); /* __MARKER */
 
    pmAtomValue atom1 = {0}, atom2 = {0};
-   if (!Metric_instance(metric, Process_getPid(&p1->super), p1->offset, &atom1, type) ||
-       !Metric_instance(metric, Process_getPid(&p2->super), p2->offset, &atom2, type)) {
+   if (!Metric_instance(metric, Process_getPid(&p1->super), p1->offset, &atom1, type) || /* __MARKER */
+       !Metric_instance(metric, Process_getPid(&p2->super), p2->offset, &atom2, type)) { /* __MARKER */
       if (type == PM_TYPE_STRING) {
          free(atom1.cp);
          free(atom2.cp);

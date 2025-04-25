@@ -103,7 +103,7 @@ static void FreeBSDProcessTable_updateProcessName(kvm_t* kd, const struct kinfo_
 
    char** argv = kvm_getargv(kd, kproc, 0);
    if (!argv || !argv[0]) {
-      Process_updateCmdline(proc, kproc->ki_comm, 0, strlen(kproc->ki_comm));
+      Process_updateCmdline(proc, kproc->ki_comm, 0, strlen(kproc->ki_comm)); /* __MARKER */
       return;
    }
 
@@ -118,7 +118,7 @@ static void FreeBSDProcessTable_updateProcessName(kvm_t* kd, const struct kinfo_
    for (int i = 0; argv[i]; i++) {
       at = stpcpy(at, argv[i]);
       if (end == 0) {
-         end = at - cmdline;
+         end = at - cmdline; /* __MARKER */
       }
       *at++ = ' ';
    }

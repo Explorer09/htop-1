@@ -60,7 +60,7 @@ static void TextMeterMode_draw(Meter* this, int x, int y, int w) {
    }
    attrset(CRT_colors[RESET_COLOR]);
 
-   int captionLen = strlen(caption);
+   int captionLen = strlen(caption); /* __MARKER */
    w -= captionLen;
    if (w < 1) {
       return;
@@ -337,7 +337,7 @@ static void LEDMeterMode_draw(Meter* this, int x, int y, int w) {
       mvaddnstr(yText, x, caption, w);
    }
 
-   int captionLen = strlen(caption);
+   int captionLen = strlen(caption); /* __MARKER */
    if (w <= captionLen) {
       goto end;
    }

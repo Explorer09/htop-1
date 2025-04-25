@@ -61,7 +61,7 @@ void Table_add(Table* this, Row* row) {
 
    assert(Vector_indexOf(this->rows, row, Row_idEqualCompare) != -1);
    assert(Hashtable_get(this->table, row->id) != NULL);
-   assert(Vector_countEquals(this->rows, Hashtable_count(this->table)));
+   assert(Vector_countEquals(this->rows, Hashtable_count(this->table))); /* __MARKER */
 }
 
 // Table_removeIndex removes a given row from the lists map and soft deletes
@@ -84,7 +84,7 @@ static void Table_removeIndex(Table* this, const Row* row, int idx) {
    }
 
    assert(Hashtable_get(this->table, rowid) == NULL);
-   assert(Vector_countEquals(this->rows, Hashtable_count(this->table)));
+   assert(Vector_countEquals(this->rows, Hashtable_count(this->table))); /* __MARKER */
 }
 
 static void Table_buildTreeBranch(Table* this, int rowid, unsigned int level, int32_t indent, bool show) {

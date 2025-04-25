@@ -367,14 +367,14 @@ bool Platform_init(void) {
    PCPDynamicColumns_init(&pcp->columns);
    PCPDynamicScreens_init(&pcp->screens, &pcp->columns);
 
-   sts = pmLookupName(pcp->totalMetrics, pcp->names, pcp->pmids);
+   sts = pmLookupName(pcp->totalMetrics, pcp->names, pcp->pmids); /* __MARKER */
    if (sts < 0) {
       fprintf(stderr, "Error: cannot lookup metric names: %s\n", pmErrStr(sts));
       Platform_done();
       return false;
    }
 
-   sts = pmLookupDescs(pcp->totalMetrics, pcp->pmids, pcp->descs);
+   sts = pmLookupDescs(pcp->totalMetrics, pcp->pmids, pcp->descs); /* __MARKER */
    if (sts < 1) {
       if (sts < 0)
          fprintf(stderr, "Error: cannot lookup descriptors: %s\n", pmErrStr(sts));
@@ -400,7 +400,7 @@ bool Platform_init(void) {
 
    /* enable metrics for all dynamic columns (including those from dynamic screens) */
    for (size_t i = pcp->columns.offset; i < pcp->columns.offset + pcp->columns.count; i++)
-      Metric_enable(i, true);
+      Metric_enable(i, true); /* __MARKER */
 
    Metric_fetch(NULL);
 
@@ -889,7 +889,7 @@ Hashtable* Platform_dynamicColumns(void) {
 const char* Platform_dynamicColumnName(unsigned int key) {
    PCPDynamicColumn* this = Hashtable_get(pcp->columns.table, key);
    if (this) {
-      Metric_enable(this->id, true);
+      Metric_enable(this->id, true); /* __MARKER */
       if (this->super.caption)
          return this->super.caption;
       if (this->super.heading)

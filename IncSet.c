@@ -32,7 +32,7 @@ void IncSet_reset(IncSet* this, IncType type) {
 void IncSet_setFilter(IncSet* this, const char* filter) {
    IncMode* mode = &this->modes[INC_FILTER];
    size_t len = String_safeStrncpy(mode->buffer, filter, sizeof(mode->buffer));
-   mode->index = len;
+   mode->index = len; /* __MARKER */
    this->filtering = true;
 }
 

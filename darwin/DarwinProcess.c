@@ -244,7 +244,7 @@ static void DarwinProcess_updateCmdLine(const struct kinfo_proc* k, Process* pro
          /* Note location of current '\0'. */
          np = cp;
          if (end == 0) {
-            end = cp - sp;
+            end = cp - sp; /* __MARKER */
          }
       }
    }
@@ -258,7 +258,7 @@ static void DarwinProcess_updateCmdLine(const struct kinfo_proc* k, Process* pro
       goto ERROR_B;
    }
    if (end == 0) {
-      end = np - sp;
+      end = np - sp; /* __MARKER */
    }
 
    Process_updateCmdline(proc, sp, 0, end);
@@ -272,7 +272,7 @@ ERROR_B:
    free( procargs );
 
 ERROR_A:
-   Process_updateCmdline(proc, k->kp_proc.p_comm, 0, strlen(k->kp_proc.p_comm));
+   Process_updateCmdline(proc, k->kp_proc.p_comm, 0, strlen(k->kp_proc.p_comm)); /* __MARKER */
 }
 
 static char* DarwinProcess_getDevname(dev_t dev) {
@@ -341,7 +341,7 @@ void DarwinProcess_setFromKInfoProc(Process* proc, const struct kinfo_proc* ps, 
        * field is enabled in the settings.
        */
       if (settings->ss->flags & PROCESS_FLAG_TTY) {
-         proc->tty_name = DarwinProcess_getDevname(proc->tty_nr);
+         proc->tty_name = DarwinProcess_getDevname(proc->tty_nr); /* __MARKER */
          if (!proc->tty_name) {
             /* devname failed: prevent us from calling it again */
             proc->tty_nr = NODEV;
@@ -455,7 +455,7 @@ void DarwinProcess_scanThreads(DarwinProcess* dp, DarwinProcessTable* dpt) {
       uint64_t tid = identifer_info.thread_id;
 
       bool preExisting;
-      Process *tprocess = ProcessTable_getProcess(&dpt->super, tid, &preExisting, DarwinProcess_new);
+      Process *tprocess = ProcessTable_getProcess(&dpt->super, tid, &preExisting, DarwinProcess_new); /* __MARKER */
       tprocess->super.updated = true;
       dpt->super.totalTasks++;
 
@@ -498,7 +498,7 @@ void DarwinProcess_scanThreads(DarwinProcess* dp, DarwinProcessTable* dpt) {
 
       // TODO: depend on setting
       const char* name = extended_info.pth_name[0] != '\0' ? extended_info.pth_name : proc->procComm;
-      Process_updateCmdline(tprocess, name, 0, name ? strlen(name) : 0);
+      Process_updateCmdline(tprocess, name, 0, name ? strlen(name) : 0); /* __MARKER */
 
       if (!preExisting)
          ProcessTable_add(&dpt->super, tprocess);

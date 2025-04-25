@@ -553,7 +553,7 @@ void Platform_getBattery(double* percent, ACPresence* isOnAC) {
    double cap_max = 0.0;
 
    /* Get the battery */
-   for (int i = 0, len = CFArrayGetCount(list); i < len; ++i) {
+   for (int i = 0, len = CFArrayGetCount(list); i < len; ++i) { /* __MARKER */
       CFDictionaryRef power_source = IOPSGetPowerSourceDescription(power_sources, CFArrayGetValueAtIndex(list, i)); /* GET rule */
 
       if (!power_source)

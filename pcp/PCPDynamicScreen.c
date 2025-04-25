@@ -42,7 +42,7 @@ static char* formatFields(PCPDynamicScreen* screen) {
 
 static void PCPDynamicScreens_appendDynamicColumns(PCPDynamicScreens* screens, PCPDynamicColumns* columns) {
    for (size_t i = 0; i < screens->count; i++) {
-      PCPDynamicScreen* screen = Hashtable_get(screens->table, i);
+      PCPDynamicScreen* screen = Hashtable_get(screens->table, i); /* __MARKER */
       if (!screen)
          return;
 
@@ -52,17 +52,17 @@ static void PCPDynamicScreens_appendDynamicColumns(PCPDynamicScreens* screens, P
 
          column->id = columns->offset + columns->cursor;
          columns->cursor++;
-         Platform_addMetric(column->id, column->metricName);
+         Platform_addMetric(column->id, column->metricName); /* __MARKER */
 
          size_t id = columns->count + LAST_PROCESSFIELD;
-         Hashtable_put(columns->table, id, column);
+         Hashtable_put(columns->table, id, column); /* __MARKER */
          columns->count++;
 
          if (j == 0) {
-            const pmDesc* desc = Metric_desc(column->id);
+            const pmDesc* desc = Metric_desc(column->id); /* __MARKER */
             assert(desc->indom != PM_INDOM_NULL);
             screen->indom = desc->indom;
-            screen->key = column->id;
+            screen->key = column->id; /* __MARKER */
          }
       }
       screen->super.columnKeys = formatFields(screen);
@@ -146,7 +146,7 @@ static void PCPDynamicScreen_parseColumn(PCPDynamicScreen* screen, const char* p
       } else if (String_eq(p, "description")) {
          free_and_xStrdup(&column->super.description, value);
       } else if (String_eq(p, "width")) {
-         column->width = strtoul(value, NULL, 10);
+         column->width = strtoul(value, NULL, 10); /* __MARKER */
       } else if (String_eq(p, "format")) {
          free_and_xStrdup(&column->format, value);
       } else if (String_eq(p, "instances")) {
@@ -207,7 +207,7 @@ static PCPDynamicScreen* PCPDynamicScreen_new(PCPDynamicScreens* screens, const 
    screen->defaultEnabled = true;
 
    size_t id = screens->count;
-   Hashtable_put(screens->table, id, screen);
+   Hashtable_put(screens->table, id, screen); /* __MARKER */
    screens->count++;
 
    return screen;
@@ -262,7 +262,7 @@ static void PCPDynamicScreen_parseFile(PCPDynamicScreens* screens, const char* p
       } else if (String_eq(key, "sortKey")) {
          free_and_xStrdup(&screen->super.sortKey, value);
       } else if (String_eq(key, "sortDirection")) {
-         screen->super.direction = strtoul(value, NULL, 10);
+         screen->super.direction = strtoul(value, NULL, 10); /* __MARKER */
       } else if (String_eq(key, "default") || String_eq(key, "enabled")) {
          if (String_eq(value, "False") || String_eq(value, "false"))
             screen->defaultEnabled = false;
@@ -357,7 +357,7 @@ void PCPDynamicScreen_appendTables(PCPDynamicScreens* screens, Machine* host) {
    PCPDynamicScreen* ds;
 
    for (size_t i = 0; i < screens->count; i++) {
-      if ((ds = (PCPDynamicScreen*)Hashtable_get(screens->table, i)) == NULL)
+      if ((ds = (PCPDynamicScreen*)Hashtable_get(screens->table, i)) == NULL) /* __MARKER */
          continue;
       ds->table = InDomTable_new(host, ds->indom, ds->key);
    }
@@ -367,7 +367,7 @@ void PCPDynamicScreen_appendScreens(PCPDynamicScreens* screens, Settings* settin
    PCPDynamicScreen* ds;
 
    for (size_t i = 0; i < screens->count; i++) {
-      if ((ds = (PCPDynamicScreen*)Hashtable_get(screens->table, i)) == NULL)
+      if ((ds = (PCPDynamicScreen*)Hashtable_get(screens->table, i)) == NULL) /* __MARKER */
          continue;
       if (ds->defaultEnabled == false)
          continue;
@@ -381,7 +381,7 @@ void PCPDynamicScreen_addDynamicScreen(PCPDynamicScreens* screens, ScreenSetting
    PCPDynamicScreen* ds;
 
    for (size_t i = 0; i < screens->count; i++) {
-      if ((ds = (PCPDynamicScreen*)Hashtable_get(screens->table, i)) == NULL)
+      if ((ds = (PCPDynamicScreen*)Hashtable_get(screens->table, i)) == NULL) /* __MARKER */
          continue;
       if (String_eq(ss->dynamic, ds->super.name) == false)
          continue;

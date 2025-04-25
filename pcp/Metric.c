@@ -167,7 +167,7 @@ bool Metric_fetch(struct timeval* timestamp) {
    }
    int sts, count = 0;
    do {
-      sts = pmFetch(pcp->totalMetrics, pcp->fetch, &pcp->result);
+      sts = pmFetch(pcp->totalMetrics, pcp->fetch, &pcp->result); /* __MARKER */
    } while (sts == PM_ERR_IPC && ++count < 3);
    if (sts < 0) {
       if (pmDebugOptions.appl0)

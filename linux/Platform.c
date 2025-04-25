@@ -508,7 +508,7 @@ FileLocks_ProcessData* Platform_getProcessLocks(pid_t pid) {
 
       errno = 0;
       char* end = de->d_name;
-      int file = strtoull(de->d_name, &end, 10);
+      int file = strtoull(de->d_name, &end, 10); /* __MARKER */
       if (errno || *end)
          continue;
 

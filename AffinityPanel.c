@@ -321,7 +321,7 @@ static MaskItem* AffinityPanel_addObject(AffinityPanel* this, hwloc_obj_t obj, u
    }
 
    /* "[x] " + "|- " * depth + ("- ")?(if root node) + name */
-   unsigned width = 4 + 3 * depth + (2 * !depth) + strlen(buf);
+   unsigned width = 4 + 3 * depth + (2 * !depth) + strlen(buf); /* __MARKER */
    if (width > this->width) {
       this->width = width;
    }

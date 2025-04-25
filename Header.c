@@ -125,7 +125,7 @@ void Header_populateFromSettings(Header* this) {
       const MeterColumnSetting* colSettings = &settings->hColumns[col];
       Vector_prune(this->columns[col]);
       for (size_t i = 0; i < colSettings->len; i++) {
-         Header_addMeterByName(this, colSettings->names[i], colSettings->modes[i], col);
+         Header_addMeterByName(this, colSettings->names[i], colSettings->modes[i], col); /* __MARKER */
       }
    }
 
@@ -198,7 +198,7 @@ void Header_draw(const Header* this) {
    for (int y = 0; y < height; y++) {
       mvhline(y, 0, ' ', COLS);
    }
-   const int numCols = HeaderLayout_getColumns(this->headerLayout);
+   const int numCols = HeaderLayout_getColumns(this->headerLayout); /* __MARKER */
    const int width = COLS - 2 * pad - (numCols - 1);
    int x = pad;
    float roundingLoss = 0.0F;
@@ -269,11 +269,11 @@ static int calcColumnWidthCount(const Header* this, const Meter* curMeter, const
             continue;
 
          if (!Object_isA((const Object*) meter, (const ObjectClass*) &BlankMeter_class))
-            return i - curColumn;
+            return i - curColumn; /* __MARKER */
       }
    }
 
-   return HeaderLayout_getColumns(this->headerLayout) - curColumn;
+   return HeaderLayout_getColumns(this->headerLayout) - curColumn; /* __MARKER */
 }
 
 int Header_calculateHeight(Header* this) {
@@ -286,7 +286,7 @@ int Header_calculateHeight(Header* this) {
       int height = pad;
       for (int i = 0; i < Vector_size(meters); i++) {
          Meter* meter = (Meter*) Vector_get(meters, i);
-         meter->columnWidthCount = calcColumnWidthCount(this, meter, pad, col, height);
+         meter->columnWidthCount = calcColumnWidthCount(this, meter, pad, col, height); /* __MARKER */
          height += meter->h;
       }
       maxHeight = MAXIMUM(maxHeight, height);

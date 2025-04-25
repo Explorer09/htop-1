@@ -408,7 +408,7 @@ Htop_Reaction Action_setScreenTab(State* st, int x) {
          return 0;
       }
       const char* tab = settings->screens[i]->heading;
-      int len = strlen(tab);
+      int len = strlen(tab); /* __MARKER */
       if (x < s + len + 2) {
          settings->ssIndex = i;
          setActiveScreen(settings, st, i);

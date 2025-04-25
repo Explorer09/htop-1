@@ -166,7 +166,7 @@ static inline bool drawTab(const int* y, int* x, int l, const char* name, bool c
    (*x)++;
    if (*x >= l)
       return false;
-   int nameLen = strlen(name);
+   int nameLen = strlen(name); /* __MARKER */
    int n = MINIMUM(l - *x, nameLen);
    attrset(CRT_colors[cur ? SCREENS_CUR_TEXT : SCREENS_OTH_TEXT]);
    mvaddnstr(*y, *x, name, n);

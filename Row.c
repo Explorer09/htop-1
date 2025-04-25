@@ -181,7 +181,7 @@ RowField RowField_keyAt(const Settings* settings, int at) {
    RowField field;
    int x = 0;
    for (int i = 0; (field = fields[i]); i++) {
-      int len = strlen(RowField_alignedTitle(settings, field));
+      int len = strlen(RowField_alignedTitle(settings, field)); /* __MARKER */
       if (at >= x && at <= x + len) {
          return field;
       }
@@ -495,7 +495,7 @@ void Row_printRate(RichString* str, double rate, bool coloring) {
 
 void Row_printLeftAlignedField(RichString* str, int attr, const char* content, unsigned int width) {
    int columns = width;
-   RichString_appendnWideColumns(str, attr, content, strlen(content), &columns);
+   RichString_appendnWideColumns(str, attr, content, strlen(content), &columns); /* __MARKER */
    RichString_appendChr(str, attr, ' ', width + 1 - columns);
 }
 

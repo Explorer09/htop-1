@@ -79,7 +79,7 @@ static void OpenBSDProcessTable_updateProcessName(kvm_t* kd, const struct kinfo_
     */
    char** arg = kvm_getargv(kd, kproc, 500);
    if (arg == NULL || *arg == NULL) {
-      Process_updateCmdline(proc, kproc->p_comm, 0, strlen(kproc->p_comm));
+      Process_updateCmdline(proc, kproc->p_comm, 0, strlen(kproc->p_comm)); /* __MARKER */
       return;
    }
 
@@ -91,7 +91,7 @@ static void OpenBSDProcessTable_updateProcessName(kvm_t* kd, const struct kinfo_
    /* don't use xMalloc here - we want to handle huge argv's gracefully */
    char* s;
    if ((s = malloc(len)) == NULL) {
-      Process_updateCmdline(proc, kproc->p_comm, 0, strlen(kproc->p_comm));
+      Process_updateCmdline(proc, kproc->p_comm, 0, strlen(kproc->p_comm)); /* __MARKER */
       return;
    }
 
@@ -102,7 +102,7 @@ static void OpenBSDProcessTable_updateProcessName(kvm_t* kd, const struct kinfo_
    for (int i = 0; arg[i] != NULL; i++) {
       size_t n = strlcat(s, arg[i], len);
       if (i == 0) {
-         end = MINIMUM(n, len - 1);
+         end = MINIMUM(n, len - 1); /* __MARKER */
          /* check if cmdline ended earlier, e.g 'kdeinit5: Running...' */
          for (int j = end; j > 0; j--) {
             if (arg[0][j] == ' ' && arg[0][j - 1] != '\\') {
@@ -200,7 +200,7 @@ static void OpenBSDProcessTable_scanProcs(OpenBSDProcessTable* this) {
       proc->nice = kproc->p_nice - 20;
       proc->time = 100 * (kproc->p_rtime_sec + ((kproc->p_rtime_usec + 500000) / 1000000));
       proc->priority = kproc->p_priority - PZERO;
-      proc->processor = kproc->p_cpuid;
+      proc->processor = kproc->p_cpuid; /* __MARKER */
       proc->minflt = kproc->p_uru_minflt;
       proc->majflt = kproc->p_uru_majflt;
       proc->nlwp = 1;

@@ -85,8 +85,8 @@ static bool findCommInCmdline(const char* comm, const char* cmdline, int cmdline
 
       if ((tokenLen == commLen || (tokenLen > commLen && commLen == (TASK_COMM_LEN - 1))) &&
           strncmp(tokenBase, comm, commLen) == 0) {
-         *pCommStart = tokenBase - cmdline;
-         *pCommEnd = token - cmdline;
+         *pCommStart = tokenBase - cmdline; /* __MARKER */
+         *pCommEnd = token - cmdline; /* __MARKER */
          return true;
       }
 
@@ -350,7 +350,7 @@ void Process_makeCommandStr(Process* this, const Settings* settings) {
       return;
    }
 
-   int exeLen = strlen(this->procExe);
+   int exeLen = strlen(this->procExe); /* __MARKER */
    int exeBasenameOffset = this->procExeBasenameOffset;
    int exeBasenameLen = exeLen - exeBasenameOffset;
 
@@ -509,7 +509,7 @@ void Process_writeCommand(const Process* this, int attr, int baseAttr, RichStrin
          if (!highlightDeleted)
             continue;
 
-      RichString_setAttrn(str, hl->attr, strStart + hl->offset, hl->length);
+      RichString_setAttrn(str, hl->attr, strStart + hl->offset, hl->length); /* __MARKER */
    }
 }
 
@@ -869,7 +869,7 @@ static bool Process_setPriority(Process* this, int priority) {
 bool Process_rowChangePriorityBy(Row* super, Arg delta) {
    Process* this = (Process*) super;
    assert(Object_isA((const Object*) this, (const ObjectClass*) &Process_class));
-   return Process_setPriority(this, this->nice + delta.i);
+   return Process_setPriority(this, this->nice + delta.i); /* __MARKER */
 }
 
 static bool Process_sendSignal(Process* this, Arg sgn) {
@@ -1059,7 +1059,7 @@ void Process_updateExe(Process* this, const char* exe) {
    if (exe) {
       this->procExe = xStrdup(exe);
       const char* lastSlash = strrchr(exe, '/');
-      this->procExeBasenameOffset = (lastSlash && *(lastSlash + 1) != '\0' && lastSlash != exe) ? (lastSlash - exe + 1) : 0;
+      this->procExeBasenameOffset = (lastSlash && *(lastSlash + 1) != '\0' && lastSlash != exe) ? (lastSlash - exe + 1) : 0; /* __MARKER */
    } else {
       this->procExe = NULL;
       this->procExeBasenameOffset = 0;

@@ -347,7 +347,7 @@ static bool LinuxProcessTable_readStatFile(LinuxProcess* lp, openat_arg_t procFd
    location += 2;
 
    /* (4) ppid  -  %d */
-   Process_setParent(process, fast_strtol_dec(&location, 0));
+   Process_setParent(process, fast_strtol_dec(&location, 0)); /* __MARKER */
 
    if (!location[0])
       return false;
@@ -355,7 +355,7 @@ static bool LinuxProcessTable_readStatFile(LinuxProcess* lp, openat_arg_t procFd
    location += 1;
 
    /* (5) pgrp  -  %d */
-   process->pgrp = fast_strtol_dec(&location, 0);
+   process->pgrp = fast_strtol_dec(&location, 0); /* __MARKER */
 
    if (!location[0])
       return false;
@@ -363,7 +363,7 @@ static bool LinuxProcessTable_readStatFile(LinuxProcess* lp, openat_arg_t procFd
    location += 1;
 
    /* (6) session  -  %d */
-   process->session = fast_strtol_dec(&location, 0);
+   process->session = fast_strtol_dec(&location, 0); /* __MARKER */
 
    if (!location[0])
       return false;
@@ -379,7 +379,7 @@ static bool LinuxProcessTable_readStatFile(LinuxProcess* lp, openat_arg_t procFd
    location += 1;
 
    /* (8) tpgid  -  %d */
-   process->tpgid = fast_strtol_dec(&location, 0);
+   process->tpgid = fast_strtol_dec(&location, 0); /* __MARKER */
 
    if (!location[0])
       return false;
@@ -513,7 +513,7 @@ static bool LinuxProcessTable_readStatFile(LinuxProcess* lp, openat_arg_t procFd
    assert(location != NULL);
 
    /* (39) processor  -  %d */
-   process->processor = fast_strtol_dec(&location, 0);
+   process->processor = fast_strtol_dec(&location, 0); /* __MARKER */
 
    /* Ignore further fields */
 
@@ -771,11 +771,11 @@ static void LinuxProcessTable_readMaps(LinuxProcess* process, openat_arg_t procF
       if (' ' != *readptr++)
          continue;
 
-      map_devmaj = fast_strtoull_hex(&readptr, 4);
+      map_devmaj = fast_strtoull_hex(&readptr, 4); /* __MARKER */
       if (':' != *readptr++)
          continue;
 
-      map_devmin = fast_strtoull_hex(&readptr, 4);
+      map_devmin = fast_strtoull_hex(&readptr, 4); /* __MARKER */
       if (' ' != *readptr++)
          continue;
 
@@ -788,10 +788,10 @@ static void LinuxProcessTable_readMaps(LinuxProcess* process, openat_arg_t procF
          continue;
 
       if (calcSize) {
-         LibraryData* libdata = Hashtable_get(ht, map_inode);
+         LibraryData* libdata = Hashtable_get(ht, map_inode); /* __MARKER */
          if (!libdata) {
             libdata = xCalloc(1, sizeof(LibraryData));
-            Hashtable_put(ht, map_inode, libdata);
+            Hashtable_put(ht, map_inode, libdata); /* __MARKER */
          }
 
          libdata->size += map_end - map_start;
@@ -975,7 +975,7 @@ static void LinuxProcessTable_readOpenVZData(LinuxProcess* process, openat_arg_t
             break;
          case 2:
             foundVPid = true;
-            process->vpid = strtoul(name_value_sep, NULL, 0);
+            process->vpid = strtoul(name_value_sep, NULL, 0); /* __MARKER */
             break;
          default:
             //Sanity Check: Should never reach here, or the implementation is missing something!
@@ -1110,7 +1110,7 @@ static void LinuxProcessTable_readOomData(LinuxProcess* process, openat_arg_t pr
    }
 
    char* oomPtr = buffer;
-   uint64_t oom = fast_strtoull_dec(&oomPtr, oomRead);
+   uint64_t oom = fast_strtoull_dec(&oomPtr, oomRead); /* __MARKER */
    if (*oomPtr && *oomPtr != '\n' && *oomPtr != ' ') {
       return;
    }
@@ -1119,7 +1119,7 @@ static void LinuxProcessTable_readOomData(LinuxProcess* process, openat_arg_t pr
       return;
    }
 
-   process->oom = oom;
+   process->oom = oom; /* __MARKER */
 }
 
 /*
@@ -1344,7 +1344,7 @@ static bool LinuxProcessTable_readCmdlineFile(Process* process, openat_arg_t pro
       if (process->procExe && String_startsWith(command, process->procExe) &&
          exeLen < (size_t)lastChar && command[exeLen] <= ' ') {
          tokenStart = process->procExeBasenameOffset;
-         tokenEnd = exeLen;
+         tokenEnd = exeLen; /* __MARKER */
       }
 
       // From initial scan we know there's at least one space.
@@ -1576,7 +1576,7 @@ static bool LinuxProcessTable_recurseProcTree(LinuxProcessTable* this, openat_ar
          unsigned long parsedPid = strtoul(name, &endptr, 10);
          if (parsedPid == 0 || parsedPid == ULONG_MAX || *endptr != '\0')
             continue;
-         pid = parsedPid;
+         pid = parsedPid; /* __MARKER */
       }
 
       // Skip task directory of main thread
@@ -1726,7 +1726,7 @@ static bool LinuxProcessTable_recurseProcTree(LinuxProcessTable* this, openat_ar
             Process_updateCmdline(proc, NULL, 0, 0);
          } else {
             if (!LinuxProcessTable_readCmdlineFile(proc, procFd, mainTask)) {
-               Process_updateCmdline(proc, statCommand, 0, strlen(statCommand));
+               Process_updateCmdline(proc, statCommand, 0, strlen(statCommand)); /* __MARKER */
             }
             LinuxProcessList_readComm(proc, procFd);
          }
@@ -1740,7 +1740,7 @@ static bool LinuxProcessTable_recurseProcTree(LinuxProcessTable* this, openat_ar
                Process_updateCmdline(proc, NULL, 0, 0);
             } else {
                if (!LinuxProcessTable_readCmdlineFile(proc, procFd, mainTask)) {
-                  Process_updateCmdline(proc, statCommand, 0, strlen(statCommand));
+                  Process_updateCmdline(proc, statCommand, 0, strlen(statCommand)); /* __MARKER */
                }
                LinuxProcessList_readComm(proc, procFd);
             }
@@ -1835,7 +1835,7 @@ static bool LinuxProcessTable_recurseProcTree(LinuxProcessTable* this, openat_ar
 
       if (!proc->cmdline && statCommand[0] &&
           (proc->state == ZOMBIE || Process_isKernelThread(proc) || settings->showThreadNames)) {
-         Process_updateCmdline(proc, statCommand, 0, strlen(statCommand));
+         Process_updateCmdline(proc, statCommand, 0, strlen(statCommand)); /* __MARKER */
       }
 
       proc->super.updated = true;
