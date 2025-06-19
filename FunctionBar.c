@@ -48,11 +48,9 @@ FunctionBar* FunctionBar_new(const char* const* functions, const char* const* ke
       this->staticData = false;
       this->keys.keys = xCalloc(FUNCTIONBAR_MAXEVENTS, sizeof(char*));
       this->events = xCalloc(FUNCTIONBAR_MAXEVENTS, sizeof(int));
-      size_t i = 0;
-      while (i < FUNCTIONBAR_MAXEVENTS && functions[i]) {
+      for (size_t i = 0; i < FUNCTIONBAR_MAXEVENTS && functions[i]; i++) {
          this->keys.keys[i] = xStrdup(keys[i]);
          this->events[i] = events[i];
-         i++;
       }
       this->size = (uint32_t)i;
    } else {
