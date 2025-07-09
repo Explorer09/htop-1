@@ -915,6 +915,66 @@ BACKTRACE_RETURN_TYPE nptrs = backtrace(&addr, 1);
       CFLAGS=$htop_save_CFLAGS])
 fi
 
+AC_ARG_ENABLE([backtrace],
+              [AS_HELP_STRING([--enable-backtrace],
+              [enable backtraces of other processes; available backends: unwind-ptrace])],
+              [],
+              [enable_backtrace=no])
+backtrace_backend_found=no
+
+case $enable_backtrace in
+   check|yes|unwind-ptrace)
+      if htop_search_header_dir libunwind-ptrace.h "/usr/include/libunwind"; then
+         # libunwind-ptrace requires linking with libunwind-generic, so
+         # libunwind-generic must be checked first.
+         AC_CHECK_LIB([unwind-generic], [_U_dyn_register], [],
+            [if test "$enable_backtrace" = unwind-ptrace; then
+               AC_MSG_ERROR([can not find required library libunwind-generic])
+            fi])
+         AC_CHECK_LIB([unwind-ptrace], [_UPT_create], [],
+            [if test "$enable_backtrace" = unwind-ptrace; then
+               AC_MSG_ERROR([can not find required library libunwind-ptrace])
+            fi])
+         if test "x$ac_cv_lib_unwind_ptrace__UPT_create" = xyes; then
+            enable_backtrace=unwind-ptrace
+            backtrace_backend_found=yes
+
+            # unw_get_elf_filename is optional
+            AC_MSG_CHECKING([if libunwind has unw_get_elf_filename])
+            AC_LINK_IFELSE([AC_LANG_PROGRAM(
+[[/* unw_get_elf_filename might exist as a macro */
+#include <libunwind-ptrace.h>]],
+[[static unw_cursor_t cursor;
+/* First argument must be non-null */
+unw_get_elf_filename(&cursor, (char*)0, (size_t)0, (unw_word_t*)0);]]
+               )],
+               [AC_DEFINE([HAVE_LIBUNWIND_ELF_FILENAME], [1], [Define if libunwind has unw_get_elf_filename])
+               AC_MSG_RESULT(yes)],
+               [AC_MSG_RESULT(no)])
+         fi
+      elif test "$enable_backtrace" = unwind-ptrace; then
+         AC_MSG_ERROR([can not find required header file libunwind-ptrace.h])
+      fi
+      ;;
+esac
+dnl
+dnl New backend check for '$enable_backtrace' should go here
+
+case $enable_backtrace in
+   no|check)
+      enable_backtrace=no
+      ;;
+   yes)
+      AC_MSG_ERROR([no backend is available in your system for --enable-backtrace])
+      ;;
+   *)
+      if test "$backtrace_backend_found" = no; then
+         AC_MSG_ERROR([bad value '$enable_backtrace' for --enable-backtrace])
+      fi
+      AC_DEFINE([HAVE_BACKTRACE_SCREEN], [1], [Define if the backtrace feature is enabled])
+      ;;
+esac
+AM_CONDITIONAL([HAVE_BACKTRACE_SCREEN], [test "$enable_backtrace" != no])
 
 AC_ARG_ENABLE([hwloc],
               [AS_HELP_STRING([--enable-hwloc],
@@ -1310,6 +1370,7 @@ AC_MSG_RESULT([
   unicode:                   $enable_unicode
   affinity:                  $enable_affinity
   unwind:                    $enable_unwind
+  backtrace:                 $enable_backtrace
   hwloc:                     $enable_hwloc
   debug:                     $enable_debug
   static:                    $enable_static
