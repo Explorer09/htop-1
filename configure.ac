@@ -976,6 +976,48 @@ case $enable_backtrace in
 esac
 AM_CONDITIONAL([HAVE_BACKTRACE_SCREEN], [test "$enable_backtrace" != no])
 
+AC_ARG_ENABLE([demangling],
+              [AS_HELP_STRING([--enable-demangling],
+                              [enable demangling support for backtraces @<:@default=check@:>@])],
+              [],
+              [enable_demangling=no])
+demangling_backend_found=no
+
+case $enable_demangling in
+   check|yes|libiberty)
+      if htop_search_header_dir demangle.h "/usr/include/libiberty"; then
+         AC_CHECK_LIB([iberty], [cplus_demangle], [],
+            [if test "$enable_demangling" = libiberty; then
+               AC_MSG_ERROR([can not find required library libiberty])
+            fi])
+
+         if test "x$ac_cv_lib_iberty_cplus_demangle" = xyes; then
+            enable_demangling=libiberty
+            demangling_backend_found=yes
+         fi
+      elif test "$enable_demangling" = libiberty; then
+         AC_MSG_ERROR([can not find required header file demangle.h])
+      fi
+      ;;
+esac
+dnl
+dnl New backend check for '$enable_demangling' should go here
+
+case $enable_demangling in
+   no|check)
+      enable_demangling=no
+      ;;
+   yes)
+      AC_MSG_ERROR([no backend is available in your system for --enable-demangling])
+      ;;
+   *)
+      if test "$demangling_backend_found" = no; then
+         AC_MSG_ERROR([bad value '$enable_demangling' for --enable-demangling])
+      fi
+      AC_DEFINE([HAVE_DEMANGLING], [1], [Define to 1 if the demangling is supported.])
+      ;;
+esac
+
 AC_ARG_ENABLE([hwloc],
               [AS_HELP_STRING([--enable-hwloc],
               [enable hwloc support for CPU affinity; disables affinity support; requires libhwloc @<:@default=no@:>@])],
@@ -1371,6 +1413,7 @@ AC_MSG_RESULT([
   affinity:                  $enable_affinity
   unwind:                    $enable_unwind
   backtrace:                 $enable_backtrace
+  demangling:                $enable_demangling
   hwloc:                     $enable_hwloc
   debug:                     $enable_debug
   static:                    $enable_static
