@@ -1000,7 +1000,7 @@ static int GraphMeterMode_lookupCell(const Meter* this, const GraphDrawContext* 
 
    unsigned int numDots = valueStart[1].numDots;
    if (numDots > 1) {
-      if (deltaExp + 1 < UINT16_WIDTH) {
+      if (deltaExp < UINT16_WIDTH) {
          numDots = ((numDots - 1) >> 1 >> deltaExp) + 1;
       } else {
          numDots = 1;
@@ -1010,7 +1010,7 @@ static int GraphMeterMode_lookupCell(const Meter* this, const GraphDrawContext* 
 
    numDots = valueStart[2].numDots;
    if (numDots > 1) {
-      if (deltaExp + 1 < UINT16_WIDTH) {
+      if (deltaExp < UINT16_WIDTH) {
          numDots = ((numDots - 1) >> 1 >> deltaExp) + 1;
       } else {
          numDots = 1;
