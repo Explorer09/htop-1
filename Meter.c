@@ -874,9 +874,65 @@ static void GraphMeterMode_recordNewValue(Meter* this, const GraphDrawContext* c
    valueStart = (GraphDataCell*)data->buffer;
    valueStart = &valueStart[(nValues - 1) * nCellsPerValue];
 
+   if (this->mode == GRAPH2_METERMODE) {
+      // "total" refers to the value that we would draw as full in graph
+      double total = 0.0;
+      if (isPercentChart) {
+         assert(this->total >= 0.0);
+         total = this->total;
+         valueStart[0].scaleExp = 0;
+      } else {
+         if (isPositive(this->values[0]))
+            total = this->values[0];
+
+         if (this->curItems > 1 && isgreater(this->values[1], total))
+            total = this->values[1];
+
+         total = MINIMUM(DBL_MAX, total);
+
+         int scaleExp = 0;
+         (void)frexp(total, &scaleExp);
+         scaleExp = MAXIMUM(0, scaleExp);
+
+         // It's safe to assume "scaleExp" never overflows when IEEE 754
+         // (binary64) floating point is used. IEEE 754 always sets the limit
+         // DBL_MAX_10_EXP == 308.
+         assert(DBL_MAX_10_EXP <= 308);
+         assert(scaleExp <= INT16_MAX);
+
+         valueStart[0].scaleExp = (int16_t)scaleExp;
+         total = ldexp(1.0, scaleExp);
+      }
+      // Prevent overflow from "this->total" or ldexp().
+      total = MINIMUM(DBL_MAX, total);
+
+      assert(h <= UINT16_MAX / 8);
+      double maxDots = (double)(int32_t)(h * 8);
+      for (uint8_t i = 0; i < 2; i++) {
+         double value = 0.0;
+         if (i < this->curItems && isPositive(this->values[i]))
+            value = this->values[i];
+
+         value = MINIMUM(total, value);
+
+         int numDots = 0;
+         if (total > 0.0) {
+            numDots = (int)ceil((value / total) * maxDots);
+            assert(numDots >= 0);
+            if (value > 0.0 && numDots <= 0) {
+               numDots = 1; // Division of (value / total) underflows
+            }
+         }
+
+         assert(numDots <= UINT16_MAX);
+         valueStart[1 + i].numDots = (uint16_t)numDots;
+      }
+      return;
+   }
+
    // Sum the values of all items
    double sum = 0.0;
-   if (this->mode != GRAPH2_METERMODE && this->curItems > 0) {
+   if (this->curItems > 0) {
       sum = Meter_computeSum(this);
       assert(sum >= 0.0);
       assert(sum <= DBL_MAX);
@@ -890,17 +946,6 @@ static void GraphMeterMode_recordNewValue(Meter* this, const GraphDrawContext* c
       // Dynamic scale. "this->total" is ignored.
       // Determine the scale and "total" that we need afterward. The "total" is
       // rounded up to a power of 2.
-
-      if (this->mode == GRAPH2_METERMODE) {
-         // Find the greatest value in this->values array
-         for (uint8_t i = 0; i < maxItems && i < this->curItems; i++) {
-            if (isgreater(this->values[i], total)) {
-               total = this->values[i];
-            }
-         }
-         total = MINIMUM(DBL_MAX, total);
-      }
-
       int scaleExp = 0;
       (void)frexp(total, &scaleExp);
       scaleExp = MAXIMUM(0, scaleExp);
@@ -921,27 +966,6 @@ static void GraphMeterMode_recordNewValue(Meter* this, const GraphDrawContext* c
    double maxDots = (double)(int32_t)(h * 8);
 
    // The total number of dots that we would draw for this record
-
-   if (maxItems == 1 || this->mode == GRAPH2_METERMODE) {
-      // We just need to record the number of dots in the graph data buffer.
-      for (uint8_t i = 0; i < maxItems; i++) {
-         int numDots = 0;
-         if (total > 0.0 && i < this->curItems && isPositive(this->values[i])) {
-            double value = MINIMUM(total, this->values[i]);
-
-            numDots = (int)ceil((value / total) * maxDots);
-            assert(numDots >= 0);
-            if (numDots <= 0) {
-               numDots = 1; // Division of (value / total) underflows
-            }
-         }
-
-         assert(numDots <= UINT16_MAX);
-         valueStart[(isPercentChart ? 0 : 1) + i].numDots = (uint16_t)numDots;
-      }
-      return;
-   }
-
    int numDots = 0;
    if (total > 0.0) {
       numDots = (int)ceil((sum / total) * maxDots);
@@ -949,6 +973,13 @@ static void GraphMeterMode_recordNewValue(Meter* this, const GraphDrawContext* c
       if (sum > 0.0 && numDots <= 0) {
          numDots = 1; // Division of (sum / total) underflows
       }
+   }
+
+   if (maxItems == 1) {
+      // We just need to record the number of dots in the graph data buffer.
+      assert(numDots <= UINT16_MAX);
+      valueStart[isPercentChart ? 0 : 1].numDots = (uint16_t)numDots;
+      return;
    }
 
    // For a meter of multiple items, we will precompute the colors of each cell
