@@ -1280,22 +1280,16 @@ static void GraphMeterMode_draw(Meter* this, int x, int y, int w) {
    bool isPercentChart = Meter_isPercentChart(this);
 
    size_t nCellsPerValue;
-   if (this->mode == GRAPH2_METERMODE) {
-      if (isPercentChart) {
-         nCellsPerValue = maxItems;
-      } else if (maxItems > 0) {
-         nCellsPerValue = 1 + maxItems;
-      } else {
-         nCellsPerValue = 0;
-      }
+   if (this->mode == GRAPH2_METERMODE || maxItems == 1) {
+      nCellsPerValue = maxItems;
    } else {
-      if (maxItems == 1) {
-         nCellsPerValue = maxItems;
-      } else {
-         nCellsPerValue = h;
+      nCellsPerValue = h;
+   }
+   if (!isPercentChart) {
+      nCellsPerValue *= 2;
+      if (this->mode == GRAPH2_METERMODE) {
+         nCellsPerValue--;
       }
-      if (!isPercentChart)
-         nCellsPerValue *= 2;
    }
 
    GraphDrawContext context = {
