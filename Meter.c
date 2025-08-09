@@ -1272,7 +1272,7 @@ static void GraphMeterMode_draw(Meter* this, int x, int y, int w) {
 
    uint8_t maxItems = Meter_maxItems(this);
    assert(this->curItems <= maxItems);
-   if (this->mode == GRAPH2_METERMODE && maxItems > 2) {
+   if (this->mode == GRAPH2_METERMODE) {
       // Items other than the first two are always hidden in "Graph2" mode.
       maxItems = 2;
    }
