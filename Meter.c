@@ -1059,25 +1059,21 @@ static int GraphMeterMode_lookupCell(const Meter* this, const GraphDrawContext* 
          deltaExp = scaleExp - valueStart[0].scaleExp;
       }
 
-      unsigned int numDots = valueStart[(isPercentChart ? 0 : 1) + 0].numDots;
-      if (numDots >= 1) {
-         if (deltaExp + 1 < UINT16_WIDTH) {
-            numDots = ((numDots - 1) >> (deltaExp + 1)) + 1;
-         } else {
-            numDots = 1;
+      unsigned int numBlanks[2];
+      for (uint8_t i = 0; i < maxItems; i++) {
+         unsigned int numDots = valueStart[(isPercentChart ? 0 : 1) + i].numDots;
+         if (numDots >= 1) {
+            if (deltaExp + 1 < UINT16_WIDTH) {
+               numDots = ((numDots - 1) >> (deltaExp + 1)) + 1;
+            } else {
+               numDots = 1;
+            }
          }
+         numBlanks[i] = h * 4 - numDots;
       }
-      unsigned int blanksAtEnd = h * 4 - numDots;
 
-      numDots = valueStart[(isPercentChart ? 0 : 1) + 1].numDots;
-      if (numDots >= 1) {
-         if (deltaExp + 1 < UINT16_WIDTH) {
-            numDots = ((numDots - 1) >> (deltaExp + 1)) + 1;
-         } else {
-            numDots = 1;
-         }
-      }
-      unsigned int blanksAtStart = h * 4 - numDots;
+      unsigned int blanksAtEnd = numBlanks[0];
+      unsigned int blanksAtStart = numBlanks[1];
 
       if (h - 1 - y < blanksAtEnd / 8)
          goto cellIsEmpty;
