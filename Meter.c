@@ -1094,7 +1094,7 @@ static int GraphMeterMode_lookupCell(const Meter* this, const GraphDrawContext* 
       for (uint8_t i = 0; i < maxItems; i++) {
          unsigned int numDots = valueStart[(isPercentChart ? 0 : 1) + i].numDots;
          if (numDots >= 1) {
-            if (deltaExp + 1 < UINT16_WIDTH) {
+            if (deltaExp < UINT16_WIDTH) {
                numDots = ((numDots - 1) >> 1 >> deltaExp) + 1;
             } else {
                numDots = 1;
