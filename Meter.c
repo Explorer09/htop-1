@@ -1080,7 +1080,7 @@ static int GraphMeterMode_lookupCell(const Meter* this, const GraphDrawContext* 
       if (y < blanksAtStart / 8)
          goto cellIsEmpty;
 
-      if (y * 2 == h - 1 && !(valueStart[(isPercentChart ? 0 : 1) + 0].numDots || valueStart[(isPercentChart ? 0 : 1) + 1].numDots))
+      if (!(valueStart[(isPercentChart ? 0 : 1) + 0].numDots || valueStart[(isPercentChart ? 0 : 1) + 1].numDots))
          goto cellIsEmpty;
 
       if (maxItems <= 1 || y * 2 > h - 1) {
