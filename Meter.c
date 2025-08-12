@@ -1050,66 +1050,6 @@ static int GraphMeterMode_lookupCell(const Meter* this, const GraphDrawContext* 
    const GraphDataCell* valueStart = (const GraphDataCell*)data->buffer;
    valueStart = &valueStart[valueIndex * nCellsPerValue];
 
-   if (this->mode == GRAPH2_METERMODE) {
-      int deltaExp = 0;
-      if (!isPercentChart) {
-         // The "scaleExp" member exists only for "dynamic scale" meters (i.e.
-         // "isPercentChart" being false).
-         assert(scaleExp >= valueStart[0].scaleExp);
-         deltaExp = scaleExp - valueStart[0].scaleExp;
-      }
-
-      unsigned int numBlanks[2];
-      for (uint8_t i = 0; i < maxItems; i++) {
-         unsigned int numDots = valueStart[(isPercentChart ? 0 : 1) + i].numDots;
-         if (numDots >= 1) {
-            if (deltaExp < UINT16_WIDTH) {
-               numDots = ((numDots - 1) >> 1 >> deltaExp) + 1;
-            } else {
-               numDots = 1;
-            }
-         }
-         numBlanks[i] = h * 4 - numDots;
-      }
-
-      unsigned int blanksAtEnd = numBlanks[0];
-      unsigned int blanksAtStart = numBlanks[1];
-
-      if (valueStart[(isPercentChart ? 0 : 1) + 0].numDots == 0 && valueStart[(isPercentChart ? 0 : 1) + 1].numDots == 0)
-         goto cellIsEmpty;
-
-      if (h - 1 - y < blanksAtEnd / 8)
-         goto cellIsEmpty;
-      if (y < blanksAtStart / 8)
-         goto cellIsEmpty;
-
-      if (maxItems <= 1 || y * 2 > h - 1) {
-         itemIndex = 0;
-      } else if (y * 2 < h - 1) {
-         itemIndex = 1;
-      } else {
-         itemIndex = valueStart[(isPercentChart ? 0 : 1) + 0].numDots >= valueStart[(isPercentChart ? 0 : 1) + 1].numDots ? 0 : 1;
-      }
-
-      if (y * 2 == h - 1 && valueStart[(isPercentChart ? 0 : 1) + 0].numDots > 8 && valueStart[(isPercentChart ? 0 : 1) + 1].numDots > 8) {
-         *details = valueStart[(isPercentChart ? 0 : 1) + 0].numDots >= valueStart[(isPercentChart ? 0 : 1) + 1].numDots ? 0x0F : 0xF0;
-      } else {
-         *details = 0xFF;
-         const uint8_t dotAlignment = 2;
-         if (y == blanksAtStart / 8) {
-            blanksAtStart = (blanksAtStart % 8) / dotAlignment * dotAlignment;
-            *details >>= blanksAtStart;
-         }
-         if ((h - 1 - y) == blanksAtEnd / 8) {
-            blanksAtEnd = (blanksAtEnd % 8) / dotAlignment * dotAlignment;
-            *details = (uint8_t)((*details >> blanksAtEnd) << blanksAtEnd);
-         }
-      }
-
-      /* fallthrough */
-      goto cellIsEmpty;
-   }
-
    int deltaExp = 0;
    if (!isPercentChart) {
       // The "scaleExp" member exists only for "dynamic scale" meters (i.e.
@@ -1118,25 +1058,72 @@ static int GraphMeterMode_lookupCell(const Meter* this, const GraphDrawContext* 
       deltaExp = scaleExp - valueStart[0].scaleExp;
    }
 
-   if (maxItems == 1) {
-      unsigned int numDots = valueStart[isPercentChart ? 0 : 1].numDots;
+   if (this->mode == GRAPH2_METERMODE || maxItems == 1) {
+      unsigned int numBlanks[2] = {0};
 
-      if (numDots < 1)
+      for (uint8_t i = 0; i < maxItems; i++) {
+         unsigned int numDots = valueStart[(isPercentChart ? 0 : 1) + i].numDots;
+         // Scale according to exponent difference. Round up.
+         if (numDots >= 1) {
+            if (deltaExp < UINT16_WIDTH) {
+               numDots = ((numDots - 1) >> deltaExp) + 1;
+            } else {
+               numDots = 1;
+            }
+         }
+         numBlanks[i] = h * 8 - numDots;
+         if (maxItems == 2 /* this->mode == GRAPH2_METERMODE */) {
+            numBlanks[i] /= 2;
+         }
+      }
+
+      bool secondItemLarger = maxItems == 2 && valueStart[(isPercentChart ? 0 : 1) + 1].numDots > valueStart[(isPercentChart ? 0 : 1) + 0].numDots;
+      /*
+       unsigned int blanksAtEnd = numBlanks[0];
+       unsigned int blanksAtStart = numBlanks[1];
+       */
+
+      bool canShowHalfCell = maxItems == 2;
+      const uint8_t dotAlignment = 2;
+
+      if (h - 1 - y < numBlanks[0] / 8)
          goto cellIsEmpty;
+      if (h - 1 - y == numBlanks[0] / 8) {
+         numBlanks[0] = (numBlanks[0] % 8) / dotAlignment * dotAlignment;
+         canShowHalfCell = false;
+      } else {
+         numBlanks[0] = 0;
+      }
 
-      // Scale according to exponent difference. Round up.
-      numDots = deltaExp < UINT16_WIDTH ? ((numDots - 1) >> deltaExp) : 0;
-      numDots++;
-
-      if (y > (numDots - 1) / 8)
+      // if maxItems < 2 then should blanksAtStart be 0 ? yes
+      if (y < numBlanks[1] / 8)
          goto cellIsEmpty;
+      if (y == numBlanks[1] / 8) {
+         numBlanks[1] = (numBlanks[1] % 8) / dotAlignment * dotAlignment;
+         if (numBlanks[0] + numBlanks[1] >= 8) {
+            // Happens only if numDots of both items are 0
+            goto cellIsEmpty;
+         }
+         canShowHalfCell = false;
+      } else {
+         numBlanks[1] = 0;
+      }
 
       itemIndex = 0;
-      *details = 0xFF;
-      if (y == (numDots - 1) / 8) {
-         const uint8_t dotAlignment = 2;
-         unsigned int blanksAtTopCell = (8 - 1 - (numDots - 1) % 8) / dotAlignment * dotAlignment;
-         *details <<= blanksAtTopCell;
+      if (maxItems == 2) {
+         if (y * 2 < h - 1) {
+            itemIndex = 1;
+         } else if (y * 2 == h - 1 && secondItemLarger) {
+            itemIndex = 1;
+         }
+      }
+
+      if (/* maxItems == 2 && */ y * 2 == h - 1 && canShowHalfCell) {
+         *details = secondItemLarger ? 0xF0 : 0x0F;
+      } else {
+         *details = 0xFF;
+         *details >>= numBlanks[1];
+         *details = (uint8_t)((*details >> numBlanks[0]) << numBlanks[0]);
       }
    } else {
       int deltaExpArg = MINIMUM(UINT16_WIDTH - 1, deltaExp);
