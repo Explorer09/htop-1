@@ -1044,7 +1044,8 @@ static int GraphMeterMode_lookupCell(const Meter* this, const GraphDrawContext* 
       numDots = deltaExp < UINT16_WIDTH ? ((numDots - 1) >> deltaExp) : 0;
       numDots++;
 
-      unsigned int blanksAtEnd = h * 8 - numDots;
+      const uint8_t dotAlignment = 2;
+      unsigned int blanksAtEnd = (h * 8 - numDots) / dotAlignment * dotAlignment;
 
       if (yOld < blanksAtEnd / 8)
          goto cellIsEmpty;
@@ -1052,9 +1053,7 @@ static int GraphMeterMode_lookupCell(const Meter* this, const GraphDrawContext* 
       itemIndex = 0;
       *details = 0xFF;
       if (yOld == blanksAtEnd / 8) {
-         const uint8_t dotAlignment = 2;
-         unsigned int blanksAtTopCell = (blanksAtEnd % 8) / dotAlignment * dotAlignment;
-         *details <<= blanksAtTopCell;
+         *details <<= blanksAtEnd % 8;
       }
    } else {
       int deltaExpArg = MINIMUM(UINT16_WIDTH - 1, deltaExp);
