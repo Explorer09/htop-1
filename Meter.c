@@ -1016,6 +1016,7 @@ static int GraphMeterMode_lookupCell(const Meter* this, const GraphDrawContext* 
 
    // Reverse the coordinate
    assert(y < h);
+   unsigned int yOld = y;
    y = h - 1 - y;
 
    uint8_t itemIndex = (uint8_t)-1;
@@ -1043,12 +1044,14 @@ static int GraphMeterMode_lookupCell(const Meter* this, const GraphDrawContext* 
       numDots = deltaExp < UINT16_WIDTH ? ((numDots - 1) >> deltaExp) : 0;
       numDots++;
 
-      if (y > (numDots - 1) / 8)
+      unsigned int blanksAtEnd = h * 8 - numDots;
+
+      if (yOld < blanksAtEnd / 8)
          goto cellIsEmpty;
 
       itemIndex = 0;
       *details = 0xFF;
-      if (y == (numDots - 1) / 8) {
+      if (yOld == blanksAtEnd / 8) {
          const uint8_t dotAlignment = 2;
          unsigned int blanksAtTopCell = (8 - 1 - (numDots - 1) % 8) / dotAlignment * dotAlignment;
          *details <<= blanksAtTopCell;
