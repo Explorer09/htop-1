@@ -1053,7 +1053,7 @@ static int GraphMeterMode_lookupCell(const Meter* this, const GraphDrawContext* 
       *details = 0xFF;
       if (yOld == blanksAtEnd / 8) {
          const uint8_t dotAlignment = 2;
-         unsigned int blanksAtTopCell = (8 - 1 - (numDots - 1) % 8) / dotAlignment * dotAlignment;
+         unsigned int blanksAtTopCell = (blanksAtEnd % 8) / dotAlignment * dotAlignment;
          *details <<= blanksAtTopCell;
       }
    } else {
