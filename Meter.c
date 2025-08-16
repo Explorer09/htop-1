@@ -1090,7 +1090,8 @@ static int GraphMeterMode_lookupCell(const Meter* this, const GraphDrawContext* 
    }
 
    if (this->mode == GRAPH2_METERMODE || maxItems == 1) {
-      unsigned int numBlanks[2] = {0};
+      unsigned int numBlanks[2];
+      numBlanks[1] = 0;
 
       const GraphDataCell* itemStart = &valueStart[isPercentChart ? 0 : 1];
       uint8_t i = 0;
