@@ -1126,17 +1126,18 @@ static int GraphMeterMode_lookupCell(const Meter* this, const GraphDrawContext* 
       }
 
       // if maxItems < 2 then should blanksAtStart be 0 ? yes
-      if (y < numBlanks[1] / 8)
+      unsigned int blanksAtStart = numBlanks[1];
+      if (y < blanksAtStart / 8)
          goto cellIsEmpty;
-      if (y == numBlanks[1] / 8) {
-         numBlanks[1] = (numBlanks[1] % 8) / dotAlignment * dotAlignment;
-         if (numBlanks[0] + numBlanks[1] >= 8) {
+      if (y == blanksAtStart / 8) {
+         blanksAtStart = (blanksAtStart % 8) / dotAlignment * dotAlignment;
+         if (numBlanks[0] + blanksAtStart >= 8) {
             // Happens only if numDots of both items are 0
             goto cellIsEmpty;
          }
          canShowHalfCell = false;
       } else {
-         numBlanks[1] = 0;
+         blanksAtStart = 0;
       }
 
       itemIndex = 0;
@@ -1152,7 +1153,7 @@ static int GraphMeterMode_lookupCell(const Meter* this, const GraphDrawContext* 
          *details = secondItemLarger ? 0xF0 : 0x0F;
       } else {
          *details = 0xFF;
-         *details >>= numBlanks[1];
+         *details >>= blanksAtStart;
          *details = (uint8_t)((*details >> numBlanks[0]) << numBlanks[0]);
       }
    } else {
