@@ -1061,7 +1061,8 @@ static int GraphMeterMode_lookupCell(const Meter* this, const GraphDrawContext* 
    if (this->mode == GRAPH2_METERMODE || maxItems == 1) {
       unsigned int numBlanks[2] = {0};
 
-      for (uint8_t i = 0; i < maxItems; i++) {
+      uint8_t i = 0;
+      do {
          unsigned int numDots = valueStart[(isPercentChart ? 0 : 1) + i].numDots;
          if (numDots >= 1) {
             // Scale according to exponent difference. Round up.
@@ -1073,7 +1074,7 @@ static int GraphMeterMode_lookupCell(const Meter* this, const GraphDrawContext* 
          if (maxItems == 2 /* this->mode == GRAPH2_METERMODE */) {
             numBlanks[i] /= 2;
          }
-      }
+      } while (++i < maxItems);
 
       bool secondItemLarger = maxItems == 2 && valueStart[(isPercentChart ? 0 : 1) + 1].numDots > valueStart[(isPercentChart ? 0 : 1) + 0].numDots;
       /*
