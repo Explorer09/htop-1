@@ -1103,7 +1103,7 @@ static int GraphMeterMode_lookupCell(const Meter* this, const GraphDrawContext* 
          }
 
          numBlanks[i] = h * 8 - numDots;
-         if (maxItems == 2 /* this->mode == GRAPH2_METERMODE */) {
+         if (this->mode == GRAPH2_METERMODE) {
             numBlanks[i] /= 2;
          }
       } while (++i < maxItems);
