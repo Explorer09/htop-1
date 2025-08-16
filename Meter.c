@@ -1083,7 +1083,7 @@ static int GraphMeterMode_lookupCell(const Meter* this, const GraphDrawContext* 
        unsigned int blanksAtStart = numBlanks[1];
        */
 
-      bool canShowHalfCell = maxItems == 2;
+      bool canShowHalfCell = this->mode == GRAPH2_METERMODE;
       const uint8_t dotAlignment = 2;
 
       unsigned int blanksAtEnd = numBlanks[0];
