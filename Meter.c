@@ -1113,7 +1113,7 @@ static int GraphMeterMode_lookupCell(const Meter* this, const GraphDrawContext* 
       } while (++i < maxItems);
 
       bool secondItemLarger = this->mode == GRAPH2_METERMODE && itemStart[1].numDots > itemStart[0].numDots;
-      bool canShowHalfCell = this->mode == GRAPH2_METERMODE;
+      bool canShowHalfCell = maxItems == 2;
       const uint8_t dotAlignment = 2;
 
       unsigned int blanksAtEnd = numBlanks[0];
