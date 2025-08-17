@@ -1141,7 +1141,7 @@ static int GraphMeterMode_lookupCell(const Meter* this, const GraphDrawContext* 
       }
 
       itemIndex = 0;
-      if (this->mode == GRAPH2_METERMODE) {
+      if (maxItems == 2) {
          if (y * 2 < h - 1) {
             itemIndex = 1;
          } else if (y * 2 == h - 1 && secondItemLarger) {
