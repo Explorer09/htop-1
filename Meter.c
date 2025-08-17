@@ -1090,10 +1090,13 @@ static int GraphMeterMode_lookupCell(const Meter* this, const GraphDrawContext* 
    }
 
    if (this->mode == GRAPH2_METERMODE || maxItems == 1) {
+      assert(maxItems <= 2);
+
       unsigned int numBlanks[2];
       numBlanks[1] = 0;
 
       const GraphDataCell* itemStart = &valueStart[isPercentChart ? 0 : 1];
+
       uint8_t i = 0;
       do {
          unsigned int numDots = itemStart[i].numDots;
@@ -1110,11 +1113,6 @@ static int GraphMeterMode_lookupCell(const Meter* this, const GraphDrawContext* 
       } while (++i < maxItems);
 
       bool secondItemLarger = this->mode == GRAPH2_METERMODE && itemStart[1].numDots > itemStart[0].numDots;
-      /*
-       unsigned int blanksAtEnd = numBlanks[0];
-       unsigned int blanksAtStart = numBlanks[1];
-       */
-
       bool canShowHalfCell = this->mode == GRAPH2_METERMODE;
       const uint8_t dotAlignment = 2;
 
@@ -1128,7 +1126,6 @@ static int GraphMeterMode_lookupCell(const Meter* this, const GraphDrawContext* 
          blanksAtEnd = 0;
       }
 
-      // if maxItems < 2 then should blanksAtStart be 0 ? yes
       unsigned int blanksAtStart = numBlanks[1];
       if (y < blanksAtStart / 8)
          goto cellIsEmpty;
@@ -1152,7 +1149,7 @@ static int GraphMeterMode_lookupCell(const Meter* this, const GraphDrawContext* 
          }
       }
 
-      if (/* maxItems == 2 && */ y * 2 == h - 1 && canShowHalfCell) {
+      if (y * 2 == h - 1 && canShowHalfCell) {
          *details = secondItemLarger ? 0xF0 : 0x0F;
       } else {
          *details = 0xFF;
