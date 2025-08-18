@@ -1117,7 +1117,7 @@ static int GraphMeterMode_lookupCell(const Meter* this, const GraphDrawContext* 
          }
       }
 
-      if (y * 2 == h - 1 && this->mode == GRAPH2_METERMODE && canShowHalfCell) {
+      if (this->mode == GRAPH2_METERMODE && y * 2 == h - 1 && canShowHalfCell) {
          *details = itemStart[1].numDots > itemStart[0].numDots ? 0xF0 : 0x0F;
       } else {
          *details = 0xFF;
