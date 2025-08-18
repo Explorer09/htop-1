@@ -923,6 +923,8 @@ static void GraphMeterMode_recordNewValue(Meter* this, const GraphDrawContext* c
    // The total number of dots that we would draw for this record
 
    if (this->mode == GRAPH2_METERMODE || maxItems == 1) {
+      GraphDataCell* itemStart = &valueStart[isPercentChart ? 0 : 1];
+
       // We just need to record the number of dots in the graph data buffer.
       for (uint8_t i = 0; i < maxItems; i++) {
          int numDots = 0;
@@ -937,7 +939,7 @@ static void GraphMeterMode_recordNewValue(Meter* this, const GraphDrawContext* c
          }
 
          assert(numDots <= UINT16_MAX);
-         valueStart[(isPercentChart ? 0 : 1) + i].numDots = (uint16_t)numDots;
+         itemStart[i].numDots = (uint16_t)numDots;
       }
       return;
    }
