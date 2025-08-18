@@ -1081,7 +1081,6 @@ static int GraphMeterMode_lookupCell(const Meter* this, const GraphDrawContext* 
          }
       } while (++i < maxItems);
 
-      bool secondItemLarger = this->mode == GRAPH2_METERMODE && itemStart[1].numDots > itemStart[0].numDots;
       bool canShowHalfCell = this->mode == GRAPH2_METERMODE;
       const uint8_t dotAlignment = 2;
 
@@ -1113,13 +1112,13 @@ static int GraphMeterMode_lookupCell(const Meter* this, const GraphDrawContext* 
       if (this->mode == GRAPH2_METERMODE) {
          if (y * 2 < h - 1) {
             itemIndex = 1;
-         } else if (y * 2 == h - 1 && secondItemLarger) {
+         } else if (y * 2 == h - 1 && itemStart[1].numDots > itemStart[0].numDots) {
             itemIndex = 1;
          }
       }
 
       if (y * 2 == h - 1 && canShowHalfCell) {
-         *details = secondItemLarger ? 0xF0 : 0x0F;
+         *details = itemStart[1].numDots > itemStart[0].numDots ? 0xF0 : 0x0F;
       } else {
          *details = 0xFF;
          *details >>= blanksAtStart;
