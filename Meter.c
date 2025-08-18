@@ -1043,16 +1043,15 @@ static int GraphMeterMode_lookupCell(const Meter* this, const GraphDrawContext* 
       numDots = deltaExp < UINT16_WIDTH ? ((numDots - 1) >> deltaExp) : 0;
       numDots++;
 
-      const uint8_t dotAlignment = 2;
-      unsigned int blanksAtEnd = (h * 8 - numDots) / dotAlignment * dotAlignment;
-
-      if (h - 1 - y < blanksAtEnd / 8)
+      if (y > (numDots - 1) / 8)
          goto cellIsEmpty;
 
       itemIndex = 0;
       *details = 0xFF;
-      if (h - 1 - y == blanksAtEnd / 8) {
-         *details <<= blanksAtEnd % 8;
+      if (y == (numDots - 1) / 8) {
+         const uint8_t dotAlignment = 2;
+         unsigned int blanksAtTopCell = (8 - 1 - (numDots - 1) % 8) / dotAlignment * dotAlignment;
+         *details <<= blanksAtTopCell;
       }
    } else {
       int deltaExpArg = MINIMUM(UINT16_WIDTH - 1, deltaExp);
