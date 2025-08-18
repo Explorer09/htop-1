@@ -1081,8 +1081,8 @@ static int GraphMeterMode_lookupCell(const Meter* this, const GraphDrawContext* 
          }
       } while (++i < maxItems);
 
-      bool canShowHalfCell = true;
       const uint8_t dotAlignment = 2;
+      bool canShowHalfCell = true;
 
       unsigned int blanksAtEnd = numBlanks[0];
       if (h - 1 - y < blanksAtEnd / 8)
