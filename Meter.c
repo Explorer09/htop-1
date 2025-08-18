@@ -922,7 +922,7 @@ static void GraphMeterMode_recordNewValue(Meter* this, const GraphDrawContext* c
 
    // The total number of dots that we would draw for this record
 
-   if (maxItems == 1 || this->mode == GRAPH2_METERMODE) {
+   if (this->mode == GRAPH2_METERMODE || maxItems == 1) {
       // We just need to record the number of dots in the graph data buffer.
       for (uint8_t i = 0; i < maxItems; i++) {
          int numDots = 0;
