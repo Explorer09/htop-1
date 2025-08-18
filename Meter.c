@@ -911,10 +911,10 @@ static void GraphMeterMode_recordNewValue(Meter* this, const GraphDrawContext* c
 
    // The total number of dots that we would draw for this record
    int numDots = 0;
-   if (total > 0.0) {
+   if (total > 0.0 && sum > 0.0) {
       numDots = (int)ceil((sum / total) * maxDots);
       assert(numDots >= 0);
-      if (sum > 0.0 && numDots <= 0) {
+      if (numDots <= 0) {
          numDots = 1; // Division of (sum / total) underflows
       }
    }
