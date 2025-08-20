@@ -928,9 +928,7 @@ static void GraphMeterMode_recordNewValue(Meter* this, const GraphDrawContext* c
    // For a meter of multiple items, we will precompute the colors of each cell
    // and store them in a record. First clear the cells, which might contain
    // data of the previous record.
-   unsigned int y = numDots;
-   if (numDots > 0)
-      y = (numDots - 1) / 8 + 1; // Round up
+   unsigned int y = (numDots + 8 - 1) / 8; // Round up
 
    size_t i = GraphMeterMode_valueCellIndex(h, isPercentChart, 0, y, NULL, NULL);
    if (i < nCellsPerValue) {
