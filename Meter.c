@@ -935,7 +935,7 @@ static void GraphMeterMode_recordNewValue(Meter* this, const GraphDrawContext* c
       memset(&valueStart[i], 0, (nCellsPerValue - i) * sizeof(*valueStart));
    }
 
-   if (numDots <= 0) {
+   if (sum <= 0.0) {
       // The record is empty. No colors needed.
       return;
    }
