@@ -282,11 +282,6 @@ static inline size_t GraphMeterMode_valueCellIndex(unsigned int h, bool isPercen
    if (stride)
       *stride = isPercentChart ? 1 : (2U << deltaExp);
 
-   unsigned int yTop = (h - 1) >> deltaExp;
-   if (y > yTop) {
-      return (size_t)-1;
-   }
-
    if (isPercentChart) {
       assert(deltaExp == 0);
       return y;
@@ -317,16 +312,15 @@ static inline size_t GraphMeterMode_valueCellIndex(unsigned int h, bool isPercen
    if (!scaleFactor) {
       // This function is called for writing. The "stride" argument is
       // optional, but the caller should assert the index is in bounds.
-      if (b + offset > 2 * h - 1) {
-         return (size_t)-1;
-      }
+      assert(b + offset < 2 * h);
       return b + offset;
    }
 
    // This function is called for reading.
    assert(!stride);
 
-   if (y < yTop) {
+   unsigned int yTop = (h - 1) >> deltaExp;
+   if (y != yTop) {
       return b + offset;
    }
 
