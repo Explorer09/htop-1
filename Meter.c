@@ -312,7 +312,7 @@ static inline size_t GraphMeterMode_valueCellIndex(unsigned int h, bool isPercen
    if (!scaleFactor) {
       // This function is called for writing. The "stride" argument is
       // optional, but the caller should assert the index is in bounds.
-      assert(b + offset < 2 * h);
+      assert(b + offset < h * 2);
       return b + offset;
    }
 
@@ -324,9 +324,9 @@ static inline size_t GraphMeterMode_valueCellIndex(unsigned int h, bool isPercen
       return b + offset;
    }
 
-   assert(((2 * h - 1) & b) == b);
+   assert(((h * 2 - 1) & b) == b);
 
-   unsigned int offsetTop = powerOf2Floor(2 * h - 1 - b);
+   unsigned int offsetTop = powerOf2Floor(h * 2 - 1 - b);
    if (offsetTop) {
       *scaleFactor = offset / offsetTop;
    }
