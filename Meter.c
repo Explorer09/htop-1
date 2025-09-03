@@ -598,9 +598,9 @@ static void GraphMeterMode_computeColors(Meter* this, const GraphDrawContext* co
    assert(firstCellIndex < context->nCellsPerValue);
 
    // The top cell of the record in this given scale
-   unsigned int topCell = (numDots - 1) / 8;
    const uint8_t dotAlignment = 2;
-   unsigned int blanksAtTopCell = (((topCell + 1) * 8 - numDots) % 8) / dotAlignment * dotAlignment;
+   unsigned int blanksAtTopCell = (8 - 1 - (numDots - 1) % 8) / dotAlignment * dotAlignment;
+   unsigned int topCell = (numDots - 1) / 8;
 
    bool hasPartialTopCell = false;
    if (blanksAtTopCell > 0) {
@@ -924,7 +924,7 @@ static void GraphMeterMode_recordNewValue(Meter* this, const GraphDrawContext* c
 
    // This is a meter of multiple items.
    // First clear the cells, which might contain data of the previous record.
-   unsigned int y = (numDots + (8 - 1)) / 8; // Round up
+   unsigned int y = numDots > 0 ? (numDots - 1) / 8 + 1 : 0; // Round up
    size_t i = GraphMeterMode_valueCellIndex(h, isPercentChart, 0, y, NULL, NULL);
    if (i < nCellsPerValue) {
       memset(&valueStart[i], 0, (nCellsPerValue - i) * sizeof(*valueStart));
