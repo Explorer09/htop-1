@@ -605,7 +605,7 @@ static void GraphMeterMode_computeColors(Meter* this, const GraphDrawContext* co
    bool hasPartialTopCell = false;
    if (blanksAtTopCell > 0) {
       hasPartialTopCell = true;
-   } else if (!isPercentChart && topCell % 2 == 0 && topCell == ((h - 1) >> deltaExp)) {
+   } else if (!isPercentChart && topCell % 2 == 0 && ((topCell + 1) << deltaExp) >= h) {
       // This "top cell" is rendered as full in one scale, but partial in the
       // next scale. (Only happens when "h" is not a power of two.)
       hasPartialTopCell = true;
@@ -947,7 +947,7 @@ static void GraphMeterMode_recordNewValue(Meter* this, const GraphDrawContext* c
 
       deltaExp++;
       scaledTotal = MINIMUM(DBL_MAX, scaledTotal * 2.0);
-      numDots = (numDots - 1) / 2 + 1;
+      numDots = (numDots + (2 - 1)) / 2;
    }
 }
 
