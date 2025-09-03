@@ -942,7 +942,7 @@ static void GraphMeterMode_recordNewValue(Meter* this, const GraphDrawContext* c
    while (true) {
       GraphMeterMode_computeColors(this, context, valueStart, deltaExp, scaledTotal, numDots);
 
-      if (isPercentChart || (2U << deltaExp) > h * 2 - 1 || !(scaledTotal < DBL_MAX))
+      if (isPercentChart || ((h - 1) >> deltaExp) == 0 || !(scaledTotal < DBL_MAX))
          break;
 
       deltaExp++;
