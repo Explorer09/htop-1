@@ -598,9 +598,9 @@ static void GraphMeterMode_computeColors(Meter* this, const GraphDrawContext* co
    assert(firstCellIndex < context->nCellsPerValue);
 
    // The top cell of the record in this given scale
-   const uint8_t dotAlignment = 2;
-   unsigned int blanksAtTopCell = (8 - 1 - (numDots - 1) % 8) / dotAlignment * dotAlignment;
    unsigned int topCell = (numDots - 1) / 8;
+   const uint8_t dotAlignment = 2;
+   unsigned int blanksAtTopCell = (((topCell + 1) * 8 - numDots) % 8) / dotAlignment * dotAlignment;
 
    bool hasPartialTopCell = false;
    if (blanksAtTopCell > 0) {
