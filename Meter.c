@@ -908,11 +908,14 @@ static void GraphMeterMode_recordNewValue(Meter* this, const GraphDrawContext* c
 
    // The total number of dots that we would draw for this record
    unsigned int numDots = 0;
+   unsigned int y = 0;
    if (total > 0.0 && sum > 0.0) {
       numDots = (unsigned int)(int32_t)ceil((sum / total) * maxDots);
       if (numDots <= 0) {
          numDots = 1; // Division of (sum / total) underflows
       }
+
+      y = (numDots - 1) / 8 + 1; // Round up
    }
 
    if (maxItems == 1) {
@@ -922,10 +925,8 @@ static void GraphMeterMode_recordNewValue(Meter* this, const GraphDrawContext* c
       return;
    }
 
-   // For a meter of multiple items, we will precompute the colors of each cell
-   // and store them in a record. First clear the cells, which might contain
-   // data of the previous record.
-   unsigned int y = ((unsigned int)numDots + 8 - 1) / 8; // Round up
+   // This is a meter of multiple items.
+   // First clear the cells, which might contain data of the previous record.
    size_t i = GraphMeterMode_valueCellIndex(h, isPercentChart, 0, y, NULL, NULL);
    if (i < nCellsPerValue) {
       memset(&valueStart[i], 0, (nCellsPerValue - i) * sizeof(*valueStart));
@@ -936,6 +937,7 @@ static void GraphMeterMode_recordNewValue(Meter* this, const GraphDrawContext* c
       return;
    }
 
+   // Then precompute and store the colors of the cells in the record.
    int deltaExp = 0;
    double scaledTotal = total;
    assert(scaledTotal > 0.0);
