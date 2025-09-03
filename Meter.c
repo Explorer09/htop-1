@@ -903,11 +903,10 @@ static void GraphMeterMode_recordNewValue(Meter* this, const GraphDrawContext* c
    double maxDots = (double)(int32_t)(h * 8);
 
    // The total number of dots that we would draw for this record
-   int numDots = 0;
-   if (total > 0.0) {
-      numDots = (int)ceil((sum / total) * maxDots);
-      assert(numDots >= 0);
-      if (sum > 0.0 && numDots <= 0) {
+   unsigned int numDots = 0;
+   if (total > 0.0 && sum > 0.0) {
+      numDots = (unsigned int)(int32_t)ceil((sum / total) * maxDots);
+      if (numDots <= 0) {
          numDots = 1; // Division of (sum / total) underflows
       }
    }
@@ -928,7 +927,7 @@ static void GraphMeterMode_recordNewValue(Meter* this, const GraphDrawContext* c
       memset(&valueStart[i], 0, (nCellsPerValue - i) * sizeof(*valueStart));
    }
 
-   if (sum <= 0.0) {
+   if (numDots <= 0) {
       // The record is empty. No colors needed.
       return;
    }
@@ -937,12 +936,7 @@ static void GraphMeterMode_recordNewValue(Meter* this, const GraphDrawContext* c
    double scaledTotal = total;
    assert(scaledTotal > 0.0);
    while (true) {
-      numDots = (int)ceil((sum / scaledTotal) * maxDots);
-      if (numDots <= 0) {
-         numDots = 1; // Division of (sum / scaledTotal) underflows
-      }
-
-      GraphMeterMode_computeColors(this, context, valueStart, deltaExp, scaledTotal, (unsigned int)numDots);
+      GraphMeterMode_computeColors(this, context, valueStart, deltaExp, scaledTotal, numDots);
 
       if (isPercentChart || !(scaledTotal < DBL_MAX) || (1U << deltaExp) >= h) {
          break;
@@ -950,6 +944,7 @@ static void GraphMeterMode_recordNewValue(Meter* this, const GraphDrawContext* c
 
       deltaExp++;
       scaledTotal = MINIMUM(DBL_MAX, scaledTotal * 2.0);
+      numDots = (numDots - 1) / 2 + 1;
    }
 }
 
