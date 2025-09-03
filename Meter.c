@@ -323,10 +323,10 @@ static inline size_t GraphMeterMode_valueCellIndex(unsigned int h, bool isPercen
    // This function is called for reading.
    assert(!stride);
 
-   if (((h * 2 - 1) - b) >= offset)
+   if (((h * 2 - 1) ^ b) >= offset || ((h * 2 - 1) ^ b) == 0)
       return b + offset;
 
-   unsigned int offsetTop = powerOf2Floor((h * 2 - 1) - b);
+   unsigned int offsetTop = powerOf2Floor((h * 2 - 1) ^ b);
    if (offsetTop)
       *scaleFactor = offset / offsetTop;
 
