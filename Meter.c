@@ -924,7 +924,7 @@ static void GraphMeterMode_recordNewValue(Meter* this, const GraphDrawContext* c
 
    // This is a meter of multiple items.
    // First clear the cells, which might contain data of the previous record.
-   unsigned int y = numDots > 0 ? (numDots - 1) / 8 + 1 : 0; // Round up
+   unsigned int y = (numDots + (8 - 1)) / 8; // Round up
    size_t i = GraphMeterMode_valueCellIndex(h, isPercentChart, 0, y, NULL, NULL);
    if (i < nCellsPerValue) {
       memset(&valueStart[i], 0, (nCellsPerValue - i) * sizeof(*valueStart));
