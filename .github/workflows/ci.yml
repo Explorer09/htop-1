@@ -62,7 +62,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CC: clang-20
-      CFLAGS: -O2 -g -flto -Wno-shorten-64-to-32
+      CFLAGS: -O2 -g -flto -Wno-error=shorten-64-to-32 -Wshorten-64-to-32
       LDFLAGS: -O2 -g -flto -Wl,--as-needed
     steps:
     - uses: actions/checkout@v5
@@ -89,7 +89,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CC: clang-20
-      CFLAGS: -Os -g -flto -Wno-shorten-64-to-32
+      CFLAGS: -Os -g -flto -Wno-error=shorten-64-to-32 -Wshorten-64-to-32
       LDFLAGS: -Os -g -flto -Wl,--as-needed
     steps:
     - uses: actions/checkout@v5
@@ -158,7 +158,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CC: clang-20
-      CFLAGS: -O2 -g -flto -Wno-shorten-64-to-32
+      CFLAGS: -O2 -g -flto -Wno-error=shorten-64-to-32 -Wshorten-64-to-32
       LDFLAGS: -O2 -g -flto -Wl,--as-needed
     steps:
     - uses: actions/checkout@v5
@@ -185,7 +185,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CC: clang-20
-      CFLAGS: -Os -g -flto -Wno-shorten-64-to-32
+      CFLAGS: -Os -g -flto -Wno-error=shorten-64-to-32 -Wshorten-64-to-32
       LDFLAGS: -Os -g -flto -Wl,--as-needed
     steps:
     - uses: actions/checkout@v5
