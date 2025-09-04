@@ -326,8 +326,10 @@ static inline size_t GraphMeterMode_valueCellIndex(unsigned int h, bool isPercen
    unsigned int offsetTop = (h * 2 - 1) ^ b;
    assert(offsetTop != 0);
 
-   if (offsetTop == 0 || offsetTop >= offset)
+   if (!offsetTop || offsetTop >= offset) {
+      // The (!offsetTop) conditional is an optimization hint
       return b + offset;
+   }
 
    offsetTop = powerOf2Floor(offsetTop);
    assert(offsetTop != 0);
@@ -910,9 +912,7 @@ static void GraphMeterMode_recordNewValue(Meter* this, const GraphDrawContext* c
    unsigned int numDots = 0;
    if (total > 0.0 && sum > 0.0) {
       numDots = (unsigned int)(int32_t)ceil((sum / total) * maxDots);
-      if (numDots <= 0) {
-         numDots = 1; // Division of (sum / total) underflows
-      }
+      numDots = MAXIMUM(1, numDots); // Division of (sum / total) can underflow
    }
 
    if (maxItems == 1) {
@@ -931,8 +931,7 @@ static void GraphMeterMode_recordNewValue(Meter* this, const GraphDrawContext* c
    }
 
    if (numDots <= 0) {
-      // The record is empty. No colors needed.
-      return;
+      return; // The record is empty. No colors needed.
    }
 
    // Then precompute and store the colors of the cells in the record.
@@ -947,7 +946,7 @@ static void GraphMeterMode_recordNewValue(Meter* this, const GraphDrawContext* c
 
       deltaExp++;
       scaledTotal = MINIMUM(DBL_MAX, scaledTotal * 2.0);
-      numDots = (numDots + (2 - 1)) / 2;
+      numDots = (numDots - 1) / 2 + 1;
    }
 }
 
