@@ -921,8 +921,8 @@ static void GraphMeterMode_recordNewValue(Meter* this, const GraphDrawContext* c
    uint8_t itemIndex = 0;
    do {
       numDots = 0;
-      double value = sum;
       if (total > 0.0) {
+         double value = sum;
          if (this->mode == GRAPH2_METERMODE && itemIndex < this->curItems) {
             value = this->values[itemIndex];
          }
