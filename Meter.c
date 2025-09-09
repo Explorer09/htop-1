@@ -917,30 +917,38 @@ static void GraphMeterMode_recordNewValue(Meter* this, const GraphDrawContext* c
    assert(h <= UINT16_MAX / 8);
    double maxDots = (double)(int32_t)(h * 8);
 
-   if (maxItems == 1 || this->mode == GRAPH2_METERMODE) {
-      // We just need to record the number of dots in the graph data buffer.
-      for (uint8_t i = 0; i < maxItems; i++) {
-         unsigned int numDots = 0;
-         if (total > 0.0 && i < this->curItems && isPositive(this->values[i])) {
-            double value = MINIMUM(total, this->values[i]);
-
-            numDots = (unsigned int)(int32_t)ceil((value / total) * maxDots);
-            // Division of (value / total) can underflow
-            numDots = MAXIMUM(1, numDots);
+   unsigned int numDots = 0;
+   uint8_t itemIndex = 0;
+   do {
+      numDots = 0;
+      double value = sum;
+      if (total > 0.0) {
+         if (this->mode == GRAPH2_METERMODE && itemIndex < this->curItems) {
+            value = this->values[itemIndex];
          }
-         assert(numDots <= UINT16_MAX - (8 - 1));
-         valueStart[(isPercentChart ? 0 : 1) + i].numDots = (uint16_t)numDots;
       }
+      if (total > 0.0 && isPositive(value)) {
+         value = MINIMUM(total, value); // Clamp when value is infinity
+
+         numDots = (unsigned int)(int32_t)ceil((value / total) * maxDots);
+         // Division of (value / total) can underflow
+         numDots = MAXIMUM(1, numDots);
+      }
+      assert(numDots <= UINT16_MAX - (8 - 1));
+
+      if (maxItems == 1 || this->mode == GRAPH2_METERMODE) {
+         // We just need to record the number of dots in the graph data buffer.
+         valueStart[(isPercentChart ? 0 : 1) + itemIndex].numDots = (uint16_t)numDots;
+      }
+
+      if (!(maxItems == 1 || this->mode == GRAPH2_METERMODE)) {
+         // simplify this to (this->mode != GRAPH2_METERMODE) ?
+         break;
+      }
+   } while (++itemIndex < maxItems);
+   if (maxItems == 1 || this->mode == GRAPH2_METERMODE) {
       return;
    }
-
-   // The total number of dots that we would draw for this record
-   unsigned int numDots = 0;
-   if (total > 0.0 && sum > 0.0) {
-      numDots = (unsigned int)(int32_t)ceil((sum / total) * maxDots);
-      numDots = MAXIMUM(1, numDots); // Division of (sum / total) can underflow
-   }
-   assert(numDots <= UINT16_MAX - (8 - 1));
 
    // This is a meter of multiple items.
    // First clear the cells, which might contain data of the previous record.
