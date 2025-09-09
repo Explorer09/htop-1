@@ -922,15 +922,17 @@ static void GraphMeterMode_recordNewValue(Meter* this, const GraphDrawContext* c
    do {
       numDots = 0;
       double value = sum;
-      if (this->mode == GRAPH2_METERMODE && itemIndex < this->curItems) {
-         value = this->values[itemIndex];
-      }
-      if (total > 0.0 && isPositive(value)) {
-         value = MINIMUM(total, value); // Clamp when value is infinity
+      if (total > 0.0) {
+         if (this->mode == GRAPH2_METERMODE && itemIndex < this->curItems) {
+            value = this->values[itemIndex];
+         }
+         if (isPositive(value)) {
+            value = MINIMUM(total, value); // Clamp when value is infinity
 
-         numDots = (unsigned int)(int32_t)ceil((value / total) * maxDots);
-         // Division of (value / total) can underflow
-         numDots = MAXIMUM(1, numDots);
+            numDots = (unsigned int)(int32_t)ceil((value / total) * maxDots);
+            // Division of (value / total) can underflow
+            numDots = MAXIMUM(1, numDots);
+         }
       }
       assert(numDots <= UINT16_MAX - (8 - 1));
 
