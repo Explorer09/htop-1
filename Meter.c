@@ -890,9 +890,12 @@ static void GraphMeterMode_recordNewValue(Meter* this, const GraphDrawContext* c
 
       if (this->mode == GRAPH2_METERMODE) {
          // Find the greatest value in this->values array
-         for (uint8_t i = 0; i < this->curItems && i < maxItems; i++) {
+         for (uint8_t i = 0; i < this->curItems; ) {
             if (isgreater(this->values[i], total)) {
                total = this->values[i];
+            }
+            if (++i >= maxItems) {
+               break;
             }
          }
          total = MINIMUM(DBL_MAX, total);
