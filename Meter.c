@@ -380,17 +380,15 @@ static uint8_t GraphMeterMode_findTopCellItem(const Meter* this, double scaledTo
 
          area = MINIMUM(topPoint - (double)(int32_t)topCell, area);
 
-         if (area >= maxValue) {
-            maxValue = area;
-            topCellItem = i;
-         }
+         value = area;
       } else {
          // Compare "value" directly. It is possible for an "area" to underflow
          // here and still win as the largest area.
-         if (value >= maxValue) {
-            maxValue = value;
-            topCellItem = i;
-         }
+      }
+
+      if (value >= maxValue) {
+         maxValue = value;
+         topCellItem = i;
       }
    }
    return topCellItem;
@@ -607,7 +605,7 @@ static void GraphMeterMode_computeColors(Meter* this, const GraphDrawContext* co
    bool hasPartialTopCell = false;
    if (blanksAtTopCell > 0) {
       hasPartialTopCell = true;
-   } else if (!isPercentChart && (topCell + 1) % 2 != 0 && ((topCell + 1) << deltaExp) >= h) {
+   } else if (!isPercentChart && topCell % 2 == 0 && ((topCell + 1) << deltaExp) >= h) {
       // This "top cell" is rendered as full in one scale, but partial in the
       // next scale. (Only happens when "h" is not a power of two.)
       hasPartialTopCell = true;
