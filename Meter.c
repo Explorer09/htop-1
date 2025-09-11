@@ -919,13 +919,13 @@ static void GraphMeterMode_recordNewValue(Meter* this, const GraphDrawContext* c
 
    unsigned int numDots = 0;
    uint8_t itemIndex = 0;
+   double value = sum;
    GraphDataCell* itemStart = (maxItems == 1 || this->mode == GRAPH2_METERMODE) ? &valueStart[isPercentChart ? 0 : 1] : NULL;
    while (true) {
       numDots = 0;
       if (total > 0.0) {
-         double value = sum;
-         if (itemStart && itemIndex < this->curItems) {
-            value = this->values[itemIndex];
+         if (this->mode == GRAPH2_METERMODE) {
+            value = itemIndex < this->curItems ? this->values[itemIndex] : 0.0;
          }
          if (isPositive(value)) {
             value = MINIMUM(total, value); // Clamp when value is infinity
