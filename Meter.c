@@ -923,10 +923,8 @@ static void GraphMeterMode_recordNewValue(Meter* this, const GraphDrawContext* c
    while (true) {
       numDots = 0;
       double value = sum;
-      if (total > 0.0) {
-         if (this->mode == GRAPH2_METERMODE && itemIndex < this->curItems) {
-            value = this->values[itemIndex];
-         }
+      if (this->mode == GRAPH2_METERMODE && itemIndex < this->curItems) {
+         value = this->values[itemIndex];
       }
       if (total > 0.0 && isPositive(value)) {
          value = MINIMUM(total, value); // Clamp when value is infinity
