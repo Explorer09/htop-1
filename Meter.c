@@ -937,7 +937,7 @@ static void GraphMeterMode_recordNewValue(Meter* this, const GraphDrawContext* c
       }
       assert(numDots <= UINT16_MAX - (8 - 1));
 
-      if (this->mode != GRAPH2_METERMODE && maxItems != 1)
+      if (maxItems != 1 && this->mode != GRAPH2_METERMODE)
          break;
 
       // We just need to record the number of dots in the graph data buffer.
