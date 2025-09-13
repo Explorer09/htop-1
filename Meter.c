@@ -378,14 +378,17 @@ static uint8_t GraphMeterMode_findTopCellItem(const Meter* this, double scaledTo
 
          area = MINIMUM(topPoint - (double)(int32_t)topCell, area);
 
-         value = area;
+         if (area >= maxValue) {
+            maxValue = area;
+            topCellItem = i;
+         }
       } else {
-         // No need to compute "area" in this case. Comparing "value" directly
-         // will give us more precision.
-      }
-      if (value >= maxValue) {
-         maxValue = value;
-         topCellItem = i;
+         // Compare "value" directly. It is possible for an "area" to underflow
+         // here and still win as the largest area.
+         if (value >= maxValue) {
+            maxValue = value;
+            topCellItem = i;
+         }
       }
    }
    return topCellItem;
