@@ -942,8 +942,7 @@ static void GraphMeterMode_recordNewValue(Meter* this, const GraphDrawContext* c
          itemStart[itemIndex].numDots = (uint16_t)numDots;
       }
 
-      if (!(maxItems == 1 || this->mode == GRAPH2_METERMODE)) {
-         // simplify this to (this->mode != GRAPH2_METERMODE) ?
+      if (this->mode != GRAPH2_METERMODE) {
          break;
       }
    } while (++itemIndex < maxItems);
