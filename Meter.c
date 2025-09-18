@@ -924,12 +924,12 @@ static void GraphMeterMode_recordNewValue(Meter* this, const GraphDrawContext* c
    while (true) {
       numDots = 0;
       if (total > 0.0) {
-         if (this->mode == GRAPH2_METERMODE) {
-            value = itemIndex < this->curItems ? this->values[itemIndex] : 0.0;
+         if (this->mode == GRAPH2_METERMODE && itemIndex < this->curItems) {
+            value = this->values[itemIndex];
          }
          if (isPositive(value)) {
             value = MINIMUM(total, value); // Clamp when value is infinity
-            
+
             numDots = (unsigned int)(int32_t)ceil((value / total) * maxDots);
             // Division of (value / total) can underflow
             numDots = MAXIMUM(1, numDots);
@@ -943,9 +943,10 @@ static void GraphMeterMode_recordNewValue(Meter* this, const GraphDrawContext* c
       // We just need to record the number of dots in the graph data buffer.
       itemStart[itemIndex].numDots = (uint16_t)numDots;
 
-      if (++itemIndex >= maxItems) {
+      if (++itemIndex >= maxItems)
          return;
-      }
+
+      value = 0.0;
    }
 
    // This is a meter of multiple items.
