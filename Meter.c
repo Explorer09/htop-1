@@ -871,15 +871,15 @@ static void GraphMeterMode_recordNewValue(Meter* this, const GraphDrawContext* c
    valueStart = (GraphDataCell*)data->buffer;
    valueStart = &valueStart[(nValues - 1) * nCellsPerValue];
 
+   GraphDataCell* itemStart = (maxItems == 1 || this->mode == GRAPH2_METERMODE) ? &valueStart[isPercentChart ? 0 : 1] : NULL;
+
    // Sum the values of all items
    double sum = 0.0;
-   if (this->mode != GRAPH2_METERMODE && this->curItems > 0) {
+   if (!itemStart && this->curItems > 0) {
       sum = Meter_computeSum(this);
       assert(sum >= 0.0);
       assert(sum <= DBL_MAX);
    }
-
-   GraphDataCell* itemStart = (maxItems == 1 || this->mode == GRAPH2_METERMODE) ? &valueStart[isPercentChart ? 0 : 1] : NULL;
 
    // "total" refers to the value that we would draw as full in graph
    double total = sum;
@@ -890,7 +890,7 @@ static void GraphMeterMode_recordNewValue(Meter* this, const GraphDrawContext* c
       // Determine the scale and "total" that we need afterward. The "total" is
       // rounded up to a power of 2.
 
-      if (itemStart) {
+      if (this->mode == GRAPH2_METERMODE) {
          // Find the greatest value in this->values array
          for (uint8_t i = 0; i < maxItems && i < this->curItems; i++) {
             if (isgreater(this->values[i], total)) {
