@@ -57,6 +57,7 @@ typedef union GraphDataCell_ {
 typedef struct GraphDrawContext_ {
    uint8_t maxItems;
    bool isPercentChart;
+   bool inNumDots;
    size_t nCellsPerValue;
 } GraphDrawContext;
 
@@ -1253,8 +1254,9 @@ static void GraphMeterMode_draw(Meter* this, int x, int y, int w) {
    }
 
    bool isPercentChart = Meter_isPercentChart(this);
+   bool inNumDots = maxItems == 1 || this->mode == GRAPH2_METERMODE;
 
-   size_t nCellsPerValue = this->mode == GRAPH2_METERMODE || maxItems == 1 ? maxItems : h;
+   size_t nCellsPerValue = inNumDots ? maxItems : h;
    if (!isPercentChart) {
       nCellsPerValue *= 2;
       if (this->mode == GRAPH2_METERMODE) {
@@ -1265,6 +1267,7 @@ static void GraphMeterMode_draw(Meter* this, int x, int y, int w) {
    GraphDrawContext context = {
       .maxItems = maxItems,
       .isPercentChart = isPercentChart,
+      .inNumDots = inNumDots,
       .nCellsPerValue = nCellsPerValue
    };
 
