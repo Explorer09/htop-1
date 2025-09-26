@@ -890,7 +890,7 @@ static void GraphMeterMode_recordNewValue(Meter* this, const GraphDrawContext* c
       // Determine the scale and "total" that we need afterward. The "total" is
       // rounded up to a power of 2.
 
-      if (inNumDots) {
+      if (this->mode == GRAPH2_METERMODE) {
          // Find the greatest value in this->values array
          for (uint8_t i = 0; i < maxItems && i < this->curItems; i++) {
             if (isgreater(this->values[i], total)) {
@@ -926,7 +926,7 @@ static void GraphMeterMode_recordNewValue(Meter* this, const GraphDrawContext* c
    while (true) {
       numDots = 0;
       if (total > 0.0) {
-         if (inNumDots && itemIndex < this->curItems) {
+         if (this->mode == GRAPH2_METERMODE && itemIndex < this->curItems) {
             value = this->values[itemIndex];
          }
          if (isPositive(value)) {
