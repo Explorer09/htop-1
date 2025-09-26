@@ -855,6 +855,7 @@ static void GraphMeterMode_computeColors(Meter* this, const GraphDrawContext* co
 static void GraphMeterMode_recordNewValue(Meter* this, const GraphDrawContext* context) {
    uint8_t maxItems = context->maxItems;
    bool isPercentChart = context->isPercentChart;
+   bool inNumDots = context->inNumDots;
    size_t nCellsPerValue = context->nCellsPerValue;
    if (!nCellsPerValue)
       return;
@@ -918,7 +919,7 @@ static void GraphMeterMode_recordNewValue(Meter* this, const GraphDrawContext* c
    assert(h <= UINT16_MAX / 8);
    double maxDots = (double)(int32_t)(h * 8);
 
-   if (maxItems == 1 || this->mode == GRAPH2_METERMODE) {
+   if (inNumDots) {
       // We just need to record the number of dots in the graph data buffer.
       GraphDataCell* itemStart = &valueStart[isPercentChart ? 0 : 1];
       uint8_t i = 0;
