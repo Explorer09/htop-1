@@ -875,7 +875,7 @@ static void GraphMeterMode_recordNewValue(Meter* this, const GraphDrawContext* c
 
    // Sum the values of all items
    double sum = 0.0;
-   if (this->mode != GRAPH2_METERMODE && this->curItems > 0) {
+   if (!inNumDots && this->curItems > 0) {
       sum = Meter_computeSum(this);
       assert(sum >= 0.0);
       assert(sum <= DBL_MAX);
