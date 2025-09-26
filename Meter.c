@@ -871,11 +871,9 @@ static void GraphMeterMode_recordNewValue(Meter* this, const GraphDrawContext* c
    valueStart = (GraphDataCell*)data->buffer;
    valueStart = &valueStart[(nValues - 1) * nCellsPerValue];
 
-   bool storeNumDots = maxItems == 1 || this->mode == GRAPH2_METERMODE;
-
    // Sum the values of all items
    double sum = 0.0;
-   if (!storeNumDots && this->curItems > 0) {
+   if (this->mode != GRAPH2_METERMODE && this->curItems > 0) {
       sum = Meter_computeSum(this);
       assert(sum >= 0.0);
       assert(sum <= DBL_MAX);
@@ -890,7 +888,7 @@ static void GraphMeterMode_recordNewValue(Meter* this, const GraphDrawContext* c
       // Determine the scale and "total" that we need afterward. The "total" is
       // rounded up to a power of 2.
 
-      if (storeNumDots) {
+      if (this->mode == GRAPH2_METERMODE) {
          // Find the greatest value in this->values array
          for (uint8_t i = 0; i < maxItems && i < this->curItems; i++) {
             if (isgreater(this->values[i], total)) {
@@ -919,36 +917,32 @@ static void GraphMeterMode_recordNewValue(Meter* this, const GraphDrawContext* c
    assert(h <= UINT16_MAX / 8);
    double maxDots = (double)(int32_t)(h * 8);
 
-   unsigned int numDots = 0;
-   uint8_t itemIndex = 0;
-   double value = sum;
-   GraphDataCell* itemStart = &valueStart[isPercentChart ? 0 : 1];
-   while (true) {
-      numDots = 0;
-      if (total > 0.0) {
-         if (storeNumDots && itemIndex < this->curItems) {
-            value = this->values[itemIndex];
-         }
-         if (isPositive(value)) {
-            value = MINIMUM(total, value); // Clamp when value is infinity
+   if (maxItems == 1 || this->mode == GRAPH2_METERMODE) {
+      // We just need to record the number of dots in the graph data buffer.
+      GraphDataCell* itemStart = &valueStart[isPercentChart ? 0 : 1];
+      uint8_t i = 0;
+      do {
+         unsigned int numDots = 0;
+         if (total > 0.0 && i < this->curItems && isPositive(this->values[i])) {
+            double value = MINIMUM(total, this->values[i]);
 
             numDots = (unsigned int)(int32_t)ceil((value / total) * maxDots);
             // Division of (value / total) can underflow
             numDots = MAXIMUM(1, numDots);
          }
-      }
-      assert(numDots <= UINT16_MAX - (8 - 1));
-      if (!storeNumDots)
-         break;
-
-      // We just need to record the number of dots in the graph data buffer.
-      itemStart[itemIndex].numDots = (uint16_t)numDots;
-
-      if (++itemIndex >= maxItems)
-         return;
-
-      value = 0.0;
+         assert(numDots <= UINT16_MAX - (8 - 1));
+         itemStart[i].numDots = (uint16_t)numDots;
+      } while (++i < maxItems);
+      return;
    }
+
+   // The total number of dots that we would draw for this record
+   unsigned int numDots = 0;
+   if (total > 0.0 && sum > 0.0) {
+      numDots = (unsigned int)(int32_t)ceil((sum / total) * maxDots);
+      numDots = MAXIMUM(1, numDots); // Division of (sum / total) can underflow
+   }
+   assert(numDots <= UINT16_MAX - (8 - 1));
 
    // This is a meter of multiple items.
    // First clear the cells, which might contain data of the previous record.
