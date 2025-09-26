@@ -1026,6 +1026,7 @@ static int GraphMeterMode_lookupCell(const Meter* this, const GraphDrawContext* 
 
    uint8_t maxItems = context->maxItems;
    bool isPercentChart = context->isPercentChart;
+   bool inNumDots = context->inNumDots;
    size_t nCellsPerValue = context->nCellsPerValue;
 
    // Reverse the coordinate
@@ -1047,7 +1048,7 @@ static int GraphMeterMode_lookupCell(const Meter* this, const GraphDrawContext* 
       deltaExp = scaleExp - valueStart[0].scaleExp;
    }
 
-   if (this->mode == GRAPH2_METERMODE || maxItems == 1) {
+   if (inNumDots) {
       assert(maxItems <= 2);
 
       unsigned int numBlanks[2];
