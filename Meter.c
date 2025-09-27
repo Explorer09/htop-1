@@ -57,6 +57,7 @@ typedef union GraphDataCell_ {
 typedef struct GraphDrawContext_ {
    uint8_t maxItems;
    bool isPercentChart;
+   bool inNumDots;
    size_t nCellsPerValue;
 } GraphDrawContext;
 
@@ -854,6 +855,7 @@ static void GraphMeterMode_computeColors(Meter* this, const GraphDrawContext* co
 static void GraphMeterMode_recordNewValue(Meter* this, const GraphDrawContext* context) {
    uint8_t maxItems = context->maxItems;
    bool isPercentChart = context->isPercentChart;
+   bool inNumDots = context->inNumDots;
    size_t nCellsPerValue = context->nCellsPerValue;
    if (!nCellsPerValue)
       return;
@@ -917,36 +919,32 @@ static void GraphMeterMode_recordNewValue(Meter* this, const GraphDrawContext* c
    assert(h <= UINT16_MAX / 8);
    double maxDots = (double)(int32_t)(h * 8);
 
-   unsigned int numDots = 0;
-   uint8_t itemIndex = 0;
-   double value = sum;
-   GraphDataCell* itemStart = &valueStart[isPercentChart ? 0 : 1];
-   while (true) {
-      numDots = 0;
-      if (total > 0.0) {
-         if (this->mode == GRAPH2_METERMODE || maxItems == 1) {
-            value = itemIndex < this->curItems ? this->values[itemIndex] : 0.0;
-         }
-         if (isPositive(value)) {
-            value = MINIMUM(total, value); // Clamp when value is infinity
-            
+   if (inNumDots) {
+      // We just need to record the number of dots in the graph data buffer.
+      GraphDataCell* itemStart = &valueStart[isPercentChart ? 0 : 1];
+      uint8_t i = 0;
+      do {
+         unsigned int numDots = 0;
+         if (total > 0.0 && i < this->curItems && isPositive(this->values[i])) {
+            double value = MINIMUM(total, this->values[i]);
+
             numDots = (unsigned int)(int32_t)ceil((value / total) * maxDots);
             // Division of (value / total) can underflow
             numDots = MAXIMUM(1, numDots);
          }
-      }
-      assert(numDots <= UINT16_MAX - (8 - 1));
-
-      if (!(this->mode == GRAPH2_METERMODE || maxItems == 1))
-         break;
-
-      // We just need to record the number of dots in the graph data buffer.
-      itemStart[itemIndex].numDots = (uint16_t)numDots;
-
-      if (++itemIndex >= maxItems) {
-         return;
-      }
+         assert(numDots <= UINT16_MAX - (8 - 1));
+         itemStart[i].numDots = (uint16_t)numDots;
+      } while (++i < maxItems);
+      return;
    }
+
+   // The total number of dots that we would draw for this record
+   unsigned int numDots = 0;
+   if (total > 0.0 && sum > 0.0) {
+      numDots = (unsigned int)(int32_t)ceil((sum / total) * maxDots);
+      numDots = MAXIMUM(1, numDots); // Division of (sum / total) can underflow
+   }
+   assert(numDots <= UINT16_MAX - (8 - 1));
 
    // This is a meter of multiple items.
    // First clear the cells, which might contain data of the previous record.
@@ -1028,6 +1026,7 @@ static int GraphMeterMode_lookupCell(const Meter* this, const GraphDrawContext* 
 
    uint8_t maxItems = context->maxItems;
    bool isPercentChart = context->isPercentChart;
+   bool inNumDots = context->inNumDots;
    size_t nCellsPerValue = context->nCellsPerValue;
 
    // Reverse the coordinate
@@ -1049,7 +1048,7 @@ static int GraphMeterMode_lookupCell(const Meter* this, const GraphDrawContext* 
       deltaExp = scaleExp - valueStart[0].scaleExp;
    }
 
-   if (this->mode == GRAPH2_METERMODE || maxItems == 1) {
+   if (inNumDots) {
       assert(maxItems <= 2);
 
       unsigned int numBlanks[2];
@@ -1252,8 +1251,9 @@ static void GraphMeterMode_draw(Meter* this, int x, int y, int w) {
    }
 
    bool isPercentChart = Meter_isPercentChart(this);
+   bool inNumDots = maxItems == 1 || this->mode == GRAPH2_METERMODE;
 
-   size_t nCellsPerValue = this->mode == GRAPH2_METERMODE || maxItems == 1 ? maxItems : h;
+   size_t nCellsPerValue = inNumDots ? maxItems : h;
    if (!isPercentChart) {
       nCellsPerValue *= 2;
       if (this->mode == GRAPH2_METERMODE) {
@@ -1264,6 +1264,7 @@ static void GraphMeterMode_draw(Meter* this, int x, int y, int w) {
    GraphDrawContext context = {
       .maxItems = maxItems,
       .isPercentChart = isPercentChart,
+      .inNumDots = inNumDots,
       .nCellsPerValue = nCellsPerValue
    };
 
