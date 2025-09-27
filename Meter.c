@@ -379,17 +379,14 @@ static uint8_t GraphMeterMode_findTopCellItem(const Meter* this, double scaledTo
 
          area = MINIMUM(topPoint - (double)(int32_t)topCell, area);
 
-         if (area >= maxValue) {
-            maxValue = area;
-            topCellItem = i;
-         }
+         value = area;
       } else {
-         // Compare "value" directly. It is possible for an "area" to underflow
-         // here and still win as the largest area.
-         if (value >= maxValue) {
-            maxValue = value;
-            topCellItem = i;
-         }
+         // No need to compute "area" in this case. Comparing "value" directly
+         // will give us more precision.
+      }
+      if (value >= maxValue) {
+         maxValue = value;
+         topCellItem = i;
       }
    }
    return topCellItem;
@@ -890,7 +887,7 @@ static void GraphMeterMode_recordNewValue(Meter* this, const GraphDrawContext* c
       // Determine the scale and "total" that we need afterward. The "total" is
       // rounded up to a power of 2.
 
-      if (inNumDots) {
+      if (this->mode == GRAPH2_METERMODE) {
          // Find the greatest value in this->values array
          for (uint8_t i = 0; i < maxItems && i < this->curItems; i++) {
             if (isgreater(this->values[i], total)) {
@@ -924,6 +921,8 @@ static void GraphMeterMode_recordNewValue(Meter* this, const GraphDrawContext* c
    double value = sum;
    GraphDataCell* itemStart = &valueStart[isPercentChart ? 0 : 1];
    while (true) {
+      assert(this->mode != GRAPH2_METERMODE || value == 0.0);
+
       numDots = 0;
       if (total > 0.0) {
          if (this->mode == GRAPH2_METERMODE && itemIndex < this->curItems) {
@@ -942,7 +941,7 @@ static void GraphMeterMode_recordNewValue(Meter* this, const GraphDrawContext* c
       if (!inNumDots)
          break;
 
-      // We just need to record the number of dots in the graph data buffer.
+      // Record the number of dots in the graph data buffer.
       itemStart[itemIndex].numDots = (uint16_t)numDots;
 
       if (++itemIndex >= maxItems)
@@ -1118,6 +1117,9 @@ static int GraphMeterMode_lookupCell(const Meter* this, const GraphDrawContext* 
          *details = 0xFF;
          *details >>= blanksAtStart;
          *details = (uint8_t)((*details >> blanksAtEnd) << blanksAtEnd);
+         if (*details == 0x3C) {
+            *details = 0x24;
+         }
       }
    } else {
       int deltaExpArg = MINIMUM(UINT16_WIDTH - 1, deltaExp);
@@ -1165,7 +1167,7 @@ static void GraphMeterMode_printCellDetails(uint8_t details) {
       // byte contains specific bit patterns, it indicates that only half cell
       // should be displayed in the ASCII display mode. The bits are supposed
       // to be filled in the Unicode display mode.
-      if ((details & 0x9C) == 0x14 || (details & 0x39) == 0x28) {
+      if ((details & 0x9C) == 0x14 || (details & 0x39) == 0x28 || details == 0x24) {
          if (details == 0x14 || details == 0x28) { // Special case
             details = 0x18;
          } else {
@@ -1205,6 +1207,8 @@ static void GraphMeterMode_printCellDetails(uint8_t details) {
       c = upperHalf;
    } else if ((details & 0x39) == 0x28) {
       c = lowerHalf;
+   } else if (details == 0x24) {
+      c = fullCell;
       // End of special cases
    } else if (popCount8(details) > 4) {
       c = fullCell;
