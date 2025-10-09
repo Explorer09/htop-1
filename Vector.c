@@ -54,9 +54,9 @@ static bool Vector_isConsistent(const Vector* this) {
    return true;
 }
 
-bool Vector_countEquals(const Vector* this, unsigned int expectedCount) {
-   unsigned int n = 0;
-   for (int i = 0; i < this->items; i++) {
+bool Vector_countEquals(const Vector* this, size_t expectedCount) {
+   size_t n = 0;
+   for (size_t i = 0; i < this->items; i++) {
       if (this->array[i]) {
          n++;
       }
