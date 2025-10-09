@@ -35,7 +35,7 @@ Vector* Vector_new(const ObjectClass* type, bool owner, int size) {
 
 void Vector_delete(Vector* this) {
    if (this->owner) {
-      for (int i = 0; i < this->items; i++) {
+      for (size_t i = 0; i < this->items; i++) {
          if (this->array[i]) {
             Object_delete(this->array[i]);
          }
