@@ -68,7 +68,7 @@ static void ProcessTable_cleanupEntries(Table* super) {
    int dirtyIndex = Vector_size(super->rows);
 
    // Finish process table update, culling any exit'd processes
-   for (int i = Vector_size(super->rows) - 1; i >= 0; i--) {
+   for (size_t i = Vector_size(super->rows) - 1; i != (size_t)-1; i--) {
       Process* p = (Process*) Vector_get(super->rows, i);
 
       // tidy up Process state after refreshing the ProcessTable table
