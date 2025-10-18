@@ -76,8 +76,8 @@ AC_USE_SYSTEM_EXTENSIONS
 dnl
 dnl Note: The "#undef" in AH_VERBATIM will be replaced with "#define"
 dnl when config.h is generated.
-AH_VERBATIM([_XOPEN_SOURCE_EXTENDED],
-[/* Enables XPG4v2 (SUSv1) interfaces if they are not enabled already with _XOPEN_SOURCE */
+AH_VERBATIM([_XOPEN_SOURCE_EXTENDED], [
+/* Enables XPG4v2 (SUSv1) interfaces if they are not enabled already with _XOPEN_SOURCE */
 #ifndef _XOPEN_SOURCE_EXTENDED
 #undef _XOPEN_SOURCE_EXTENDED
 #endif
@@ -108,10 +108,12 @@ AM_CFLAGS="-std=c99 -pedantic"
 # ----------------------------------------------------------------------
 
 AC_ARG_ENABLE([static],
-              [AS_HELP_STRING([--enable-static],
-                              [build a static htop binary @<:@default=no@:>@])],
-              [],
-              [enable_static=no])
+   [AS_HELP_STRING([--enable-static],
+      [build a static htop binary @<:@default=no@:>@]
+   )],
+   [],
+   [enable_static=no]
+)
 case "$enable_static" in
    no)
       ;;
@@ -132,17 +134,24 @@ esac
 # ----------------------------------------------------------------------
 
 AC_ARG_ENABLE([pcp],
-              [AS_HELP_STRING([--enable-pcp],
-                              [build a pcp-htop binary @<:@default=no@:>@])],
-              [],
-              [enable_pcp=no])
+   [AS_HELP_STRING([--enable-pcp],
+      [build a pcp-htop binary @<:@default=no@:>@]
+   )],
+   [],
+   [enable_pcp=no]
+)
 case "$enable_pcp" in
    no)
       ;;
    yes)
-      AC_CHECK_HEADERS([pcp/pmapi.h], [my_htop_platform=pcp],
-                       [AC_MSG_ERROR([can not find PCP header file])])
-      AC_SEARCH_LIBS([pmNewContext], [pcp], [], [AC_MSG_ERROR([can not find PCP library])])
+      AC_CHECK_HEADERS([pcp/pmapi.h],
+         [my_htop_platform=pcp],
+         [AC_MSG_ERROR([can not find PCP header file])]
+      )
+      AC_SEARCH_LIBS([pmNewContext], [pcp],
+         [],
+         [AC_MSG_ERROR([can not find PCP library])]
+      )
       AC_DEFINE([HTOP_PCP], [1], [Define if building pcp-htop binary.])
       AC_CONFIG_FILES([pcp-htop.5])
       ;;
@@ -159,26 +168,39 @@ esac
 # ----------------------------------------------------------------------
 
 AC_HEADER_DIRENT
-m4_version_prereq([2.70], [AC_CHECK_INCLUDES_DEFAULT], [AC_HEADER_STDC])
+m4_version_prereq([2.70],
+   [AC_CHECK_INCLUDES_DEFAULT],
+   [AC_HEADER_STDC]
+)
 AC_CHECK_HEADERS([ \
-    stdlib.h \
-    string.h \
-    strings.h \
-    sys/param.h \
-    sys/time.h \
-    sys/utsname.h \
-    unistd.h
-   ], [], [AC_MSG_ERROR([can not find required generic header files])])
+   stdlib.h \
+   string.h \
+   strings.h \
+   sys/param.h \
+   sys/time.h \
+   sys/utsname.h \
+   unistd.h
+   ],
+   [],
+   [AC_MSG_ERROR([can not find required generic header files])]
+)
 
 AC_HEADER_MAJOR
 dnl glibc 2.25 deprecates 'major' and 'minor' in <sys/types.h> and requires to
 dnl include <sys/sysmacros.h>. However the logic in AC_HEADER_MAJOR has not yet
 dnl been updated in Autoconf 2.69, so use a workaround:
-m4_version_prereq([2.70], [],
-[if test "x$ac_cv_header_sys_mkdev_h" != xyes; then
-   AC_CHECK_HEADER([sys/sysmacros.h], [AC_DEFINE([MAJOR_IN_SYSMACROS], [1],
-      [Define to 1 if 'major', 'minor', and 'makedev' are declared in <sys/sysmacros.h>.])])
-fi])
+m4_version_prereq([2.70],
+   [],
+   [
+   if test "x$ac_cv_header_sys_mkdev_h" != xyes; then
+      AC_CHECK_HEADER([sys/sysmacros.h],
+         [AC_DEFINE([MAJOR_IN_SYSMACROS], [1],
+            [Define to 1 if 'major', 'minor', and 'makedev' are declared in <sys/sysmacros.h>.]
+         )]
+      )
+   fi
+   ]
+)
 
 # Optional Section
 
@@ -186,7 +208,13 @@ AC_CHECK_HEADERS([execinfo.h])
 
 if test "$my_htop_platform" = darwin; then
    AC_CHECK_HEADERS([mach/mach_time.h])
-   AC_CHECK_TYPES([thread_extended_info_data_t], [], [], [[#include <mach/thread_info.h>]])
+   AC_CHECK_TYPES([thread_extended_info_data_t],
+      [],
+      [],
+      [[
+#include <mach/thread_info.h>
+      ]]
+   )
 fi
 
 # ----------------------------------------------------------------------
@@ -211,89 +239,92 @@ AC_TYPE_UINT64_T
 AC_MSG_CHECKING(for alloc_size)
 old_CFLAGS="$CFLAGS"
 CFLAGS="$CFLAGS -Wno-error -Werror=attributes"
-AC_COMPILE_IFELSE([
-   AC_LANG_SOURCE(
-      [
-         /* Attribute supported in GCC 4.3 or later */
-         __attribute__((alloc_size(1))) char* my_alloc(int size) { return 0; }
-      ],[]
-   )],
+AC_COMPILE_IFELSE(
+   [AC_LANG_SOURCE([[
+      /* Attribute supported in GCC 4.3 or later */
+      __attribute__((alloc_size(1))) char* my_alloc(int size) { return 0; }
+   ]])],
+   [
    AC_DEFINE([HAVE_ATTR_ALLOC_SIZE], 1, [The alloc_size attribute is supported.])
-   AC_MSG_RESULT(yes),
-   AC_MSG_RESULT(no))
+   AC_MSG_RESULT(yes)
+   ],
+   [AC_MSG_RESULT(no)]
+)
 CFLAGS="$old_CFLAGS"
 
 AC_MSG_CHECKING(for access)
 old_CFLAGS="$CFLAGS"
 CFLAGS="$CFLAGS -Wno-error -Werror=attributes"
-AC_COMPILE_IFELSE([
-   AC_LANG_SOURCE(
-      [
-         /* Attribute supported in GCC 10 or later */
-         __attribute__((access(read_only, 1, 2))) extern int foo(const char* str, unsigned len);
-      ],[]
-   )],
+AC_COMPILE_IFELSE(
+   [AC_LANG_SOURCE([[
+      /* Attribute supported in GCC 10 or later */
+      __attribute__((access(read_only, 1, 2))) extern int foo(const char* str, unsigned len);
+   ]])],
+   [
    AC_DEFINE([HAVE_ATTR_ACCESS], 1, [The access attribute is supported.])
-   AC_MSG_RESULT(yes),
-   AC_MSG_RESULT(no))
+   AC_MSG_RESULT(yes)
+   ],
+   [AC_MSG_RESULT(no)]
+)
 CFLAGS="$old_CFLAGS"
 
 AC_MSG_CHECKING(for nonnull)
 old_CFLAGS="$CFLAGS"
 CFLAGS="$CFLAGS -Wno-error -Werror=attributes"
-AC_COMPILE_IFELSE([
-   AC_LANG_SOURCE(
-      [[
-         /* Attribute supported in GCC 3.3 or later */
-         __attribute__((nonnull)) int my_strcmp(const char* a, const char* b);
-         __attribute__((nonnull(1))) long my_strtol(const char* str, char** endptr, int base);
-      ]]
-   )],
+AC_COMPILE_IFELSE(
+   [AC_LANG_SOURCE([[
+      /* Attribute supported in GCC 3.3 or later */
+      __attribute__((nonnull)) int my_strcmp(const char* a, const char* b);
+      __attribute__((nonnull(1))) long my_strtol(const char* str, char** endptr, int base);
+   ]])],
+   [
    AC_DEFINE([HAVE_ATTR_NONNULL], 1, [The nonnull attribute is supported.])
-   AC_MSG_RESULT(yes),
-   AC_MSG_RESULT(no))
+   AC_MSG_RESULT(yes)
+   ],
+   [AC_MSG_RESULT(no)]
+)
 CFLAGS="$old_CFLAGS"
 
 AC_MSG_CHECKING(for returns_nonnull)
 old_CFLAGS="$CFLAGS"
 CFLAGS="$CFLAGS -Wno-error -Werror=attributes"
-AC_COMPILE_IFELSE([
-   AC_LANG_SOURCE(
-      [[
-         /* Attribute supported in GCC 4.9 or later */
-         __attribute__((returns_nonnull)) void* foo(void);
-      ]]
-   )],
+AC_COMPILE_IFELSE(
+   [AC_LANG_SOURCE([[
+      /* Attribute supported in GCC 4.9 or later */
+      __attribute__((returns_nonnull)) void* foo(void);
+   ]])],
+   [
    AC_DEFINE([HAVE_ATTR_RETNONNULL], 1, [The returns_nonnull attribute is supported.])
-   AC_MSG_RESULT(yes),
-   AC_MSG_RESULT(no))
+   AC_MSG_RESULT(yes)
+   ],
+   [AC_MSG_RESULT(no)]
+)
 CFLAGS="$old_CFLAGS"
 
 AC_MSG_CHECKING(for NaN support)
 dnl Note: AC_RUN_IFELSE does not try compiling the program at all when
 dnl $cross_compiling is 'yes'.
-AC_LINK_IFELSE([
-   AC_LANG_PROGRAM(
-      [[
+AC_LINK_IFELSE(
+   [AC_LANG_PROGRAM([[
 #include <math.h>
-      ]],
-      [[
-         double x = NAN;
-         /* Both should evaluate to false -> 0 (exit success) */
-         return isgreater(x, x) || isgreaterequal(x, x);
-      ]]
-   )],
-   [flag_finite_math_only=unknown
+   ]], [[
+      double x = NAN;
+      /* Both should evaluate to false -> 0 (exit success) */
+      return isgreater(x, x) || isgreaterequal(x, x);
+   ]])],
+   [
+   flag_finite_math_only=unknown
    if test "$cross_compiling" = yes; then
-      AC_COMPILE_IFELSE([
-         AC_LANG_SOURCE([[
+      AC_COMPILE_IFELSE(
+         [AC_LANG_SOURCE([[
 /* __FINITE_MATH_ONLY__ is documented in Clang. */
 #ifdef __FINITE_MATH_ONLY__
 #error "should not enable -ffinite-math-only"
 #endif
          ]])],
-         AC_MSG_RESULT([assume yes (cross compiling)]),
-         flag_finite_math_only=yes)
+         [AC_MSG_RESULT([assume yes (cross compiling)])],
+         [flag_finite_math_only=yes]
+      )
    elif ./conftest$EXEEXT >&AS_MESSAGE_LOG_FD; then
       flag_finite_math_only=no
       AC_MSG_RESULT(yes)
@@ -303,16 +334,26 @@ AC_LINK_IFELSE([
    if test "$flag_finite_math_only" = yes; then
       AC_MSG_RESULT(no)
       AC_MSG_WARN([runtime behavior with NaN is not compliant - some functionality might break; consider using '-fno-finite-math-only'])
-   fi],
-   [AC_MSG_RESULT(no)
-   AC_MSG_ERROR([can not find required macros: NAN, isgreater() and isgreaterequal()])])
+   fi
+   ],
+   [
+   AC_MSG_RESULT(no)
+   AC_MSG_ERROR([can not find required macros: NAN, isgreater() and isgreaterequal()])
+   ]
+)
 
 AC_MSG_CHECKING(for __builtin_ctz)
-AC_COMPILE_IFELSE([
-   AC_LANG_PROGRAM([], [[__builtin_ctz(1); /* Supported in GCC 3.4 or later */]])],
-   [AC_DEFINE([HAVE_BUILTIN_CTZ], 1, [Define to 1 if the compiler supports '__builtin_ctz' function.])
-   AC_MSG_RESULT(yes)],
-   AC_MSG_RESULT(no))
+AC_COMPILE_IFELSE(
+   [AC_LANG_PROGRAM([[
+   ]], [[
+      __builtin_ctz(1); /* Supported in GCC 3.4 or later */
+   ]])],
+   [
+   AC_DEFINE([HAVE_BUILTIN_CTZ], 1, [Define to 1 if the compiler supports '__builtin_ctz' function.])
+   AC_MSG_RESULT(yes)
+   ],
+   [AC_MSG_RESULT(no)]
+)
 
 # ----------------------------------------------------------------------
 
@@ -321,40 +362,79 @@ AC_COMPILE_IFELSE([
 # Checks for generic library functions.
 # ----------------------------------------------------------------------
 
-AC_SEARCH_LIBS([ceil], [m], [], [AC_MSG_ERROR([can not find required function ceil()])])
+AC_SEARCH_LIBS([ceil], [m],
+   [],
+   [AC_MSG_ERROR([can not find required function ceil()])]
+)
 
 if test "$my_htop_platform" = dragonflybsd; then
-   AC_SEARCH_LIBS([kvm_open], [kvm], [], [AC_MSG_ERROR([can not find required function kvm_open()])])
-   AC_SEARCH_LIBS([getdevs], [devstat], [], [AC_MSG_ERROR([can not find required function getdevs()])])
+   AC_SEARCH_LIBS([kvm_open], [kvm],
+      [],
+      [AC_MSG_ERROR([can not find required function kvm_open()])]
+   )
+   AC_SEARCH_LIBS([getdevs], [devstat],
+      [],
+      [AC_MSG_ERROR([can not find required function getdevs()])]
+   )
 fi
 
 if test "$my_htop_platform" = freebsd; then
    if test "$enable_static" = yes; then
-      AC_SEARCH_LIBS([elf_version], [elf], [], [AC_MSG_ERROR([can not find required function elf_version()])])
+      AC_SEARCH_LIBS([elf_version], [elf],
+         [],
+         [AC_MSG_ERROR([can not find required function elf_version()])]
+      )
    fi
-   AC_SEARCH_LIBS([kvm_open], [kvm], [], [AC_MSG_ERROR([can not find required function kvm_open()])])
-   AC_SEARCH_LIBS([devstat_checkversion], [devstat], [], [AC_MSG_ERROR([can not find required function devstat_checkversion()])])
+   AC_SEARCH_LIBS([kvm_open], [kvm],
+      [],
+      [AC_MSG_ERROR([can not find required function kvm_open()])]
+   )
+   AC_SEARCH_LIBS([devstat_checkversion], [devstat],
+      [],
+      [AC_MSG_ERROR([can not find required function devstat_checkversion()])]
+   )
 fi
 
 if test "$my_htop_platform" = linux; then
    if test "$enable_static" != yes; then
-      AC_SEARCH_LIBS([dlopen], [dl dld], [], [AC_MSG_ERROR([can not find required function dlopen()])])
+      AC_SEARCH_LIBS([dlopen], [dl dld],
+         [],
+         [AC_MSG_ERROR([can not find required function dlopen()])]
+      )
    fi
 fi
 
 if test "$my_htop_platform" = netbsd; then
-   AC_SEARCH_LIBS([kvm_open], [kvm], [], [AC_MSG_ERROR([can not find required function kvm_open()])])
-   AC_SEARCH_LIBS([prop_dictionary_get], [prop], [], [AC_MSG_ERROR([can not find required function prop_dictionary_get()])])
+   AC_SEARCH_LIBS([kvm_open], [kvm],
+      [],
+      [AC_MSG_ERROR([can not find required function kvm_open()])]
+   )
+   AC_SEARCH_LIBS([prop_dictionary_get], [prop],
+      [],
+      [AC_MSG_ERROR([can not find required function prop_dictionary_get()])]
+   )
 fi
 
 if test "$my_htop_platform" = openbsd; then
-   AC_SEARCH_LIBS([kvm_open], [kvm], [], [AC_MSG_ERROR([can not find required function kvm_open()])])
+   AC_SEARCH_LIBS([kvm_open], [kvm],
+      [],
+      [AC_MSG_ERROR([can not find required function kvm_open()])]
+   )
 fi
 
 if test "$my_htop_platform" = solaris; then
-   AC_SEARCH_LIBS([kstat_open], [kstat], [], [AC_MSG_ERROR([can not find required function kstat_open()])])
-   AC_SEARCH_LIBS([Pgrab_error], [proc], [], [AC_MSG_ERROR([can not find required function Pgrab_error()])])
-   AC_SEARCH_LIBS([free], [malloc], [], [AC_MSG_ERROR([can not find required function free()])])
+   AC_SEARCH_LIBS([kstat_open], [kstat],
+      [],
+      [AC_MSG_ERROR([can not find required function kstat_open()])]
+   )
+   AC_SEARCH_LIBS([Pgrab_error], [proc],
+      [],
+      [AC_MSG_ERROR([can not find required function Pgrab_error()])]
+   )
+   AC_SEARCH_LIBS([free], [malloc],
+      [],
+      [AC_MSG_ERROR([can not find required function free()])]
+   )
 fi
 
 # Optional Section
@@ -362,18 +442,19 @@ fi
 AC_SEARCH_LIBS([clock_gettime], [rt])
 
 AC_CHECK_FUNCS([ \
-    clock_gettime \
-    dladdr \
-    faccessat \
-    fstatat \
-    host_get_clock_service \
-    memfd_create\
-    openat \
-    readlinkat \
-    sched_getscheduler \
-    sched_setscheduler \
-    strnlen \
-   ])
+   clock_gettime \
+   dladdr \
+   faccessat \
+   fstatat \
+   host_get_clock_service \
+   memfd_create\
+   openat \
+   readlinkat \
+   sched_getscheduler \
+   sched_setscheduler \
+   strnlen \
+   ]
+)
 
 # strchrnul is available in macOS since 15.4, but the user may specify an older
 # macOS version ('-mmacos-version-min') to build for. We need to ensure it is
@@ -382,25 +463,36 @@ htop_save_CFLAGS=$CFLAGS
 CFLAGS="$CFLAGS -Werror"
 
 AC_MSG_CHECKING([for strchrnul])
-AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+AC_LINK_IFELSE(
+   [AC_LANG_PROGRAM([[
 #include <string.h>
    ]], [[
-static char ch;
-char* ptr = strchrnul(&ch, 0);
-return ptr != &ch; /* Should be 0 (exit success) */
+      static char ch;
+      char* ptr = strchrnul(&ch, 0);
+      return ptr != &ch; /* Should be 0 (exit success) */
    ]])],
-   [AC_MSG_RESULT(yes)
-   AC_DEFINE([HAVE_STRCHRNUL], [1], [Define to 1 if you have the 'strchrnul' function.])],
-   [AC_MSG_RESULT(no)])
+   [
+   AC_MSG_RESULT(yes)
+   AC_DEFINE([HAVE_STRCHRNUL], [1], [Define to 1 if you have the 'strchrnul' function.])
+   ],
+   [AC_MSG_RESULT(no)]
+)
 
 CFLAGS=$htop_save_CFLAGS
 
 if test "$my_htop_platform" = darwin; then
    AC_CHECK_FUNCS([mach_timebase_info])
 
-   AC_CHECK_FUNCS([host_statistics64], [
-      AC_CHECK_TYPES([struct vm_statistics64], [], [], [[#include <mach/vm_statistics.h>]])
-   ], [])
+   AC_CHECK_FUNCS([host_statistics64],
+      [AC_CHECK_TYPES([struct vm_statistics64],
+         [],
+         [],
+         [[
+#include <mach/vm_statistics.h>
+         ]]
+      )],
+      []
+   )
 fi
 
 if test "$my_htop_platform" = pcp; then
@@ -408,7 +500,11 @@ if test "$my_htop_platform" = pcp; then
 fi
 
 if test "$my_htop_platform" = linux && test "x$enable_static" = xyes; then
-   AC_CHECK_LIB([systemd], [sd_bus_open_system], [], [], [-lcap])
+   AC_CHECK_LIB([systemd], [sd_bus_open_system],
+      [],
+      [],
+      [-lcap]
+   )
 fi
 
 # ----------------------------------------------------------------------
@@ -421,20 +517,22 @@ fi
 dnl PKG_PROG_PKG_CONFIG initializes $PKG_CONFIG and related variables.
 dnl If the macro is not called, some pkg-config checks might be skipped
 dnl and $PKG_CONFIG might be unset.
-m4_ifdef([PKG_PROG_PKG_CONFIG], [
+m4_ifdef([PKG_PROG_PKG_CONFIG],
+   [
    PKG_PROG_PKG_CONFIG()
    pkg_m4_included=1 # Makefile might grep this keyword. Don't remove.
-], [
-   m4_warn(
-      [syntax],
-      [pkg.m4 is absent or older than version 0.16; this 'configure' would have incomplete pkg-config support])
-])
+   ],
+   [m4_warn([syntax],
+      [pkg.m4 is absent or older than version 0.16; this 'configure' would have incomplete pkg-config support])]
+)
 
 AC_ARG_ENABLE([unicode],
-              [AS_HELP_STRING([--enable-unicode],
-                              [enable Unicode support @<:@default=yes@:>@])],
-              [],
-              [enable_unicode=yes])
+   [AS_HELP_STRING([--enable-unicode],
+      [enable Unicode support @<:@default=yes@:>@]
+   )],
+   [],
+   [enable_unicode=yes]
+)
 
 AC_ARG_VAR([CURSES_CFLAGS], [C compiler flags for curses; this overrides auto detected values])
 AC_ARG_VAR([CURSES_LIBS], [linker flags for curses; this overrides auto detected values])
@@ -448,10 +546,12 @@ if test "x$enable_unicode" = xyes; then
 fi
 
 AC_ARG_WITH([curses],
-            [AS_HELP_STRING([--with-curses=NAME],
-                            [select curses package NAME to link with; e.g. ncursesw6])],
-            [],
-            [with_curses=check])
+   [AS_HELP_STRING([--with-curses=NAME],
+      [select curses package NAME to link with; e.g. ncursesw6]
+   )],
+   [],
+   [with_curses=check]
+)
 case $with_curses in
 check|yes)
    : # No-op. Use default list.
@@ -496,49 +596,65 @@ htop_check_curses_capability () {
    # Check "-ltinfo" symbols first, as libncurses might require
    # explicit "-ltinfo" to link (for internal dependency).
    AC_MSG_CHECKING([for keypad in $htop_msg_linker_flags])
-   AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+   AC_LINK_IFELSE(
+      [AC_LANG_PROGRAM([[
 /* int keypad(WINDOW* win, bool enable); */
 int keypad(void* win, int enable);
       ]], [[
-static char dummy;
-keypad((void*)&dummy, 0);
+         static char dummy;
+         keypad((void*)&dummy, 0);
       ]])],
       [AC_MSG_RESULT(yes)],
-      [AC_MSG_RESULT(no)
-      htop_curses_status=1])
+      [
+      AC_MSG_RESULT(no)
+      htop_curses_status=1
+      ]
+   )
 
    # htop calls refresh(), which might be implemented as a macro.
    # It is more reliable to test linking with doupdate(), which
    # refresh() would call internally.
    if test "$htop_curses_status" -eq 0; then
       AC_MSG_CHECKING([for doupdate in $htop_msg_linker_flags])
-      AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+      AC_LINK_IFELSE(
+         [AC_LANG_PROGRAM([[
 int doupdate(void);
          ]], [[
-doupdate();
+            doupdate();
          ]])],
-         [AC_MSG_RESULT(yes)
-         htop_curses_capability=nonwide],
-         [AC_MSG_RESULT(no)
-         htop_curses_status=1])
+         [
+         AC_MSG_RESULT(yes)
+         htop_curses_capability=nonwide
+         ],
+         [
+         AC_MSG_RESULT(no)
+         htop_curses_status=1
+         ]
+      )
    fi
 
    # htop calls mvadd_wchnstr(), which might be implemented as a macro.
    # It is more reliable to test linking with wadd_wchnstr().
    if test "x$htop_curses_status$enable_unicode" = x0yes; then
       AC_MSG_CHECKING([for wadd_wchnstr in $htop_msg_linker_flags])
-      AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+      AC_LINK_IFELSE(
+         [AC_LANG_PROGRAM([[
 /* int wadd_wchnstr(WINDOW* win, const cchar_t* wchstr, int n); */
 int wadd_wchnstr(void* win, const void* wchstr, int n);
          ]], [[
-static char dummy1;
-static char dummy2;
-wadd_wchnstr((void*)&dummy1, (void*)&dummy2, 0);
+            static char dummy1;
+            static char dummy2;
+            wadd_wchnstr((void*)&dummy1, (void*)&dummy2, 0);
          ]])],
-         [AC_MSG_RESULT(yes)
-         htop_curses_capability=wide],
-         [AC_MSG_RESULT(no)
-         htop_curses_status=1])
+         [
+         AC_MSG_RESULT(yes)
+         htop_curses_capability=wide
+         ],
+         [
+         AC_MSG_RESULT(no)
+         htop_curses_status=1
+         ]
+      )
    fi
 
    if test "$htop_curses_status" -eq 0; then
@@ -653,9 +769,10 @@ none-*|nonwide-yes)
          if test "x$result" != x; then
             echo detected a .pc file: "$result" >&AS_MESSAGE_LOG_FD
             AC_MSG_WARN([your system supports pkg-config; installing pkg-config is recommended before configuring htop])
-            m4_ifdef([PKG_PROG_PKG_CONFIG], [], [
-               AC_MSG_WARN([this configure script would also need to be regenerated])
-            ])
+            m4_ifdef([PKG_PROG_PKG_CONFIG],
+               [],
+               [AC_MSG_WARN([this configure script would also need to be regenerated])]
+            )
             break
          fi
       done
@@ -701,26 +818,52 @@ htop_save_CFLAGS=$CFLAGS
 CFLAGS="$AM_CFLAGS $CFLAGS"
 
 if test "x$enable_unicode" = xyes; then
-   AC_CHECK_HEADERS([ncursesw/curses.h], [],
-      [AC_CHECK_HEADERS([ncurses/ncurses.h], [],
-         [AC_CHECK_HEADERS([ncurses/curses.h], [],
-            [AC_CHECK_HEADERS([ncurses.h], [],
-               [AC_MSG_ERROR([can not find required ncurses header file])])])])])
+   AC_CHECK_HEADERS([ncursesw/curses.h],
+      [],
+      [AC_CHECK_HEADERS([ncurses/ncurses.h],
+         [],
+         [AC_CHECK_HEADERS([ncurses/curses.h],
+            [],
+            [AC_CHECK_HEADERS([ncurses.h],
+               [],
+               [AC_MSG_ERROR([can not find required ncurses header file])]
+            )]
+         )]
+      )]
+   )
 
-   AC_CHECK_HEADERS([ncursesw/term.h], [],
-      [AC_CHECK_HEADERS([ncurses/term.h], [],
-         [AC_CHECK_HEADERS([term.h], [],
-            [AC_MSG_ERROR([can not find required term header file])])])])
+   AC_CHECK_HEADERS([ncursesw/term.h],
+      [],
+      [AC_CHECK_HEADERS([ncurses/term.h],
+         [],
+         [AC_CHECK_HEADERS([term.h],
+            [],
+            [AC_MSG_ERROR([can not find required term header file])]
+         )]
+      )]
+   )
 else
-   AC_CHECK_HEADERS([curses.h], [],
-      [AC_CHECK_HEADERS([ncurses/curses.h], [],
-         [AC_CHECK_HEADERS([ncurses/ncurses.h], [],
-            [AC_CHECK_HEADERS([ncurses.h], [],
-               [AC_MSG_ERROR([can not find required ncurses header file])])])])])
+   AC_CHECK_HEADERS([curses.h],
+      [],
+      [AC_CHECK_HEADERS([ncurses/curses.h],
+         [],
+         [AC_CHECK_HEADERS([ncurses/ncurses.h],
+            [],
+            [AC_CHECK_HEADERS([ncurses.h],
+               [],
+               [AC_MSG_ERROR([can not find required ncurses header file])]
+            )]
+         )]
+      )]
+   )
 
-   AC_CHECK_HEADERS([ncurses/term.h], [],
-      [AC_CHECK_HEADERS([term.h], [],
-         [AC_MSG_ERROR([can not find required term header file])])])
+   AC_CHECK_HEADERS([ncurses/term.h],
+      [],
+      [AC_CHECK_HEADERS([term.h],
+         [],
+         [AC_MSG_ERROR([can not find required term header file])]
+      )]
+   )
 fi
 
 CFLAGS="-I$srcdir $CFLAGS"
@@ -728,26 +871,29 @@ CFLAGS="-I$srcdir $CFLAGS"
 # Check for things that might be macros.
 # "stdscr" is a macro in ncursest (reentrant version of ncurses).
 AC_MSG_CHECKING([whether the curses header works])
-AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+AC_LINK_IFELSE(
+   [AC_LANG_PROGRAM([[
 /* Checks if the "bool" definition in curses is ISO C compatible */
 #include <stdbool.h>
 
 #include "ProvideCurses.h"
    ]], [[
-keypad(stdscr, false);
+      keypad(stdscr, false);
 
-refresh();
+      refresh();
 
 #if defined(HAVE_LIBNCURSESW)
-{
-   static cchar_t dummy;
-   mvadd_wchnstr(0, 0, &dummy, 0);
-}
+      {
+         static cchar_t dummy;
+         mvadd_wchnstr(0, 0, &dummy, 0);
+      }
 #endif
    ]])],
    [AC_MSG_RESULT(yes)],
-   [AC_MSG_RESULT(no)
-   AC_MSG_FAILURE([there are problems with the curses header])]
+   [
+   AC_MSG_RESULT(no)
+   AC_MSG_FAILURE([there are problems with the curses header])
+   ]
 )
 
 CFLAGS=$htop_save_CFLAGS
@@ -760,36 +906,44 @@ if test "$my_htop_platform" = "solaris"; then
    # Since ncurses macros use the ERR macro, we can not use another name.
    AC_DEFINE([ERR], [(-1)], [Predefine ncurses macro.])
 fi
-AC_CHECK_FUNCS( [set_escdelay] )
-AC_CHECK_FUNCS( [getmouse] )
+AC_CHECK_FUNCS([set_escdelay])
+AC_CHECK_FUNCS([getmouse])
 AC_DEFINE([NCURSES_ENABLE_STDBOOL_H], [1], [Define to enable stdbool.h in ncurses])
 
 
 AC_ARG_ENABLE([affinity],
-              [AS_HELP_STRING([--enable-affinity],
-                              [enable sched_setaffinity and sched_getaffinity for affinity support, conflicts with hwloc @<:@default=check@:>@])],
-              [],
-              [enable_affinity=check])
+   [AS_HELP_STRING([--enable-affinity],
+      [enable sched_setaffinity and sched_getaffinity for affinity support, conflicts with hwloc @<:@default=check@:>@]
+   )],
+   [],
+   [enable_affinity=check]
+)
 if test "x$enable_affinity" = xcheck; then
    if test "x$enable_hwloc" = xyes; then
       enable_affinity=no
    else
       AC_MSG_CHECKING([for usable sched_setaffinity])
-      AC_RUN_IFELSE([
-         AC_LANG_PROGRAM([[
-            #include <sched.h>
-            #include <errno.h>
-            static cpu_set_t cpuset;
+      AC_RUN_IFELSE(
+         [AC_LANG_PROGRAM([[
+#include <sched.h>
+#include <errno.h>
+static cpu_set_t cpuset;
          ]], [[
             CPU_ZERO(&cpuset);
             sched_setaffinity(0, sizeof(cpu_set_t), &cpuset);
-            if (errno == ENOSYS) return 1;
+            if (errno == ENOSYS)
+               return 1;
          ]])],
-      [enable_affinity=yes
-         AC_MSG_RESULT([yes])],
-      [enable_affinity=no
-         AC_MSG_RESULT([no])],
-      [AC_MSG_RESULT([assume yes (cross compiling)])])
+         [
+         enable_affinity=yes
+         AC_MSG_RESULT([yes])
+         ],
+         [
+         enable_affinity=no
+         AC_MSG_RESULT([no])
+         ],
+         [AC_MSG_RESULT([assume yes (cross compiling)])]
+      )
    fi
 fi
 if test "x$enable_affinity" = xyes; then
@@ -816,12 +970,18 @@ htop_search_header_dir () {
          htop_header_dir=" -I$htop_header_dir"
       fi
       CPPFLAGS="$AM_CPPFLAGS$htop_header_dir $htop_save_CPPFLAGS"
-      AC_COMPILE_IFELSE([AC_LANG_SOURCE([[$3
-#include <$1>]])],
-         [AM_CPPFLAGS="$AM_CPPFLAGS$htop_header_dir"
+      AC_COMPILE_IFELSE(
+         [AC_LANG_SOURCE([[
+$3
+#include <$1>
+         ]])],
+         [
+         AM_CPPFLAGS="$AM_CPPFLAGS$htop_header_dir"
          htop_header_search_status=0
-         break],
-         [htop_msg_header_dir="(not found)"])
+         break
+],
+         [htop_msg_header_dir="(not found)"]
+      )
    done
    AC_MSG_RESULT([$htop_msg_header_dir])
 
@@ -830,10 +990,12 @@ htop_search_header_dir () {
 } # htop_search_header_dir
 
 AC_ARG_ENABLE([unwind],
-              [AS_HELP_STRING([--enable-unwind],
-              [enable unwind support for printing backtraces; requires libunwind @<:@default=check@:>@])],
-              [],
-              [enable_unwind=check])
+   [AS_HELP_STRING([--enable-unwind],
+      [enable unwind support for printing backtraces; requires libunwind @<:@default=check@:>@]
+   )],
+   [],
+   [enable_unwind=check]
+)
 case "$enable_unwind" in
    no)
       ;;
@@ -842,11 +1004,15 @@ case "$enable_unwind" in
          AC_CHECK_LIB([lzma], [lzma_index_buffer_decode])
       fi
 
-      AC_CHECK_LIB([unwind], [unw_init_local], [],
-         [if test "$enable_unwind" = yes; then
+      AC_CHECK_LIB([unwind], [unw_init_local],
+         [],
+         [
+         if test "$enable_unwind" = yes; then
             AC_MSG_ERROR([can not find required library libunwind])
          fi
-         enable_unwind=no])
+         enable_unwind=no
+         ]
+      )
       ;;
    *)
       AC_MSG_ERROR([bad value '$enable_unwind' for --enable-unwind])
@@ -924,13 +1090,15 @@ else
    AC_SEARCH_LIBS([backtrace], [execinfo])
 
    AC_MSG_CHECKING([the return type of backtrace])
-   AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
+   AC_COMPILE_IFELSE(
+      [AC_LANG_SOURCE([[
 #ifndef BACKTRACE_RETURN_TYPE
 #error "BACKTRACE_RETURN_TYPE not defined"
 #endif
       ]])],
       [AC_MSG_RESULT([user defined])],
-      [htop_save_CFLAGS=$CFLAGS
+      [
+      htop_save_CFLAGS=$CFLAGS
       CFLAGS="$AM_CFLAGS $CFLAGS -Werror"
 
       # Use 'typeof' if supported. Otherwise guess types from larger bit width
@@ -948,21 +1116,26 @@ else
          size_t \
          int \
       ; do
-         AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+         AC_LINK_IFELSE(
+            [AC_LANG_PROGRAM([[
 #include <execinfo.h>
 #include <stddef.h> /* For size_t */
-         ]],[[
+
 #define BACKTRACE_RETURN_TYPE $backtrace_return_type
-/* Assuming the second argument of backtrace_symbols() would use the same type
+/* Assume the second argument of backtrace_symbols() uses the same type
    as the return type of backtrace(). */
-static char** (*func)(void* const*, BACKTRACE_RETURN_TYPE) = backtrace_symbols;
-static void* addr;
-BACKTRACE_RETURN_TYPE nptrs = backtrace(&addr, 1);
-(void)nptrs;
-         ]])],
-         [AC_DEFINE_UNQUOTED([BACKTRACE_RETURN_TYPE], [$backtrace_return_type], [Defined to the return type of the 'backtrace' function.])
-         break],
-         [backtrace_return_type=""])
+char** (*fn)(void* const*, BACKTRACE_RETURN_TYPE) = backtrace_symbols;
+            ]], [[
+               static void* addr;
+               BACKTRACE_RETURN_TYPE nptrs = backtrace(&addr, 1);
+               (void)nptrs;
+            ]])],
+            [
+            AC_DEFINE_UNQUOTED([BACKTRACE_RETURN_TYPE], [$backtrace_return_type], [Defined to the return type of the 'backtrace' function.])
+            break
+            ],
+            [backtrace_return_type=""]
+         )
       done
       backtrace_return_type_msg=`echo "x$backtrace_return_type" | sed '
          s/^x *//
@@ -970,32 +1143,52 @@ BACKTRACE_RETURN_TYPE nptrs = backtrace(&addr, 1);
          s/^\(_*typeof_*\) *( *backtrace( *( *void *\* *\* *) *1 *, *0 *) *) *$/automatic (using \1)/'`
       AC_MSG_RESULT([$backtrace_return_type_msg])
 
-      CFLAGS=$htop_save_CFLAGS])
+      CFLAGS=$htop_save_CFLAGS
+      ]
+   )
 fi
 
 
 AC_ARG_ENABLE([hwloc],
-              [AS_HELP_STRING([--enable-hwloc],
-              [enable hwloc support for CPU affinity; disables affinity support; requires libhwloc @<:@default=no@:>@])],
-              [],
-              [enable_hwloc=no])
+   [AS_HELP_STRING([--enable-hwloc],
+      [enable hwloc support for CPU affinity; disables affinity support; requires libhwloc @<:@default=no@:>@]
+   )],
+   [],
+   [enable_hwloc=no]
+)
 case "$enable_hwloc" in
    no)
       ;;
    yes)
-      m4_ifdef([PKG_PROG_PKG_CONFIG], [
-         PKG_CHECK_MODULES(HWLOC, hwloc, [
-               AM_CFLAGS="$AM_CFLAGS $HWLOC_CFLAGS"
-               LIBS="$LIBS $HWLOC_LIBS"
-               AC_DEFINE([HAVE_LIBHWLOC], [1], [Define to 1 if you have the 'hwloc' library (-lhwloc).])
-            ], [
-               AC_CHECK_LIB([hwloc], [hwloc_get_proc_cpubind], [], [AC_MSG_ERROR([can not find required library libhwloc])])
-               AC_CHECK_HEADERS([hwloc.h], [], [AC_MSG_ERROR([can not find require header file hwloc.h])])
-            ])
-         ], [
-            AC_CHECK_LIB([hwloc], [hwloc_get_proc_cpubind], [], [AC_MSG_ERROR([can not find required library libhwloc])])
-            AC_CHECK_HEADERS([hwloc.h], [], [AC_MSG_ERROR([can not find require header file hwloc.h])])
-         ])
+      m4_ifdef([PKG_PROG_PKG_CONFIG],
+         [PKG_CHECK_MODULES(HWLOC, hwloc,
+            [
+            AM_CFLAGS="$AM_CFLAGS $HWLOC_CFLAGS"
+            LIBS="$LIBS $HWLOC_LIBS"
+            AC_DEFINE([HAVE_LIBHWLOC], [1], [Define to 1 if you have the 'hwloc' library (-lhwloc).])
+            ],
+            [
+            AC_CHECK_LIB([hwloc], [hwloc_get_proc_cpubind],
+               [],
+               [AC_MSG_ERROR([can not find required library libhwloc])]
+            )
+            AC_CHECK_HEADERS([hwloc.h],
+               [],
+               [AC_MSG_ERROR([can not find require header file hwloc.h])]
+            )
+            ]
+         )],
+         [
+         AC_CHECK_LIB([hwloc], [hwloc_get_proc_cpubind],
+            [],
+            [AC_MSG_ERROR([can not find required library libhwloc])]
+         )
+         AC_CHECK_HEADERS([hwloc.h],
+            [],
+            [AC_MSG_ERROR([can not find require header file hwloc.h])]
+         )
+         ]
+      )
       ;;
    *)
       AC_MSG_ERROR([bad value '$enable_hwloc' for --enable-hwloc])
@@ -1004,10 +1197,12 @@ esac
 
 
 AC_ARG_WITH([os-release],
-            [AS_HELP_STRING([--with-os-release=FILE],
-                            [location of an os-release file @<:@default=/etc/os-release@:>@])],
-            [],
-            [with_os_release=/etc/os-release])
+   [AS_HELP_STRING([--with-os-release=FILE],
+      [location of an os-release file @<:@default=/etc/os-release@:>@]
+   )],
+   [],
+   [with_os_release=/etc/os-release]
+)
 if test -n "$with_os_release" && test ! -f "$with_os_release"; then
    if test -f "/usr/lib/os-release"; then
       with_os_release="/usr/lib/os-release"
@@ -1016,10 +1211,12 @@ fi
 AC_DEFINE_UNQUOTED([OSRELEASEFILE], ["$with_os_release"], [File with OS release details.])
 
 AC_ARG_WITH([config],
-            [AS_HELP_STRING([--with-config=DIR],
-                            [configuration path @<:@default=/.config@:>@])],
-            [],
-            [with_config="/.config"])
+   [AS_HELP_STRING([--with-config=DIR],
+      [configuration path @<:@default=/.config@:>@]
+   )],
+   [],
+   [with_config="/.config"]
+)
 dnl Performance Co-Pilot configuration location to prevent overwrite
 if test "$my_htop_platform" = pcp -a "$with_config" = /.config; then
     with_config="/.pcp"
@@ -1036,10 +1233,12 @@ AC_DEFINE_UNQUOTED([CONFIGDIR], ["$with_config"], [Configuration path.])
 # ----------------------------------------------------------------------
 
 AC_ARG_WITH([proc],
-            [AS_HELP_STRING([--with-proc=DIR],
-                            [location of a Linux-compatible proc filesystem @<:@default=/proc@:>@])],
-            [],
-            [with_proc=/proc])
+   [AS_HELP_STRING([--with-proc=DIR],
+      [location of a Linux-compatible proc filesystem @<:@default=/proc@:>@]
+   )],
+   [],
+   [with_proc=/proc]
+)
 if test -z "$with_proc"; then
    AC_MSG_ERROR([bad empty value for --with-proc option])
 fi
@@ -1047,30 +1246,36 @@ AC_DEFINE_UNQUOTED([PROCDIR], ["$with_proc"], [Path of proc filesystem.])
 
 
 AC_ARG_ENABLE([openvz],
-              [AS_HELP_STRING([--enable-openvz],
-                              [enable OpenVZ support @<:@default=no@:>@])],
-              [],
-              [enable_openvz=no])
+   [AS_HELP_STRING([--enable-openvz],
+      [enable OpenVZ support @<:@default=no@:>@]
+   )],
+   [],
+   [enable_openvz=no]
+)
 if test "x$enable_openvz" = xyes; then
    AC_DEFINE([HAVE_OPENVZ], [1], [Define if openvz support enabled.])
 fi
 
 
 AC_ARG_ENABLE([vserver],
-              [AS_HELP_STRING([--enable-vserver],
-                              [enable VServer support @<:@default=no@:>@])],
-              [],
-              [enable_vserver=no])
+   [AS_HELP_STRING([--enable-vserver],
+      [enable VServer support @<:@default=no@:>@]
+   )],
+   [],
+   [enable_vserver=no]
+)
 if test "x$enable_vserver" = xyes; then
    AC_DEFINE([HAVE_VSERVER], [1], [Define if VServer support enabled.])
 fi
 
 
 AC_ARG_ENABLE([ancient_vserver],
-              [AS_HELP_STRING([--enable-ancient-vserver],
-                              [enable ancient VServer support (implies --enable-vserver) @<:@default=no@:>@])],
-              [],
-              [enable_ancient_vserver=no])
+   [AS_HELP_STRING([--enable-ancient-vserver],
+      [enable ancient VServer support (implies --enable-vserver) @<:@default=no@:>@]
+   )],
+   [],
+   [enable_ancient_vserver=no]
+)
 if test "x$enable_ancient_vserver" = xyes; then
    if test "x$enable_vserver" != xyes; then
       enable_vserver=implied
@@ -1081,21 +1286,35 @@ fi
 
 
 AC_ARG_ENABLE([capabilities],
-              [AS_HELP_STRING([--enable-capabilities],
-                              [enable Linux capabilities support; requires libcap @<:@default=check@:>@])],
-              [],
-              [enable_capabilities=check])
+   [AS_HELP_STRING([--enable-capabilities],
+      [enable Linux capabilities support; requires libcap @<:@default=check@:>@]
+   )],
+   [],
+   [enable_capabilities=check]
+)
 case "$enable_capabilities" in
    no)
       ;;
    check)
       enable_capabilities=yes
-      AC_CHECK_LIB([cap], [cap_init], [], [enable_capabilities=no])
-      AC_CHECK_HEADERS([sys/capability.h], [], [enable_capabilities=no])
+      AC_CHECK_LIB([cap], [cap_init],
+         [],
+         [enable_capabilities=no]
+      )
+      AC_CHECK_HEADERS([sys/capability.h],
+         [],
+         [enable_capabilities=no]
+      )
       ;;
    yes)
-      AC_CHECK_LIB([cap], [cap_init], [], [AC_MSG_ERROR([can not find required library libcap])])
-      AC_CHECK_HEADERS([sys/capability.h], [], [AC_MSG_ERROR([can not find required header file sys/capability.h])])
+      AC_CHECK_LIB([cap], [cap_init],
+         [],
+         [AC_MSG_ERROR([can not find required library libcap])]
+      )
+      AC_CHECK_HEADERS([sys/capability.h],
+         [],
+         [AC_MSG_ERROR([can not find required header file sys/capability.h])]
+      )
       ;;
    *)
       AC_MSG_ERROR([bad value '$enable_capabilities' for --enable-capabilities])
@@ -1113,24 +1332,28 @@ htop_try_link_libnl3 () {
       # New library path searched after what user has specified
       LDFLAGS="$LDFLAGS -L$1"
    fi
-   AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+   AC_LINK_IFELSE(
+      [AC_LANG_PROGRAM([[
 /* struct nl_sock* nl_socket_alloc(void); */
 void* nl_socket_alloc(void);
       ]], [[
-void* sock = nl_socket_alloc();
+         void* sock = nl_socket_alloc();
       ]])],
       [htop_libnl3_link_succeed=yes],
-      [htop_libnl3_link_succeed=no])
+      [htop_libnl3_link_succeed=no]
+   )
 
    LDFLAGS=$htop_save_LDFLAGS
    LIBS=$htop_save_LIBS
 } # htop_try_link_libnl3
 
 AC_ARG_ENABLE([delayacct],
-              [AS_HELP_STRING([--enable-delayacct],
-                              [enable Linux delay accounting support; requires libnl-3 and libnl-genl-3 @<:@default=check@:>@])],
-              [],
-              [enable_delayacct=check])
+   [AS_HELP_STRING([--enable-delayacct],
+      [enable Linux delay accounting support; requires libnl-3 and libnl-genl-3 @<:@default=check@:>@]
+   )],
+   [],
+   [enable_delayacct=check]
+)
 case "$enable_delayacct" in
    no|yes)
       ;;
@@ -1149,22 +1372,28 @@ esac
 case "$enable_delayacct" in
    check|yes)
       if test "x${LIBNL3_CFLAGS+y}" = x; then
-         m4_ifdef([PKG_PROG_PKG_CONFIG], [
-            PKG_CHECK_MODULES(LIBNL3, libnl-3.0, [], [LIBNL3_CFLAGS="-I/usr/include/libnl3"])
-         ], [
-            LIBNL3_CFLAGS="-I/usr/include/libnl3"
-         ])
+         m4_ifdef([PKG_PROG_PKG_CONFIG],
+            [PKG_CHECK_MODULES(LIBNL3, libnl-3.0,
+               [],
+               [LIBNL3_CFLAGS="-I/usr/include/libnl3"]
+            )],
+            [LIBNL3_CFLAGS="-I/usr/include/libnl3"]
+         )
       fi
 
       htop_save_CFLAGS=$CFLAGS
       # New include path searched after what user has specified
       CFLAGS="$CFLAGS $LIBNL3_CFLAGS"
-      AC_CHECK_HEADERS([netlink/attr.h netlink/handlers.h netlink/msg.h],
+      AC_CHECK_HEADERS(
+         [netlink/attr.h netlink/handlers.h netlink/msg.h],
          [],
-         [if test "$enable_delayacct" = yes; then
+         [
+         if test "$enable_delayacct" = yes; then
             AC_MSG_ERROR([can not find required header files netlink/attr.h, netlink/handlers.h, netlink/msg.h])
          fi
-         enable_delayacct=no])
+         enable_delayacct=no
+         ]
+      )
       CFLAGS=$htop_save_CFLAGS
 
       if test "$enable_delayacct" != no; then
@@ -1203,25 +1432,39 @@ AM_CONDITIONAL([HAVE_DELAYACCT], [test "$enable_delayacct" = yes])
 
 
 AC_ARG_ENABLE([sensors],
-              [AS_HELP_STRING([--enable-sensors],
-                              [enable libsensors support for reading temperature data; requires only libsensors headers at compile time, at runtime libsensors is loaded via dlopen @<:@default=check@:>@])],
-              [],
-              [enable_sensors=check])
+   [AS_HELP_STRING([--enable-sensors],
+      [enable libsensors support for reading temperature data; requires only libsensors headers at compile time, at runtime libsensors is loaded via dlopen @<:@default=check@:>@]
+   )],
+   [],
+   [enable_sensors=check]
+)
 case "$enable_sensors" in
    no)
       ;;
    check)
       enable_sensors=yes
       if test "$enable_static" = yes; then
-         AC_CHECK_LIB([sensors], [sensors_init], [], [enable_sensors=no])
+         AC_CHECK_LIB([sensors], [sensors_init],
+            [],
+            [enable_sensors=no]
+         )
       fi
-      AC_CHECK_HEADERS([sensors/sensors.h], [], [enable_sensors=no])
+      AC_CHECK_HEADERS([sensors/sensors.h],
+         [],
+         [enable_sensors=no]
+      )
       ;;
    yes)
       if test "$enable_static" = yes; then
-         AC_CHECK_LIB([sensors], [sensors_init], [], [AC_MSG_ERROR([can not find required library libsensors])])
+         AC_CHECK_LIB([sensors], [sensors_init],
+            [],
+            [AC_MSG_ERROR([can not find required library libsensors])]
+         )
       fi
-      AC_CHECK_HEADERS([sensors/sensors.h], [], [AC_MSG_ERROR([can not find required header file sensors/sensors.h])])
+      AC_CHECK_HEADERS([sensors/sensors.h],
+         [],
+         [AC_MSG_ERROR([can not find required header file sensors/sensors.h])]
+      )
       ;;
    *)
       AC_MSG_ERROR([bad value '$enable_sensors' for --enable-sensors])
@@ -1276,43 +1519,61 @@ AS_VAR_POPDEF([CACHEVAR])dnl
 dnl During the check of '-Wextra-semi-stmt' we must treat
 dnl 'extra-semi-stmt' as a non-error because the AC_LANG_PROGRAM
 dnl template will generate a warning of this (by design).
-AX_CHECK_COMPILE_FLAG([-Wextra-semi-stmt],         [AM_CFLAGS="$AM_CFLAGS -Wextra-semi-stmt"],         , [-Werror -Wno-error=extra-semi-stmt])
+AX_CHECK_COMPILE_FLAG([-Wextra-semi-stmt],
+   [AM_CFLAGS="$AM_CFLAGS -Wextra-semi-stmt"],
+   [],
+   [-Werror -Wno-error=extra-semi-stmt]
+)
 
-AX_CHECK_COMPILE_FLAG([-Wimplicit-int-conversion], [AM_CFLAGS="$AM_CFLAGS -Wimplicit-int-conversion"], , [-Werror])
-AX_CHECK_COMPILE_FLAG([-Wnull-dereference],        [AM_CFLAGS="$AM_CFLAGS -Wnull-dereference"],        , [-Werror])
+AX_CHECK_COMPILE_FLAG([-Wimplicit-int-conversion],
+   [AM_CFLAGS="$AM_CFLAGS -Wimplicit-int-conversion"],
+   [],
+   [-Werror]
+)
+AX_CHECK_COMPILE_FLAG([-Wnull-dereference],
+   [AM_CFLAGS="$AM_CFLAGS -Wnull-dereference"],
+   [],
+   [-Werror]
+)
 
 AC_ARG_ENABLE([werror],
-              [AS_HELP_STRING([--enable-werror],
-                              [Treat warnings as errors @<:@default=no@:>@])],
-              [],
-              [enable_werror=no])
+   [AS_HELP_STRING([--enable-werror],
+      [Treat warnings as errors @<:@default=no@:>@]
+   )],
+   [],
+   [enable_werror=no]
+)
 if test "x$enable_werror" = xyes; then
    AM_CFLAGS="$AM_CFLAGS -Werror"
 fi
 
 AC_ARG_ENABLE([debug],
-              [AS_HELP_STRING([--enable-debug],
-                              [Enable compiling with maximum debug info, asserts and internal sanity checks @<:@default=no@:>@])],
-              [],
-              [enable_debug=no])
+   [AS_HELP_STRING([--enable-debug],
+      [Enable compiling with maximum debug info, asserts and internal sanity checks @<:@default=no@:>@]
+   )],
+   [],
+   [enable_debug=no]
+)
 if test "x$enable_debug" != xyes; then
    AM_CPPFLAGS="$AM_CPPFLAGS -DNDEBUG"
 
-   AC_COMPILE_IFELSE([
-      AC_LANG_SOURCE([[
+   AC_COMPILE_IFELSE(
+      [AC_LANG_SOURCE([[
 #ifdef __SUPPORT_SNAN__
 #error "signaling NaN support not recommended"
 #endif
       ]])],
-      :,
-      [warning_msg="signaling NaN support is enabled; not recommended for htop"
+      [],
+      [
+      warning_msg="signaling NaN support is enabled; not recommended for htop"
       case "$CC" in
       *gcc*)
          warning_msg="$warning_msg (use '-fno-signaling-nans' compiler flag to disable)"
          ;;
       esac
       AC_MSG_WARN([$warning_msg])
-      ])
+      ]
+   )
 else
    AM_CPPFLAGS="$AM_CPPFLAGS -ggdb3"
 fi
