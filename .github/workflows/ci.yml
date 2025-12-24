@@ -30,6 +30,8 @@ jobs:
       run: make -k
     - name: Distcheck
       run: make distcheck DISTCHECK_CONFIGURE_FLAGS="--enable-werror --enable-affinity --disable-unicode --disable-sensors"
+    - name: Get program size
+      run: size ./htop
 
   build-ubuntu-minimal-gcc-Os:
     runs-on: ubuntu-latest
@@ -53,6 +55,8 @@ jobs:
       run: make -k
     - name: Distcheck
       run: make distcheck DISTCHECK_CONFIGURE_FLAGS="--enable-werror --enable-affinity --disable-unicode --disable-sensors"
+    - name: Get program size
+      run: size ./htop
 
   build-ubuntu-minimal-clang-O2:
     runs-on: ubuntu-latest
@@ -78,6 +82,8 @@ jobs:
       run: make -k
     - name: Distcheck
       run: make distcheck DISTCHECK_CONFIGURE_FLAGS="--enable-werror --enable-affinity --disable-unicode --disable-sensors"
+    - name: Get program size
+      run: size ./htop
 
   build-ubuntu-minimal-clang-Os:
     runs-on: ubuntu-latest
@@ -103,6 +109,8 @@ jobs:
       run: make -k
     - name: Distcheck
       run: make distcheck DISTCHECK_CONFIGURE_FLAGS="--enable-werror --enable-affinity --disable-unicode --disable-sensors"
+    - name: Get program size
+      run: size ./htop
 
   build-ubuntu-full-featured-gcc-O2:
     runs-on: ubuntu-latest
@@ -122,6 +130,8 @@ jobs:
       run: make -k
     - name: Distcheck
       run: make distcheck DISTCHECK_CONFIGURE_FLAGS='--enable-werror --enable-openvz --enable-vserver --enable-ancient-vserver --enable-unicode --enable-hwloc --enable-delayacct --enable-sensors --enable-capabilities'
+    - name: Get program size
+      run: size ./htop
 
   build-ubuntu-full-featured-gcc-Os:
     runs-on: ubuntu-latest
@@ -141,6 +151,8 @@ jobs:
       run: make -k
     - name: Distcheck
       run: make distcheck DISTCHECK_CONFIGURE_FLAGS='--enable-werror --enable-openvz --enable-vserver --enable-ancient-vserver --enable-unicode --enable-hwloc --enable-delayacct --enable-sensors --enable-capabilities'
+    - name: Get program size
+      run: size ./htop
 
   build-ubuntu-full-featured-clang-O2:
     runs-on: ubuntu-latest
@@ -166,6 +178,8 @@ jobs:
       run: make -k
     - name: Distcheck
       run: make distcheck DISTCHECK_CONFIGURE_FLAGS='--enable-werror --enable-openvz --enable-vserver --enable-ancient-vserver --enable-unicode --enable-hwloc --enable-delayacct --enable-sensors --enable-capabilities'
+    - name: Get program size
+      run: size ./htop
 
   build-ubuntu-full-featured-clang-Os:
     runs-on: ubuntu-latest
@@ -191,6 +205,8 @@ jobs:
       run: make -k
     - name: Distcheck
       run: make distcheck DISTCHECK_CONFIGURE_FLAGS='--enable-werror --enable-openvz --enable-vserver --enable-ancient-vserver --enable-unicode --enable-hwloc --enable-delayacct --enable-sensors --enable-capabilities'
+    - name: Get program size
+      run: size ./htop
 
   build-ubuntu-gcc-static-O2:
     runs-on: ubuntu-latest
@@ -210,6 +226,8 @@ jobs:
       run: make -k
     - name: Distcheck
       run: make distcheck DISTCHECK_CONFIGURE_FLAGS='--enable-static --enable-werror --enable-openvz --enable-vserver --enable-ancient-vserver --enable-unicode --disable-hwloc --disable-delayacct --enable-sensors --enable-capabilities'
+    - name: Get program size
+      run: size ./htop
 
   build-ubuntu-gcc-static-Os:
     runs-on: ubuntu-latest
@@ -229,3 +247,5 @@ jobs:
       run: make -k
     - name: Distcheck
       run: make distcheck DISTCHECK_CONFIGURE_FLAGS='--enable-static --enable-werror --enable-openvz --enable-vserver --enable-ancient-vserver --enable-unicode --disable-hwloc --disable-delayacct --enable-sensors --enable-capabilities'
+    - name: Get program size
+      run: size ./htop
