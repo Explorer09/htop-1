@@ -13,6 +13,7 @@ in the source distribution for its full text.
 #include <ctype.h>
 #include <dirent.h>
 #include <errno.h>
+#include <limits.h>
 #include <pwd.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -154,6 +155,9 @@ static bool PCPDynamicMeter_uniqueName(char* key, PCPDynamicMeters* meters) {
 }
 
 static PCPDynamicMeter* PCPDynamicMeter_new(PCPDynamicMeters* meters, const char* name) {
+   if (meters->count >= UINT_MAX)
+      return NULL;
+
    PCPDynamicMeter* meter = xCalloc(1, sizeof(*meter));
    String_safeStrncpy(meter->super.name, name, sizeof(meter->super.name));
    ht_key_t key = (ht_key_t) ++meters->count;
