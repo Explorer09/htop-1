@@ -160,23 +160,27 @@ static void PCPDynamicColumn_parseFile(PCPDynamicColumns* columns, const char* p
             ok = PCPDynamicColumn_uniqueName(key + 1, columns);
          if (ok)
             column = PCPDynamicColumn_new(columns, key + 1);
-      } else if (value && column && String_eq(key, "caption")) {
+      } else if (!column) {
+         /* skip this one, we're looking for a new header */
+      } else if (!value) {
+         /* skip this one as we always need value strings */
+      } else if (String_eq(key, "caption")) {
          free_and_xStrdup(&column->super.caption, value);
-      } else if (value && column && String_eq(key, "heading")) {
+      } else if (String_eq(key, "heading")) {
          free_and_xStrdup(&column->super.heading, value);
-      } else if (value && column && String_eq(key, "description")) {
+      } else if (String_eq(key, "description")) {
          free_and_xStrdup(&column->super.description, value);
-      } else if (value && column && String_eq(key, "width")) {
+      } else if (String_eq(key, "width")) {
          column->super.width = atoi(value);
-      } else if (value && column && String_eq(key, "format")) {
+      } else if (String_eq(key, "format")) {
          free_and_xStrdup(&column->format, value);
-      } else if (value && column && String_eq(key, "instances")) {
+      } else if (String_eq(key, "instances")) {
          if (String_eq(value, "True") || String_eq(value, "true"))
             column->instances = true;
-      } else if (value && column && (String_eq(key, "default") || String_eq(key, "enabled"))) {
+      } else if (String_eq(key, "default") || String_eq(key, "enabled")) {
          if (String_eq(value, "False") || String_eq(value, "false"))
             column->defaultEnabled = false;
-      } else if (value && column && String_eq(key, "metric")) {
+      } else if (String_eq(key, "metric")) {
          PCPDynamicColumn_parseMetric(columns, column, path, lineno, value);
       }
       String_freeArray(config);
