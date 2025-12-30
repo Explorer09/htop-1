@@ -782,7 +782,7 @@ void Process_writeField(const Process* this, RichString* str, RowField field) {
       xSnprintf(buffer, n, "%-10d ", this->st_uid);
       break;
    default:
-      if (DynamicColumn_writeField(this, str, field))
+      if (DynamicColumn_writeField(this, str, (ht_key_t)field))
          return;
       assert(0 && "Process_writeField: default key reached"); /* should never be reached */
       xSnprintf(buffer, n, "- ");

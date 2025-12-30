@@ -46,7 +46,7 @@ void DynamicColumn_done(DynamicColumn* this) {
 typedef struct {
    const char* name;
    const DynamicColumn* data;
-   unsigned int key;
+   ht_key_t key;
 } DynamicIterator;
 
 static void DynamicColumn_compare(ht_key_t key, void* value, void* data) {
@@ -58,7 +58,7 @@ static void DynamicColumn_compare(ht_key_t key, void* value, void* data) {
    }
 }
 
-const DynamicColumn* DynamicColumn_search(Hashtable* dynamics, const char* name, unsigned int* key) {
+const DynamicColumn* DynamicColumn_search(Hashtable* dynamics, const char* name, ht_key_t* key) {
    DynamicIterator iter = { .key = 0, .data = NULL, .name = name };
    if (dynamics)
       Hashtable_foreach(dynamics, DynamicColumn_compare, &iter);
@@ -67,10 +67,10 @@ const DynamicColumn* DynamicColumn_search(Hashtable* dynamics, const char* name,
    return iter.data;
 }
 
-const DynamicColumn* DynamicColumn_lookup(Hashtable* dynamics, unsigned int key) {
+const DynamicColumn* DynamicColumn_lookup(Hashtable* dynamics, ht_key_t key) {
    return (const DynamicColumn*) Hashtable_get(dynamics, key);
 }
 
-bool DynamicColumn_writeField(const Process* proc, RichString* str, unsigned int key) {
+bool DynamicColumn_writeField(const Process* proc, RichString* str, ht_key_t key) {
    return Platform_dynamicColumnWriteField(proc, str, key);
 }

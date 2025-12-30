@@ -209,12 +209,12 @@ static int toFieldIndex(Hashtable* columns, const char* str) {
          char* end;
          if ((end = strrchr(dynamic, ')')) != NULL) {
             bool success;
-            unsigned int key;
+            ht_key_t key;
             *end = '\0';
-            success = DynamicColumn_search(columns, dynamic, &key) != NULL;
+            success = DynamicColumn_search(columns, dynamic, &key) != NULL && key <= INT_MAX;
             *end = ')';
             if (success)
-               return key;
+               return (int)key;
          }
       }
       // Fallback to iterative scan of table of fields by-name.

@@ -122,11 +122,11 @@ static inline Hashtable* Platform_dynamicColumns(void) {
 
 static inline void Platform_dynamicColumnsDone(ATTR_UNUSED Hashtable* table) { }
 
-static inline const char* Platform_dynamicColumnName(ATTR_UNUSED unsigned int key) {
+static inline const char* Platform_dynamicColumnName(ATTR_UNUSED ht_key_t key) {
    return NULL;
 }
 
-static inline bool Platform_dynamicColumnWriteField(ATTR_UNUSED const Process* proc, ATTR_UNUSED RichString* str, ATTR_UNUSED unsigned int key) {
+static inline bool Platform_dynamicColumnWriteField(ATTR_UNUSED const Process* proc, ATTR_UNUSED RichString* str, ATTR_UNUSED ht_key_t key) {
    return false;
 }
 

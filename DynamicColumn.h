@@ -36,10 +36,10 @@ const char* DynamicColumn_name(unsigned int key);
 
 void DynamicColumn_done(DynamicColumn* this);
 
-const DynamicColumn* DynamicColumn_lookup(Hashtable* dynamics, unsigned int key);
+const DynamicColumn* DynamicColumn_lookup(Hashtable* dynamics, ht_key_t key);
 
-const DynamicColumn* DynamicColumn_search(Hashtable* dynamics, const char* name, unsigned int* key);
+const DynamicColumn* DynamicColumn_search(Hashtable* dynamics, const char* name, ht_key_t* key);
 
-bool DynamicColumn_writeField(const Process* proc, RichString* str, unsigned int key);
+bool DynamicColumn_writeField(const Process* proc, RichString* str, ht_key_t key);
 
 #endif

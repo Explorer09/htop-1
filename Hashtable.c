@@ -49,9 +49,9 @@ static void Hashtable_dump(const Hashtable* this) {
 
    size_t items = 0;
    for (size_t i = 0; i < this->size; i++) {
-      fprintf(stderr, "  item %5zu: key = %5u probe = %2zu value = %p\n",
+      fprintf(stderr, "  item %5zu: key = %5zu probe = %2zu value = %p\n",
               i,
-              this->buckets[i].key,
+              (size_t)this->buckets[i].key,
               this->buckets[i].probe,
               this->buckets[i].value);
 

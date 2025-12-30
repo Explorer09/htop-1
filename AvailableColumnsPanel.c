@@ -91,7 +91,7 @@ static void AvailableColumnsPanel_addDynamicColumn(ht_key_t key, void* value, vo
       xSnprintf(description, sizeof(description), "%s - %s", title, text);
    else
       xSnprintf(description, sizeof(description), "%s", title);
-   Panel_add(&this->super, (Object*) ListItem_new(description, key));
+   Panel_add(&this->super, (Object*) ListItem_new(description, (int)key));
 }
 
 // Handle DynamicColumns entries in the AvailableColumnsPanel

@@ -113,7 +113,7 @@ static bool changePriority(MainPanel* panel, int delta) {
 static void addUserToVector(ht_key_t key, void* userCast, void* panelCast) {
    const char* user = userCast;
    Panel* panel = panelCast;
-   Panel_add(panel, (Object*) ListItem_new(user, key));
+   Panel_add(panel, (Object*) ListItem_new(user, (int)key));
 }
 
 bool Action_setUserOnly(const char* userName, uid_t* userId) {

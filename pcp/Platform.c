@@ -899,7 +899,7 @@ Hashtable* Platform_dynamicColumns(void) {
    return pcp->columns.table;
 }
 
-const char* Platform_dynamicColumnName(unsigned int key) {
+const char* Platform_dynamicColumnName(ht_key_t key) {
    PCPDynamicColumn* this = Hashtable_get(pcp->columns.table, key);
    if (this) {
       Metric metric = Metric_fromId(this->id);
@@ -913,7 +913,7 @@ const char* Platform_dynamicColumnName(unsigned int key) {
    return NULL;
 }
 
-bool Platform_dynamicColumnWriteField(const Process* proc, RichString* str, unsigned int key) {
+bool Platform_dynamicColumnWriteField(const Process* proc, RichString* str, ht_key_t key) {
    PCPDynamicColumn* this = Hashtable_get(pcp->columns.table, key);
    if (this) {
       PCPDynamicColumn_writeField(this, proc, str);

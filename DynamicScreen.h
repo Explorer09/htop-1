@@ -31,8 +31,8 @@ void DynamicScreen_done(DynamicScreen* this);
 
 void DynamicScreens_addAvailableColumns(Panel* availableColumns, char* screen);
 
-const char* DynamicScreen_lookup(Hashtable* screens, unsigned int key);
+const char* DynamicScreen_lookup(Hashtable* screens, ht_key_t key);
 
-bool DynamicScreen_search(Hashtable* screens, const char* name, unsigned int* key);
+bool DynamicScreen_search(Hashtable* screens, const char* name, ht_key_t* key);
 
 #endif

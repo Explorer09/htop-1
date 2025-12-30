@@ -156,9 +156,9 @@ Hashtable* Platform_dynamicColumns(void);
 
 void Platform_dynamicColumnsDone(Hashtable* columns);
 
-const char* Platform_dynamicColumnName(unsigned int key);
+const char* Platform_dynamicColumnName(ht_key_t key);
 
-bool Platform_dynamicColumnWriteField(const Process* proc, RichString* str, unsigned int key);
+bool Platform_dynamicColumnWriteField(const Process* proc, RichString* str, ht_key_t key);
 
 Hashtable* Platform_dynamicScreens(void);
 

@@ -11,7 +11,7 @@ in the source distribution for its full text.
 #include <stddef.h>
 
 
-typedef unsigned int ht_key_t;
+typedef size_t ht_key_t;
 
 typedef void(*Hashtable_PairFunction)(ht_key_t key, void* value, void* userdata);
 
