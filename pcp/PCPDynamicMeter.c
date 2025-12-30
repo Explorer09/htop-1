@@ -191,13 +191,12 @@ static void PCPDynamicMeter_parseFile(PCPDynamicMeters* meters, const char* path
       char* key = String_trim(config[0]);
       char* value = n > 1 ? String_trim(config[1]) : NULL;
       if (key[0] == '[') {  /* new section heading - i.e. new meter */
+         meter = NULL;
          bool ok = PCPDynamicMeter_validateMeterName(key + 1, path, lineno);
          if (ok)
             ok = PCPDynamicMeter_uniqueName(key + 1, meters);
          if (ok)
             meter = PCPDynamicMeter_new(meters, key + 1);
-         if (!ok)
-            meter = NULL;
       } else if (!meter) {
          /* skip this one, we're looking for a new header */
       } else if (!value) {
