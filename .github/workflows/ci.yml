@@ -255,7 +255,7 @@ jobs:
     runs-on: ubuntu-22.04
     env:
       CFLAGS: -Os -g -flto
-      LDFLAGS: -Os -g -flto
+      LDFLAGS: -Os -g -flto -Wl,--as-needed
     steps:
     - uses: actions/checkout@v6
     - name: Install Dependencies
