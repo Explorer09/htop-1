@@ -13,6 +13,7 @@ in the source distribution for its full text.
 
 #include "Hashtable.h"
 #include "HeaderLayout.h"
+#include "Macros.h"
 #include "MeterMode.h"
 #include "Row.h"
 #include "RowField.h"
@@ -129,6 +130,9 @@ static inline int ScreenSettings_getActiveDirection(const ScreenSettings* this) 
 void Settings_delete(Settings* this);
 
 int Settings_write(const Settings* this, bool onCrash);
+
+ATTR_RETNONNULL ATTR_MALLOC
+char* Settings_getUserHtopConfigDir(void);
 
 Settings* Settings_new(const struct Machine_* host, Hashtable* dynamicMeters, Hashtable* dynamicColumns, Hashtable* dynamicScreens);
 

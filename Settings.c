@@ -782,6 +782,28 @@ int Settings_write(const Settings* this, bool onCrash) {
    return r;
 }
 
+static char* Settings_getUserConfigAndHomeDir(const char** homeDir) {
+   *homeDir = getenv("HOME");
+   if (!*homeDir || (*homeDir)[0] != '/') {
+      const struct passwd* pw = getpwuid(getuid());
+      *homeDir = (pw && pw->pw_dir && pw->pw_dir[0] == '/') ? pw->pw_dir : "";
+   }
+
+   char* configDir = NULL;
+   const char* xdgConfigHome = getenv("XDG_CONFIG_HOME");
+   if (xdgConfigHome && xdgConfigHome[0] == '/') {
+      configDir = xStrdup(xdgConfigHome);
+   } else {
+      configDir = String_cat(*homeDir, CONFIGDIR);
+   }
+   return configDir;
+}
+
+char* Settings_getUserHtopConfigDir(void) {
+   const char *homeDir = NULL;
+   return Settings_getUserConfigAndHomeDir(&homeDir);
+}
+
 Settings* Settings_new(const Machine* host, Hashtable* dynamicMeters, Hashtable* dynamicColumns, Hashtable* dynamicScreens) {
    Settings* this = xCalloc(1, sizeof(Settings));
 
@@ -833,18 +855,8 @@ Settings* Settings_new(const Machine* host, Hashtable* dynamicMeters, Hashtable*
    if (rcfile) {
       this->initialFilename = xStrdup(rcfile);
    } else {
-      const char* home = getenv("HOME");
-      if (!home || home[0] != '/') {
-         const struct passwd* pw = getpwuid(getuid());
-         home = (pw && pw->pw_dir && pw->pw_dir[0] == '/') ? pw->pw_dir : "";
-      }
-      const char* xdgConfigHome = getenv("XDG_CONFIG_HOME");
-      char* configDir = NULL;
-      if (xdgConfigHome && xdgConfigHome[0] == '/') {
-         configDir = xStrdup(xdgConfigHome);
-      } else {
-         configDir = String_cat(home, CONFIGDIR);
-      }
+      const char* homeDir = NULL;
+      char* configDir = Settings_getUserConfigAndHomeDir(&homeDir);
       char* htopDir = String_cat(configDir, "/htop");
       this->initialFilename = String_cat(htopDir, "/htoprc");
       (void) mkdir(configDir, 0700);
@@ -852,7 +864,7 @@ Settings* Settings_new(const Machine* host, Hashtable* dynamicMeters, Hashtable*
       free(htopDir);
       free(configDir);
 
-      legacyDotfile = String_cat(home, "/.htoprc");
+      legacyDotfile = String_cat(homeDir, "/.htoprc");
    }
 
    this->filename = xMalloc(PATH_MAX);
