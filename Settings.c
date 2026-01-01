@@ -844,12 +844,11 @@ Settings* Settings_new(const Machine* host, Hashtable* dynamicMeters, Hashtable*
       if (xdgConfigHome && xdgConfigHome[0] == '/') {
          this->initialFilename = String_cat(xdgConfigHome, "/htop/htoprc");
          configDir = xStrdup(xdgConfigHome);
-         htopDir = String_cat(xdgConfigHome, "/htop");
       } else {
          this->initialFilename = String_cat(home, CONFIGDIR "/htop/htoprc");
          configDir = String_cat(home, CONFIGDIR);
-         htopDir = String_cat(configDir, "/htop");
       }
+      htopDir = String_cat(configDir, "/htop");
       (void) mkdir(configDir, 0700);
       (void) mkdir(htopDir, 0700);
       free(htopDir);
