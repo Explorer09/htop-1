@@ -13,6 +13,7 @@ in the source distribution for its full text.
 #include <ctype.h>
 #include <dirent.h>
 #include <errno.h>
+#include <pwd.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,7 +24,6 @@ in the source distribution for its full text.
 #include "Macros.h"
 #include "Platform.h"
 #include "RichString.h"
-#include "Settings.h"
 #include "XUtils.h"
 
 #include "pcp/Metric.h"
@@ -251,8 +251,16 @@ static void PCPDynamicMeter_scanDir(PCPDynamicMeters* meters, char* path) {
 void PCPDynamicMeters_init(PCPDynamicMeters* meters) {
    const char* share = pmGetConfig("PCP_SHARE_DIR");
    const char* sysconf = pmGetConfig("PCP_SYSCONF_DIR");
+   const char* xdgConfigHome = getenv("XDG_CONFIG_HOME");
    const char* override = getenv("PCP_HTOP_DIR");
+   const char* home = getenv("HOME");
    char* path;
+
+   if (!xdgConfigHome && !home) {
+      const struct passwd* pw = getpwuid(getuid());
+      if (pw)
+         home = pw->pw_dir;
+   }
 
    meters->table = Hashtable_new(0, true);
 
@@ -264,13 +272,16 @@ void PCPDynamicMeters_init(PCPDynamicMeters* meters) {
    }
 
    /* next, search in home directory alongside htoprc */
-   char* configDir = Settings_getUserHtopConfigDir();
-   if (configDir[0] == '/') {
-      path = String_cat(configDir, "/meters/");
+   if (xdgConfigHome)
+      path = String_cat(xdgConfigHome, "/htop/meters/");
+   else if (home)
+      path = String_cat(home, CONFIGDIR "/htop/meters/");
+   else
+      path = NULL;
+   if (path) {
       PCPDynamicMeter_scanDir(meters, path);
       free(path);
    }
-   free(configDir);
 
    /* next, search in the system meters directory */
    path = String_cat(sysconf, "/htop/meters/");
