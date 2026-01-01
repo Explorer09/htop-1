@@ -13,6 +13,7 @@ in the source distribution for its full text.
 #include <ctype.h>
 #include <dirent.h>
 #include <errno.h>
+#include <pwd.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,7 +25,6 @@ in the source distribution for its full text.
 #include "Process.h"
 #include "ProcessTable.h"
 #include "RichString.h"
-#include "Settings.h"
 #include "XUtils.h"
 
 #include "linux/CGroupUtils.h"
@@ -206,8 +206,16 @@ static void PCPDynamicColumn_scanDir(PCPDynamicColumns* columns, char* path) {
 void PCPDynamicColumns_init(PCPDynamicColumns* columns) {
    const char* share = pmGetConfig("PCP_SHARE_DIR");
    const char* sysconf = pmGetConfig("PCP_SYSCONF_DIR");
+   const char* xdgConfigHome = getenv("XDG_CONFIG_HOME");
    const char* override = getenv("PCP_HTOP_DIR");
+   const char* home = getenv("HOME");
    char* path;
+
+   if (!xdgConfigHome && !home) {
+      const struct passwd* pw = getpwuid(getuid());
+      if (pw)
+         home = pw->pw_dir;
+   }
 
    columns->table = Hashtable_new(0, true);
 
@@ -219,13 +227,16 @@ void PCPDynamicColumns_init(PCPDynamicColumns* columns) {
    }
 
    /* next, search in home directory alongside htoprc */
-   char* configDir = Settings_getUserHtopConfigDir();
-   if (configDir[0] == '/') {
-      path = String_cat(configDir, "/columns/");
+   if (xdgConfigHome)
+      path = String_cat(xdgConfigHome, "/htop/columns/");
+   else if (home)
+      path = String_cat(home, CONFIGDIR "/htop/columns/");
+   else
+      path = NULL;
+   if (path) {
       PCPDynamicColumn_scanDir(columns, path);
       free(path);
    }
-   free(configDir);
 
    /* next, search in the system columns directory */
    path = String_cat(sysconf, "/htop/columns/");
