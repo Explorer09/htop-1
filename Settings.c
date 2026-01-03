@@ -637,11 +637,57 @@ static int signal_safe_fprintf(FILE* stream, const char* fmt, ...) {
    return (int)MINIMUM(INT_MAX, ret);
 }
 
+static int makeAncestorDirectories(char* filePath, size_t len) {
+   assert(len == strlen(filePath));
+
+   int ret = 0;
+   int oldErr = errno;
+
+   char *p = filePath + len;
+   for (; p > filePath; p--) {
+      if (*p != '/')
+         continue;
+
+      *p = '\0';
+      bool ok = !mkdir(filePath, S_IRWXU);
+      *p = '/';
+      if (ok)
+         break;
+
+      if (errno != ENOENT)
+         return -errno;
+
+      ret = -errno;
+   }
+   if (p <= filePath)
+      return ret;
+
+   errno = oldErr;
+
+   while (++p < filePath + len) {
+      assert(*p);
+      if (*p != '/')
+         continue;
+
+      *p = '\0';
+      bool ok = !mkdir(filePath, S_IRWXU);
+      *p = '/';
+      if (!ok)
+         return -errno;
+   }
+   return 0;
+}
+
 int Settings_write(const Settings* this, bool onCrash) {
+   int r = 0;
    FILE* fp;
    char separator;
    char* tmpFilename = NULL;
    OutputFunc of;
+/*
+   gid_t oldEgid = getegid();
+   uid_t oldEuid = geteuid();
+*/
    if (onCrash) {
       fp = stderr;
       separator = ';';
@@ -649,19 +695,37 @@ int Settings_write(const Settings* this, bool onCrash) {
    } else if (!this->writeConfig) {
       return 0;
    } else {
-      /* create tempfile with mode 0600 */
-      mode_t cur_umask = umask(S_IXUSR | S_IRWXG | S_IRWXO);
-      xAsprintf(&tmpFilename, "%s.tmp.XXXXXX", this->filename);
+      // Drop privilege if needed
+/*
+      gid_t gid = getgid();
+      if (gid != oldEgid && setegid(gid) != 0)
+         return -errno;
+
+      uid_t uid = getuid();
+      if (uid != oldEuid && seteuid(uid) != 0)
+         return -errno;
+*/
+
+      // Prepare temp filename
+      size_t nameLen = (size_t)xAsprintf(&tmpFilename, "%s.tmp.XXXXXX", this->filename);
+
+      // Create ancestor directories with mode 0700
+      mode_t cur_umask = umask(S_IRWXG | S_IRWXO);
+      makeAncestorDirectories(tmpFilename, nameLen);
+
+      // Create temp file with mode 0600
+      umask(S_IXUSR | S_IRWXG | S_IRWXO);
       int fdtmp = mkstemp(tmpFilename);
       umask(cur_umask);
       if (fdtmp == -1) {
-         free(tmpFilename);
-         return -errno;
+         r = -errno;
+         goto tmpFileFail;
       }
       fp = fdopen(fdtmp, "w");
       if (!fp) {
-         free(tmpFilename);
-         return -errno;
+         r = -errno;
+         close(fdtmp);
+         goto tmpFileFail;
       }
       separator = '\n';
       of = fprintf;
@@ -766,8 +830,6 @@ int Settings_write(const Settings* this, bool onCrash) {
    if (onCrash)
       return 0;
 
-   int r = 0;
-
    if (ferror(fp) != 0)
       r = (errno != 0) ? -errno : -EBADF;
 
@@ -777,7 +839,13 @@ int Settings_write(const Settings* this, bool onCrash) {
    if (r == 0)
       r = (rename(tmpFilename, this->filename) == -1) ? -errno : 0;
 
+tmpFileFail:
    free(tmpFilename);
+
+/*
+   setegid(oldEgid);
+   seteuid(oldEuid);
+*/
 
    return r;
 }
