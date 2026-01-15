@@ -315,8 +315,6 @@ BacktracePanel* BacktracePanel_new(Vector* processes, const Settings* settings) 
       FunctionBar_new(BacktraceScreenFunctions, BacktraceScreenKeys, BacktraceScreenEvents)
    );
 
-   BacktracePanel_populateFrames(this);
-
    if (settings->showProgramPath) {
       this->displayOptions |= SHOW_FULL_PATH_OBJECT;
       FunctionBar_setLabel(super->defaultBar, KEY_F(3), BacktracePanel_options[OPTION_OBJECT_BASENAME]);
@@ -324,6 +322,8 @@ BacktracePanel* BacktracePanel_new(Vector* processes, const Settings* settings) 
       this->displayOptions &= ~SHOW_FULL_PATH_OBJECT;
       FunctionBar_setLabel(super->defaultBar, KEY_F(3), BacktracePanel_options[OPTION_OBJECT_FULL_PATH]);
    }
+
+   BacktracePanel_populateFrames(this);
 
    return this;
 }
