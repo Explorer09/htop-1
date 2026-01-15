@@ -52,15 +52,15 @@ static int ptraceDetach(pid_t pid) {
 void UnwindPtrace_makeBacktrace(Vector* frames, pid_t pid, char** error) {
    *error = NULL;
 
+   if (pid <= 0) {
+      xAsprintf(error, "Invalid PID: %ld", (long)pid);
+      return;
+   }
+
    unw_addr_space_t addrSpace = unw_create_addr_space(&_UPT_accessors, 0);
    if (!addrSpace) {
       xAsprintf(error, "Unable to initialize libunwind.");
       return;
-   }
-
-   if (pid <= 0) {
-      xAsprintf(error, "Unable to get the pid");
-      goto addr_space_error;
    }
 
    int ptraceErrno = ptraceAttach(pid);
