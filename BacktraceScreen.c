@@ -207,7 +207,6 @@ static void BacktracePanel_makePrintingHelper(const BacktracePanel* this, Backtr
 static void BacktracePanel_makeBacktrace(Vector* frames, pid_t pid, char** error) {
 #ifdef HAVE_LIBUNWIND_PTRACE
    UnwindPtrace_makeBacktrace(frames, pid, error);
-   return;
 #else
    (void)frames;
    (void)pid;
