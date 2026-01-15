@@ -1334,7 +1334,7 @@ if test "$have_libdemangle" != no; then
 fi
 
 if test "$have_libiberty$have_libdemangle" != nono; then
-   if htop_search_header_dir demangle.h "$demangle_header_paths"; then
+   if htop_search_header_dir libiberty/demangle.h "$demangle_header_paths"; then
       AC_DEFINE([HAVE_DEMANGLE_H], 1, [Define to 1 if you have the <demangle.h> header file.])
    else
       have_libiberty=no
@@ -1353,7 +1353,7 @@ if test "$demangling_backend_found" = no && test "$have_libiberty" != no; then
    AC_LINK_IFELSE(
       [AC_LANG_PROGRAM(
          [[
-#include <demangle.h>
+#include <libiberty/demangle.h>
 #include <stdlib.h>
 /* char* cplus_demangle(const char* mangled, int options); */
          ]], [[

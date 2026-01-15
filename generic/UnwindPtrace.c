@@ -128,7 +128,11 @@ void UnwindPtrace_makeBacktrace(Vector* frames, pid_t pid, char** error) {
             frame->objectPath = xStrndup(elfFileName, 2048);
 
             char *lastSlash = strrchr(frame->objectPath, '/');
-            frame->objectName = xStrndup(lastSlash + 1, 2048);
+            if (!lastSlash) {
+               frame->objectName = xStrdup(frame->objectPath);
+            } else {
+               frame->objectName = xStrndup(lastSlash + 1, 2048);
+            }
          }
 # endif
 
