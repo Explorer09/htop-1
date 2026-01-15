@@ -482,14 +482,16 @@ static void BacktracePanelRow_display(const Object* super, RichString* out) {
    assert(row);
 
    switch (row->type) {
-      case BACKTRACE_PANEL_ROW_DATA_FRAME:
-         BacktracePanelRow_displayFrame(super, out);
+   case BACKTRACE_PANEL_ROW_DATA_FRAME:
+      BacktracePanelRow_displayFrame(super, out);
       break;
-      case BACKTRACE_PANEL_ROW_PROCESS_INFORMATION:
-         BacktracePanelRow_displayInformation(super, out);
+
+   case BACKTRACE_PANEL_ROW_PROCESS_INFORMATION:
+      BacktracePanelRow_displayInformation(super, out);
       break;
-      case BACKTRACE_PANEL_ROW_ERROR:
-         BacktracePanelRow_displayError(super, out);
+
+   case BACKTRACE_PANEL_ROW_ERROR:
+      BacktracePanelRow_displayError(super, out);
       break;
    }
 }
@@ -505,13 +507,13 @@ BacktracePanelRow* BacktracePanelRow_new(const BacktracePanel* panel) {
 void BacktracePanelRow_delete(Object* object) {
    BacktracePanelRow* this = (BacktracePanelRow*)object;
    switch (this->type) {
-      case BACKTRACE_PANEL_ROW_DATA_FRAME:
-         BacktraceFrameData_delete((Object *)this->data.frame);
-      break;
-      case BACKTRACE_PANEL_ROW_ERROR:
-         free(this->data.error);
+   case BACKTRACE_PANEL_ROW_DATA_FRAME:
+      BacktraceFrameData_delete((Object *)this->data.frame);
       break;
 
+   case BACKTRACE_PANEL_ROW_ERROR:
+      free(this->data.error);
+      break;
    }
    free(this);
 }
