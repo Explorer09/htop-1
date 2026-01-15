@@ -59,7 +59,7 @@ void UnwindPtrace_makeBacktrace(Vector* frames, pid_t pid, char** error) {
 
    unw_addr_space_t addrSpace = unw_create_addr_space(&_UPT_accessors, 0);
    if (!addrSpace) {
-      xAsprintf(error, "Unable to initialize libunwind.");
+      *error = xStrdup("Cannot initialize libunwind");
       return;
    }
 
@@ -77,13 +77,13 @@ void UnwindPtrace_makeBacktrace(Vector* frames, pid_t pid, char** error) {
    }
 
    if (WIFSTOPPED(waitStatus) == 0) {
-      *error = xStrdup("The process chosen is not stopped correctly.");
+      *error = xStrdup("The process chosen is not stopped correctly");
       goto ptrace_error;
    }
 
    struct UPT_info* context = _UPT_create(pid);
    if (!context) {
-      xAsprintf(error, "Unable to create the context of libunwind-ptrace");
+      *error = xStrdup("Cannot create the context of libunwind-ptrace");
       goto ptrace_error;
    }
 
@@ -105,7 +105,7 @@ void UnwindPtrace_makeBacktrace(Vector* frames, pid_t pid, char** error) {
       if (unw_get_proc_name(&cursor, procName, sizeof(procName), &offset) == 0) {
          ret = unw_get_reg(&cursor, UNW_REG_IP, &pc);
          if (ret < 0) {
-            xAsprintf(error, "unable to get program counter register: %d", ret);
+            xAsprintf(error, "Cannot get program counter register: %d", ret);
             BacktraceFrameData_delete((Object *)frame);
             break;
          }
