@@ -68,31 +68,31 @@ static const char* const BacktraceFrame_headerFields[LAST_PANEL_HEADER] = {
 };
 
 static const char* const BacktraceScreenFunctions[] = {
-   "Refresh",
 #if defined(HAVE_DEMANGLING)
    BacktracePanel_options[OPTION_NAME_RAW],
 #endif
    BacktracePanel_options[OPTION_OBJECT_FULL_PATH],
+   "Refresh",
    "Done   ",
    NULL
 };
 
 static const char* const BacktraceScreenKeys[] = {
-   "F1",
 #if defined(HAVE_DEMANGLING)
    "F2",
 #endif
    "F3",
+   "F5",
    "Esc",
    NULL
 };
 
 static const int BacktraceScreenEvents[] = {
-   KEY_F(1),
 #if defined(HAVE_DEMANGLING)
    KEY_F(2),
 #endif
    KEY_F(3),
+   KEY_F(5),
    27,
 };
 
@@ -262,11 +262,6 @@ static HandlerResult BacktracePanel_eventHandler(Panel* super, int ch) {
 
    HandlerResult result = IGNORED;
    switch (ch) {
-   case KEY_F(1):
-      Panel_prune(super);
-      BacktracePanel_populateFrames(this);
-      break;
-
 #if defined(HAVE_DEMANGLING)
    case KEY_F(2):
       if (!!(*displayOptions & DEMANGLE_NAME_FUNCTION)) {
@@ -292,6 +287,11 @@ static HandlerResult BacktracePanel_eventHandler(Panel* super, int ch) {
       this->super.needsRedraw = true;
       BacktracePanel_displayHeader(this);
       break;
+   case KEY_F(5):
+      Panel_prune(super);
+      BacktracePanel_populateFrames(this);
+      break;
+
    }
    return result;
 }
