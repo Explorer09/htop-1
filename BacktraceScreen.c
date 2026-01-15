@@ -104,7 +104,7 @@ typedef enum BacktraceScreenDisplayOptions_ {
 
 BacktraceFrameData* BacktraceFrameData_new(void) {
    BacktraceFrameData* this = AllocThis(BacktraceFrameData);
-   this->index = -1;
+   this->index = 0;
    this->address = 0;
    this->offset = 0;
    this->functionName = NULL;
@@ -445,7 +445,7 @@ static void BacktracePanelRow_displayFrame(const Object* super, RichString* out)
    assert(maxFunctionNameLength <= INT_MAX);
    assert(objectLength <= INT_MAX);
 
-   int len = xAsprintf(&line, "%*d 0x%0*zx %n%-*s %-*s",
+   int len = xAsprintf(&line, "%*zd 0x%0*zx %n%-*s %-*s",
       (int)printingHelper->maxFrameNumLen, frame->index,
       (int)maxAddrLen, frame->address,
       &objectPathStart,

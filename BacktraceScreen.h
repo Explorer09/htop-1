@@ -19,7 +19,7 @@ in the source distribution for its full text.
 typedef struct BacktraceFrameData_ {
    Object super;
 
-   int index;
+   ssize_t index;
    size_t address;
    size_t offset;
    char* functionName;
