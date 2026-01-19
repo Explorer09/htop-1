@@ -52,21 +52,6 @@ static const char* const BacktracePanel_options[LAST_PANEL_OPTION] = {
    [OPTION_OBJECT_BASENAME] = "Basename",
 };
 
-typedef enum BacktraceFrameHeaders_ {
-   HEADER_NUMBER_FRAME,
-   HEADER_ADDRESS,
-   HEADER_NAME,
-   HEADER_PATH,
-   LAST_PANEL_HEADER,
-} BacktracePanelHeaders;
-
-static const char* const BacktraceFrame_headerFields[LAST_PANEL_HEADER] = {
-   [HEADER_NUMBER_FRAME] = "#",
-   [HEADER_ADDRESS] = "ADDRESS",
-   [HEADER_NAME] = "NAME",
-   [HEADER_PATH] = "PATH",
-};
-
 static const char* const BacktraceScreenFunctions[] = {
 #if defined(HAVE_DEMANGLING)
    BacktracePanel_options[OPTION_NAME_RAW],
@@ -151,10 +136,10 @@ static void BacktracePanel_displayHeader(BacktracePanel* this) {
 
    char* line = NULL;
    xAsprintf(&line, "%*s %-*s %-*s %-*s",
-      (int)printingHelper->maxFrameNumLen, BacktraceFrame_headerFields[HEADER_NUMBER_FRAME],
-      (int)printingHelper->maxAddrLen, BacktraceFrame_headerFields[HEADER_ADDRESS],
-      (int)maxObjLen, BacktraceFrame_headerFields[HEADER_PATH],
-      (int)maxFunctionNameLength, BacktraceFrame_headerFields[HEADER_NAME]
+      (int)printingHelper->maxFrameNumLen, "#",
+      (int)printingHelper->maxAddrLen, "ADDRESS",
+      (int)maxObjLen, "PATH",
+      (int)maxFunctionNameLength, "NAME"
    );
 
    Panel_setHeader((Panel*)this, line);
