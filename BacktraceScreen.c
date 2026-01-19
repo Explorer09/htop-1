@@ -47,9 +47,9 @@ typedef enum BacktracePanelOptions_ {
 
 static const char* const BacktracePanel_options[LAST_PANEL_OPTION] = {
    [OPTION_NAME_DEMANGLE] = "Demangle",
-   [OPTION_NAME_RAW] = "Raw",
+   [OPTION_NAME_RAW] = "Mangle  ",
    [OPTION_OBJECT_FULL_PATH] = "Full Path",
-   [OPTION_OBJECT_BASENAME] = "Basename",
+   [OPTION_OBJECT_BASENAME] = "Basename ",
 };
 
 static const char* const BacktraceScreenFunctions[] = {
@@ -113,16 +113,14 @@ static void BacktracePanel_displayHeader(BacktracePanel* this) {
    const BacktracePanelPrintingHelper* printingHelper = &this->printingHelper;
    const int displayOptions = this->displayOptions;
 
-   size_t maxFunctionNameLength = printingHelper->maxFuncNameLen;
-   if (!!(displayOptions & DEMANGLE_NAME_FUNCTION) &&
-         printingHelper->maxDemangledFuncNameLen > 0) {
-      maxFunctionNameLength = printingHelper->maxDemangledFuncNameLen;
-   }
+   bool showDemangledNames = (displayOptions & DEMANGLE_NAME_FUNCTION) &&
+      printingHelper->maxDemangledFuncNameLen > 0;
 
    size_t maxObjLen = printingHelper->maxObjNameLen;
    if (!!(displayOptions & SHOW_FULL_PATH_OBJECT)) {
       maxObjLen = printingHelper->maxObjPathLen;
    }
+   maxObjLen = MAXIMUM(maxObjLen, strlen("PATH"));
 
    /*
     * The parameters for printf are of type int.
@@ -130,16 +128,14 @@ static void BacktracePanel_displayHeader(BacktracePanel* this) {
     */
    assert(printingHelper->maxFrameNumLen <= INT_MAX);
    assert(printingHelper->maxAddrLen <= INT_MAX);
-   assert(printingHelper->maxDemangledFuncNameLen <= INT_MAX);
    assert(maxObjLen <= INT_MAX);
-   assert(maxFunctionNameLength <= INT_MAX);
 
    char* line = NULL;
-   xAsprintf(&line, "%*s %-*s %-*s %-*s",
+   xAsprintf(&line, "%*s %-*s %-*s %s",
       (int)printingHelper->maxFrameNumLen, "#",
       (int)printingHelper->maxAddrLen, "ADDRESS",
       (int)maxObjLen, "PATH",
-      (int)maxFunctionNameLength, "NAME"
+      (showDemangledNames ? "NAME (demangled)" : "NAME")
    );
 
    Panel_setHeader((Panel*)this, line);
@@ -248,25 +244,24 @@ static HandlerResult BacktracePanel_eventHandler(Panel* super, int ch) {
    switch (ch) {
 #if defined(HAVE_DEMANGLING)
    case KEY_F(2):
+      *displayOptions ^= DEMANGLE_NAME_FUNCTION;
       if (!!(*displayOptions & DEMANGLE_NAME_FUNCTION)) {
-         *displayOptions &= ~DEMANGLE_NAME_FUNCTION;
-         FunctionBar_setLabel(super->defaultBar, KEY_F(2), BacktracePanel_options[OPTION_NAME_DEMANGLE]);
-      } else {
-         *displayOptions |= DEMANGLE_NAME_FUNCTION;
          FunctionBar_setLabel(super->defaultBar, KEY_F(2), BacktracePanel_options[OPTION_NAME_RAW]);
+      } else {
+         FunctionBar_setLabel(super->defaultBar, KEY_F(2), BacktracePanel_options[OPTION_NAME_DEMANGLE]);
       }
       this->super.needsRedraw = true;
+      BacktracePanel_displayHeader(this);
       break;
 #endif
 
    case 'p':
    case KEY_F(3):
+      *displayOptions ^= SHOW_FULL_PATH_OBJECT;
       if (!!(*displayOptions & SHOW_FULL_PATH_OBJECT)) {
-         *displayOptions &= ~SHOW_FULL_PATH_OBJECT;
-         FunctionBar_setLabel(super->defaultBar, KEY_F(3), BacktracePanel_options[OPTION_OBJECT_FULL_PATH]);
-      } else {
          FunctionBar_setLabel(super->defaultBar, KEY_F(3), BacktracePanel_options[OPTION_OBJECT_BASENAME]);
-         *displayOptions |= SHOW_FULL_PATH_OBJECT;
+      } else {
+         FunctionBar_setLabel(super->defaultBar, KEY_F(3), BacktracePanel_options[OPTION_OBJECT_FULL_PATH]);
       }
       this->super.needsRedraw = true;
       BacktracePanel_displayHeader(this);
@@ -415,6 +410,7 @@ static void BacktracePanelRow_displayFrame(const Object* super, RichString* out)
       objectDisplayed = frame->objectPath;
       objectLength = printingHelper->maxObjPathLen;
    }
+   objectLength = MAXIMUM(objectLength, strlen("PATH"));
 
    size_t maxAddrLen = printingHelper->maxAddrLen - strlen("0x");
    char* line = NULL;
