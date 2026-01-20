@@ -266,11 +266,12 @@ static HandlerResult BacktracePanel_eventHandler(Panel* super, int ch) {
       this->super.needsRedraw = true;
       BacktracePanel_displayHeader(this);
       break;
+
+   case KEY_CTRL('L'):
    case KEY_F(5):
       Panel_prune(super);
       BacktracePanel_populateFrames(this);
       break;
-
    }
    return result;
 }
