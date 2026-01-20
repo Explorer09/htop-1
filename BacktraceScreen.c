@@ -203,21 +203,21 @@ static void BacktracePanel_populateFrames(BacktracePanel* this) {
       const Process* process = (Process*)Vector_get(this->processes, i);
       BacktracePanel_makeBacktrace(data, Process_getPid(process), &error);
 
-      if (error) {
-         BacktracePanelRow* errorRow = BacktracePanelRow_new(this);
-         errorRow->type = BACKTRACE_PANEL_ROW_ERROR;
-         errorRow->data.error = error;
-
-         Panel_prune((Panel*)this);
-         Panel_add((Panel*)this, (Object*)errorRow);
-         Vector_delete(data);
-         return;
-      }
-
       BacktracePanelRow* header = BacktracePanelRow_new(this);
       header->process = process;
       header->type = BACKTRACE_PANEL_ROW_PROCESS_INFORMATION;
       Panel_add((Panel*)this, (Object*)header);
+
+      if (error) {
+         BacktracePanelRow* errorRow = BacktracePanelRow_new(this);
+         errorRow->type = BACKTRACE_PANEL_ROW_ERROR;
+         errorRow->data.error = error;
+         Panel_add((Panel*)this, (Object*)errorRow);
+
+         Vector_delete(data);
+         BacktracePanel_displayHeader(this);
+         return;
+      }
 
       for (int j = 0; j < Vector_size(data); j++) {
          BacktracePanelRow* row = BacktracePanelRow_new(this);
