@@ -1178,10 +1178,13 @@ if test "$with_libunwind" != no; then
                First argument must be non-null. */
             unw_get_elf_filename(&cursor, (char*)0, (size_t)0, (unw_word_t*)0);
          ]]
-      )],
-      AC_DEFINE([HAVE_LIBUNWIND_ELF_FILENAME], [1], [Define if libunwind has unw_get_elf_filename])
-      AC_MSG_RESULT(yes),
-      AC_MSG_RESULT(no)
+      )], [
+         AC_DEFINE([HAVE_LIBUNWIND_ELF_FILENAME], [1], [Define if libunwind has unw_get_elf_filename])
+         AC_MSG_RESULT(yes)
+      ], [
+         AC_MSG_RESULT(no)
+         AC_MSG_WARN([showing filenames in backtrace screen requires libunwind 1.8 or later])
+      ]
    )
 
    if test "$have_libunwind_ptrace" != no && test "x$ac_cv_lib_unwind_ptrace__UPT_create" != xyes; then
