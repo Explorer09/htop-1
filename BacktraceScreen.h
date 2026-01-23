@@ -62,10 +62,8 @@ typedef struct BacktracePanelRow_ {
       char* error;
    } data;
 
-   const int* displayOptions;
-   const BacktracePanelPrintingHelper* printingHelper;
+   const BacktracePanel* panel;
    const Process* process;
-   const Settings* settings;
 } BacktracePanelRow;
 
 BacktraceFrameData* BacktraceFrameData_new(void);

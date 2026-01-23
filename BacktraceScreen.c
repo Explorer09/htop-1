@@ -388,13 +388,15 @@ static void BacktracePanelRow_displayFrame(const Object* super, RichString* out)
    assert(row);
    assert(row->type == BACKTRACE_PANEL_ROW_DATA_FRAME);
 
-   const BacktracePanelPrintingHelper* printingHelper = row->printingHelper;
-   const int* const displayOptions = row->displayOptions;
+   const BacktracePanel* panel = row->panel;
+   const BacktracePanelPrintingHelper* printingHelper = &panel->printingHelper;
+   const int displayOptions = panel->displayOptions;
+
    const BacktraceFrameData* frame = row->data.frame;
 
    char* functionName = frame->functionName;
    size_t maxFunctionNameLength = printingHelper->maxFuncNameLen;
-   if (!!(*displayOptions & DEMANGLE_NAME_FUNCTION) &&
+   if (!!(displayOptions & DEMANGLE_NAME_FUNCTION) &&
          printingHelper->maxDemangledFuncNameLen > 0) {
       maxFunctionNameLength = printingHelper->maxDemangledFuncNameLen;
       if (frame->demangleFunctionName) {
@@ -407,7 +409,7 @@ static void BacktracePanelRow_displayFrame(const Object* super, RichString* out)
 
    char* objectDisplayed = frame->objectName;
    size_t objectLength = printingHelper->maxObjNameLen;
-   if (!!(*displayOptions & SHOW_FULL_PATH_OBJECT)) {
+   if (!!(displayOptions & SHOW_FULL_PATH_OBJECT)) {
       objectDisplayed = frame->objectPath;
       objectLength = printingHelper->maxObjPathLen;
    }
@@ -441,7 +443,7 @@ static void BacktracePanelRow_displayFrame(const Object* super, RichString* out)
 
    RichString_appendnAscii(out, colors, line, len);
 
-   if (row->settings->highlightBaseName) {
+   if (panel->settings->highlightBaseName) {
       BacktracePanelRow_highlightBasename(row, out, line, objectPathStart);
    }
 
@@ -479,9 +481,7 @@ static void BacktracePanelRow_display(const Object* super, RichString* out) {
 
 BacktracePanelRow* BacktracePanelRow_new(const BacktracePanel* panel) {
    BacktracePanelRow* this = AllocThis(BacktracePanelRow);
-   this->displayOptions = &panel->displayOptions;
-   this->printingHelper = &panel->printingHelper;
-   this->settings = panel->settings;
+   this->panel = panel;
    return this;
 }
 
