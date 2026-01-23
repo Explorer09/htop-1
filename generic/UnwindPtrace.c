@@ -96,13 +96,13 @@ void UnwindPtrace_makeBacktrace(Vector* frames, pid_t pid, char** error) {
 
    int index = 0;
    do {
-      char procName[2048] = "?";
+      char buffer[2048] = {0};
       unw_word_t offset;
       unw_word_t pc;
 
       BacktraceFrameData* frame = BacktraceFrameData_new();
       frame->index = index;
-      if (unw_get_proc_name(&cursor, procName, sizeof(procName), &offset) == 0) {
+      if (unw_get_proc_name(&cursor, buffer, sizeof(buffer), &offset) == 0) {
          ret = unw_get_reg(&cursor, UNW_REG_IP, &pc);
          if (ret < 0) {
             xAsprintf(error, "Cannot get program counter register: %d", ret);
@@ -114,7 +114,7 @@ void UnwindPtrace_makeBacktrace(Vector* frames, pid_t pid, char** error) {
          frame->offset = offset;
          frame->isSignalFrame = unw_is_signal_frame(&cursor);
 
-         frame->functionName = xStrndup(procName, 2048);
+         frame->functionName = xStrndup(buffer, sizeof(buffer));
 
 # if defined(HAVE_DEMANGLING)
          char* demangledName = Generic_Demangle(frame->functionName);
@@ -123,16 +123,9 @@ void UnwindPtrace_makeBacktrace(Vector* frames, pid_t pid, char** error) {
 
 # if defined(HAVE_LIBUNWIND_ELF_FILENAME)
          unw_word_t offsetElfFileName;
-         char elfFileName[2048] = { 0 };
-         if (unw_get_elf_filename(&cursor, elfFileName, sizeof(elfFileName), &offsetElfFileName) == 0) {
-            frame->objectPath = xStrndup(elfFileName, 2048);
+         if (unw_get_elf_filename(&cursor, buffer, sizeof(buffer), &offsetElfFileName) == 0) {
+            frame->objectPath = xStrndup(buffer, sizeof(buffer));
 
-            char *lastSlash = strrchr(frame->objectPath, '/');
-            if (!lastSlash) {
-               frame->objectName = xStrdup(frame->objectPath);
-            } else {
-               frame->objectName = xStrndup(lastSlash + 1, 2048);
-            }
          }
 # endif
 

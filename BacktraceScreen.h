@@ -26,7 +26,6 @@ typedef struct BacktraceFrameData_ {
    char* demangleFunctionName;
    bool isSignalFrame;
    char* objectPath;
-   char* objectName;
 } BacktraceFrameData;
 
 typedef struct BacktracePanelPrintingHelper_ {

@@ -96,7 +96,6 @@ BacktraceFrameData* BacktraceFrameData_new(void) {
    this->demangleFunctionName = NULL;
    this->isSignalFrame = false;
    this->objectPath = NULL;
-   this->objectName = NULL;
    return this;
 }
 
@@ -105,7 +104,6 @@ void BacktraceFrameData_delete(Object* object) {
    free(this->functionName);
    free(this->demangleFunctionName);
    free(this->objectPath);
-   free(this->objectName);
    free(this);
 }
 
@@ -120,7 +118,6 @@ static void BacktracePanel_displayHeader(BacktracePanel* this) {
    if (!!(displayOptions & SHOW_FULL_PATH_OBJECT)) {
       maxObjLen = printingHelper->maxObjPathLen;
    }
-   maxObjLen = MAXIMUM(maxObjLen, strlen("PATH"));
 
    /*
     * The parameters for printf are of type int.
@@ -140,6 +137,11 @@ static void BacktracePanel_displayHeader(BacktracePanel* this) {
 
    Panel_setHeader((Panel*)this, line);
    free(line);
+}
+
+static const char* getBasename(const char* path) {
+   char *lastSlash = strrchr(path, '/');
+   return lastSlash ? lastSlash + 1 : path;
 }
 
 static void BacktracePanel_makePrintingHelper(const BacktracePanel* this, BacktracePanelPrintingHelper* printingHelper) {
@@ -164,13 +166,12 @@ static void BacktracePanel_makePrintingHelper(const BacktracePanel* this, Backtr
       }
 
       if (row->data.frame->objectPath) {
-         size_t objectPathLength = strlen(row->data.frame->objectPath);
-         printingHelper->maxObjPathLen = MAXIMUM(objectPathLength, printingHelper->maxObjPathLen);
-      }
+         const char* objectName = getBasename(row->data.frame->objectPath);
+         size_t objectNameLength = strlen(objectName);
+         size_t objectPathLength = (size_t)(objectName - row->data.frame->objectPath) + objectNameLength;
 
-      if (row->data.frame->objectName) {
-         size_t objectNameLength = strlen(row->data.frame->objectName);
          printingHelper->maxObjNameLen = MAXIMUM(objectNameLength, printingHelper->maxObjNameLen);
+         printingHelper->maxObjPathLen = MAXIMUM(objectPathLength, printingHelper->maxObjPathLen);
       }
 
       printingHelper->maxFrameNumLen = MAXIMUM(countDigits(row->data.frame->index, 10), printingHelper->maxFrameNumLen);
@@ -407,11 +408,11 @@ static void BacktracePanelRow_displayFrame(const Object* super, RichString* out)
    char* completeFunctionName = NULL;
    xAsprintf(&completeFunctionName, "%s+0x%zx", functionName, frame->offset);
 
-   char* objectDisplayed = frame->objectName;
-   size_t objectLength = printingHelper->maxObjNameLen;
-   if (!!(displayOptions & SHOW_FULL_PATH_OBJECT)) {
-      objectDisplayed = frame->objectPath;
-      objectLength = printingHelper->maxObjPathLen;
+   const char* objectDisplayed = frame->objectPath;
+   size_t objectLength = printingHelper->maxObjPathLen;
+   if (!(displayOptions & SHOW_FULL_PATH_OBJECT)) {
+      objectDisplayed = getBasename(frame->objectPath);
+      objectLength = printingHelper->maxObjNameLen;
    }
    objectLength = MAXIMUM(objectLength, strlen("PATH"));
 
