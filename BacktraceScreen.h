@@ -19,13 +19,13 @@ in the source distribution for its full text.
 typedef struct BacktraceFrameData_ {
    Object super;
 
-   ssize_t index;
    size_t address;
    size_t offset;
    char* functionName;
    char* demangleFunctionName;
-   bool isSignalFrame;
    char* objectPath;
+   unsigned int index;
+   bool isSignalFrame;
 } BacktraceFrameData;
 
 typedef struct BacktracePanelPrintingHelper_ {

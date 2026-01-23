@@ -89,13 +89,13 @@ typedef enum BacktraceScreenDisplayOptions_ {
 
 BacktraceFrameData* BacktraceFrameData_new(void) {
    BacktraceFrameData* this = AllocThis(BacktraceFrameData);
-   this->index = 0;
    this->address = 0;
    this->offset = 0;
    this->functionName = NULL;
    this->demangleFunctionName = NULL;
-   this->isSignalFrame = false;
    this->objectPath = NULL;
+   this->index = 0;
+   this->isSignalFrame = false;
    return this;
 }
 
@@ -146,6 +146,7 @@ static const char* getBasename(const char* path) {
 
 static void BacktracePanel_makePrintingHelper(const BacktracePanel* this, BacktracePanelPrintingHelper* printingHelper) {
    Vector* lines = this->super.items;
+   unsigned int maxFrameNum = 0;
    size_t longestAddress = 0;
 
    for (int i = 0; i < Vector_size(lines); i++) {
@@ -174,10 +175,12 @@ static void BacktracePanel_makePrintingHelper(const BacktracePanel* this, Backtr
          printingHelper->maxObjPathLen = MAXIMUM(objectPathLength, printingHelper->maxObjPathLen);
       }
 
-      printingHelper->maxFrameNumLen = MAXIMUM(countDigits(row->data.frame->index, 10), printingHelper->maxFrameNumLen);
+      maxFrameNum = MAXIMUM(row->data.frame->index, maxFrameNum);
 
       longestAddress = MAXIMUM(row->data.frame->address, longestAddress);
    }
+
+   printingHelper->maxFrameNumLen = MAXIMUM(countDigits(maxFrameNum, 10), printingHelper->maxFrameNumLen);
 
    size_t addressLength = MAX_HEX_ADDR_STR_LEN_32;
    if (longestAddress > UINT32_MAX) {
@@ -429,7 +432,7 @@ static void BacktracePanelRow_displayFrame(const Object* super, RichString* out)
    assert(maxFunctionNameLength <= INT_MAX);
    assert(objectLength <= INT_MAX);
 
-   int len = xAsprintf(&line, "%*zd 0x%0*zx %n%-*s %-*s",
+   int len = xAsprintf(&line, "%*u 0x%0*zx %n%-*s %-*s",
       (int)printingHelper->maxFrameNumLen, frame->index,
       (int)maxAddrLen, frame->address,
       &objectPathStart,

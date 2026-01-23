@@ -94,7 +94,7 @@ void UnwindPtrace_makeBacktrace(Vector* frames, pid_t pid, char** error) {
       goto context_error;
    }
 
-   int index = 0;
+   unsigned int index = 0;
    do {
       char buffer[2048] = {0};
       unw_word_t offset;
