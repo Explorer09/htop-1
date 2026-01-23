@@ -207,25 +207,24 @@ static void BacktracePanel_populateFrames(BacktracePanel* this) {
       header->type = BACKTRACE_PANEL_ROW_PROCESS_INFORMATION;
       Panel_add((Panel*)this, (Object*)header);
 
-      if (error) {
+      if (!error) {
+         for (int j = 0; j < Vector_size(data); j++) {
+            BacktracePanelRow* row = BacktracePanelRow_new(this);
+            row->process = process;
+            row->type = BACKTRACE_PANEL_ROW_DATA_FRAME;
+            row->data.frame = (BacktraceFrameData*)Vector_get(data, j);
+
+            Panel_add((Panel*)this, (Object*)row);
+         }
+      } else {
          BacktracePanelRow* errorRow = BacktracePanelRow_new(this);
+         errorRow->process = process;
          errorRow->type = BACKTRACE_PANEL_ROW_ERROR;
          errorRow->data.error = error;
+         error = NULL;
          Panel_add((Panel*)this, (Object*)errorRow);
-
-         Vector_delete(data);
-         BacktracePanel_displayHeader(this);
-         return;
       }
 
-      for (int j = 0; j < Vector_size(data); j++) {
-         BacktracePanelRow* row = BacktracePanelRow_new(this);
-         row->type = BACKTRACE_PANEL_ROW_DATA_FRAME;
-         row->data.frame = (BacktraceFrameData*)Vector_get(data, j);
-         row->process = process;
-
-         Panel_add((Panel*)this, (Object*)row);
-      }
       Vector_prune(data);
    }
    Vector_delete(data);
