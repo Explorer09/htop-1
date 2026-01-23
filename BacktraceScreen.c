@@ -112,7 +112,7 @@ static void BacktracePanel_displayHeader(BacktracePanel* this) {
    const int displayOptions = this->displayOptions;
 
    bool showDemangledNames = (displayOptions & DEMANGLE_NAME_FUNCTION) &&
-      printingHelper->maxDemangledFuncNameLen > 0;
+      printingHelper->hasDemangledSymNames;
 
    size_t maxObjLen = printingHelper->maxObjNameLen;
    if (!!(displayOptions & SHOW_FULL_PATH_OBJECT)) {
@@ -149,21 +149,16 @@ static void BacktracePanel_makePrintingHelper(const BacktracePanel* this, Backtr
    unsigned int maxFrameNum = 0;
    size_t longestAddress = 0;
 
+   printingHelper->hasDemangledSymNames = false;
+
    for (int i = 0; i < Vector_size(lines); i++) {
       const BacktracePanelRow* row = (const BacktracePanelRow*)Vector_get(lines, i);
       if (row->type != BACKTRACE_PANEL_ROW_DATA_FRAME) {
          continue;
       }
 
-      size_t digitOfOffsetFrame = strlen("+0x") + countDigits(row->data.frame->offset, 16);
       if (row->data.frame->demangleFunctionName) {
-         size_t demangledFunctionNameLength = strlen(row->data.frame->demangleFunctionName) + digitOfOffsetFrame;
-         printingHelper->maxDemangledFuncNameLen = MAXIMUM(demangledFunctionNameLength, printingHelper->maxDemangledFuncNameLen);
-      }
-
-      if (row->data.frame->functionName) {
-         size_t functionNameLength = strlen(row->data.frame->functionName) + digitOfOffsetFrame;
-         printingHelper->maxFuncNameLen = MAXIMUM(functionNameLength, printingHelper->maxFuncNameLen);
+         printingHelper->hasDemangledSymNames = true;
       }
 
       if (row->data.frame->objectPath) {
@@ -285,11 +280,10 @@ BacktracePanel* BacktracePanel_new(Vector* processes, const Settings* settings) 
    this->processes = processes;
 
    this->printingHelper.maxAddrLen = 0;
-   this->printingHelper.maxDemangledFuncNameLen = 0;
    this->printingHelper.maxFrameNumLen = 0;
-   this->printingHelper.maxFuncNameLen = 0;
    this->printingHelper.maxObjNameLen = 0;
    this->printingHelper.maxObjPathLen = 0;
+   this->printingHelper.hasDemangledSymNames = false;
 
    this->displayOptions = DEMANGLE_NAME_FUNCTION;
    this->settings = settings;
@@ -399,10 +393,8 @@ static void BacktracePanelRow_displayFrame(const Object* super, RichString* out)
    const BacktraceFrameData* frame = row->data.frame;
 
    char* functionName = frame->functionName;
-   size_t maxFunctionNameLength = printingHelper->maxFuncNameLen;
    if (!!(displayOptions & DEMANGLE_NAME_FUNCTION) &&
-         printingHelper->maxDemangledFuncNameLen > 0) {
-      maxFunctionNameLength = printingHelper->maxDemangledFuncNameLen;
+         printingHelper->hasDemangledSymNames) {
       if (frame->demangleFunctionName) {
          functionName = frame->demangleFunctionName;
       }
@@ -429,15 +421,14 @@ static void BacktracePanelRow_displayFrame(const Object* super, RichString* out)
     */
    assert(printingHelper->maxFrameNumLen <= INT_MAX);
    assert(maxAddrLen <= INT_MAX);
-   assert(maxFunctionNameLength <= INT_MAX);
    assert(objectLength <= INT_MAX);
 
-   int len = xAsprintf(&line, "%*u 0x%0*zx %n%-*s %-*s",
+   int len = xAsprintf(&line, "%*u 0x%0*zx %n%-*s %s",
       (int)printingHelper->maxFrameNumLen, frame->index,
       (int)maxAddrLen, frame->address,
       &objectPathStart,
       (int)objectLength, objectDisplayed ? objectDisplayed : "-",
-      (int)maxFunctionNameLength, completeFunctionName
+      completeFunctionName
    );
 
    int colors = CRT_colors[DEFAULT_COLOR];

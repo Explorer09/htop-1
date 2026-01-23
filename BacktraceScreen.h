@@ -30,11 +30,10 @@ typedef struct BacktraceFrameData_ {
 
 typedef struct BacktracePanelPrintingHelper_ {
    size_t maxAddrLen;
-   size_t maxDemangledFuncNameLen;
-   size_t maxFuncNameLen;
    size_t maxFrameNumLen;
    size_t maxObjPathLen;
    size_t maxObjNameLen;
+   bool hasDemangledSymNames;
 } BacktracePanelPrintingHelper;
 
 typedef struct BacktracePanel_ {
