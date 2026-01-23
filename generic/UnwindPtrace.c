@@ -53,7 +53,7 @@ void UnwindPtrace_makeBacktrace(Vector* frames, pid_t pid, char** error) {
    *error = NULL;
 
    if (pid <= 0) {
-      xAsprintf(error, "Invalid PID: %ld", (long)pid);
+      *error = xStrdup("Invalid PID");
       return;
    }
 
