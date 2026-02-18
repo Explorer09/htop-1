@@ -412,6 +412,7 @@ AC_CHECK_FUNCS([ \
    fstatat \
    host_get_clock_service \
    memfd_create \
+   mkdirat \
    openat \
    readlinkat \
    sched_getscheduler \
